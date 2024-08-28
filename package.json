@@ -1,0 +1,31 @@
+{
+  "name": "gen-ai-builder-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.0",
+    "express": "^4.18.2",
+    "mongoose": "^7.0.0",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.15"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@gitlab.com/VenturePact/outgrow-projects/gen-ai-builder-backend.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://gitlab.com/VenturePact/outgrow-projects/gen-ai-builder-backend/issues"
+  },
+  "homepage": "https://gitlab.com/VenturePact/outgrow-projects/gen-ai-builder-backend#readme"
+}
