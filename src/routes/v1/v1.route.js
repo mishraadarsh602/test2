@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { getGtMetrixReport, getCurrentWeather } = require('../../controllers/agents');
+const { getGtMetrixReport, getCurrentWeather, getAllLocations } = require('../../controllers/agents');
 
 
 router.get("/", async (req, res) => {
@@ -13,6 +13,7 @@ router.post('/gtmetrix/start', getGtMetrixReport);
 
 // weather api route start
 router.post('/weatherApi', getCurrentWeather);
+router.get('/locationSearch/:query', getAllLocations);
 // weather api route end
 
 module.exports = router;
