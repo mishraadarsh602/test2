@@ -8,7 +8,7 @@ const errorHandle = require("../utils/errorHandle");
 require('dotenv').config();
 
 // Connect to database
-// connectDB();
+connectDB();
 
 const app = express();
 
