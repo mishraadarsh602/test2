@@ -1,259 +1,275 @@
 'use strict';
 const mongoose = require('mongoose');
+const fieldsSchema = require('./fields');
 
 const appSchema = new mongoose.Schema({
-    appName: {
+    name: {
         type: String,
-        required: false
+        required: true
+    },
+    // user:{
+    //     type: mongoose.Schema.Types.ObjectId,
+    //     ref: 'User',
+    //     required: true
+    // },
+    appUUID: {
+        type: String,
+        default:''
+    },
+    status: { 
+        type: String, 
+        enum: ['LIVE', 'DEV', 'DELETED'], 
+        default: 'DEV' 
     },
     agent: {
+        type: {
+            type: String,
+            default: 'weather'
+        },
         status: {
             type: String,
-            required: false
+            default: 'active'
         },
         heading: {
             type: String,
-            required: false
+            default: "<span style='font-weight: 700;font-size: 2.25rem;line-height: 2.5rem;text-align: center;margin: 0;'>Weather Forecast1123</span>",
         },
         subHeading: {
             type: String,
-            required: false
+            default: "Get the latest weather updates",
         },
         componentText: {
             type: String,
-            required: false
+            default: "Search"
         },
         componentColor: {
             type: String,
-            required: false
-        },
-        themeColor:{
-            type:String,
-            required:false
-        },
-        location:{
-            type:String,
-            required:false
-        },
-        locationColor:{
-            type:String,
-            required:false
-        },
-        locationComponentColor:{
-            type:String,
-            required:false
-        },
-        airQuality: {
-            type: String,
-            required: false
-        },
-        airQualityToggle: {
-            type: Boolean,
-            required: false
-        },
-        celsiusToggle: {
-            type: Boolean,
-            required: false
-        },
-        outputToggle: {
-            type: Boolean,
-            required: false
-        },
-        feelsLike: {
-            type: String,
-            required: false
-        },
-        wind: {
-            type: String,
-            required: false
-        },
-        humidity: {
-            type: String,
-            required: false
-        },
-        cloudCover: {
-            type: String,
-            required: false
-        },
-        uvIndex: {
-            type: String,
-            required: false
-        },
-        pressure: {
-            type: String,
-            required: false
-        },
-        airQualityCO: {
-            type: String,
-            required: false
-        },
-        airQualityNO2: {
-            type: String,
-            required: false
-        },
-        airQualityO3: {
-            type: String,
-            required: false
-        },
-        airQualitySO2: {
-            type: String,
-            required: false
-        },
-        airQualityPM25: {
-            type: String,
-            required: false
-        },
-        airQualityPM10: {
-            type: String,
-            required: false
-        },
-     },
-    theme: {
-        mode: {
-            type: String,
-            required: false
-        },
-        primaryColor: {
-            type: String,
-            required: false
+            default: "#4f46e5"
         },
         themeColor: {
             type: String,
-            required: false
+            default: "#111827"
         },
-        textColor: {
+        location: {
             type: String,
-            required: false
+            default: "Enter Location"
+        },
+        locationColor: {
+            type: String,
+            default: "#4f46e5"
+        },
+        locationComponentColor: {
+            type: String,
+            default: "#111827"
+        },
+        airQuality: {
+            type: String,
+            default: "<span style='font-weight: 700;font-size: 2.25rem;line-height: 2.5rem;text-align: center;margin: 0;'>Air Quality</span>"
+        },
+        airQualityToggle: {
+            type: Boolean,
+            default: false
+        },
+        celsiusToggle: {
+            type: Boolean,
+            default: true
+        },
+        outputToggle: {
+            type: Boolean,
+            default: false
+        },
+        feelsLike: {
+            type: String,
+            default: "Feels Like"
+        },
+        wind: {
+            type: String,
+            default: "Wind"
+        },
+        humidity: {
+            type: String,
+            default: "Humidity"
+        },
+        cloudCover: {
+            type: String,
+            default: "Cloud Cover"
+        },
+        uvIndex: {
+            type: String,
+            default: "UV Index"
+        },
+        pressure: {
+            type: String,
+            default: "Pressure"
+        },
+        airQualityCO: {
+            type: String,
+            default: "CO"
+        },
+        airQualityNO2: {
+            type: String,
+            default: "NO2"
+        },
+        airQualityO3: {
+            type: String,
+            default: "O3"
+        },
+        airQualitySO2: {
+            type: String,
+            default: "SO2"
+        },
+        airQualityPM25: {
+            type: String,
+            default: "PM2.5"
+        },
+        airQualityPM10: {
+            type: String,
+            default: "PM10"
+        },
+    },
+    theme: {
+        mode: {
+            type: String,
+            default: 'dark' 
+        },
+        primaryColor: { 
+            type: String,
+            default: '#6366F1' 
+        },
+        backgroundColor: { 
+            type: String,
+            default: '#1F2937' 
+        },
+        textColor: { 
+            type: String,
+            default: '#FFFFFF'
         }
     },
     domain: {
-        type: {
+        type: { 
             type: String,
-            required: false
+            default: '' 
         },
-        default: {
+        default: { 
             type: String,
-            required: false
+            default: '' 
         },
-        trim: {
+        trim: { 
             type: Boolean,
-            required: false
+            default: true
         }
     },
     useBrandDetail: {
         type: Boolean,
-        required: false
+        default: true 
     },
-    brandDetail: {
-        fonts: {
-            type: [String],
-            required: false
-        },
-        colors: {
-            type: [String],
-            required: false
-        },
-        logo: {
-            type: String,
-            required: false
-        },
-        favicon: {
-            type: String,
-            required: false
-        },
-        title: {
-            type: String,
-            required: false
-        },
-        description: {
-            type: String,
-            required: false
-        },
-        topImages: {
-            type: [String],
-            required: false
-        }
+    brand_detail: {
+        fonts: { type: Array, default: [] },
+        colors: { type: Array, default: [] },
+        logo: { type: String, default: '' },
+        favicon: { type: String, default: '' },
+        title: { type: String, default: '' },
+        description: { type: String, default: '' },
+        topImages: { type: Array, default: [] }
     },
     leadForm: {
         enabled: {
             type: Boolean,
-            required: false
+           default: false
         },
+        fields: [fieldsSchema],
         thankYouMessage: {
             type: String,
-            required: false
+            default: "Thank you for your interest! We'll be in touch soon." 
         },
         enableRedirect: {
             type: Boolean,
-            required: false
+            default: false
         },
         redirectUrl: {
             type: String,
-            required: false
+            default: ''
         },
-        fields: {
-            type: [mongoose.Schema.Types.Mixed],
-            required: false
-        }
+        // fields: {
+        //     type: [mongoose.Schema.Types.Mixed],
+        //     required: false
+        // }
     },
     payments: {
+        enabled: {
+            type: Boolean,
+            default: false 
+        },
+        mode: {
+            type: String,
+            default: 'live' 
+        },
+        currency: {
+            type: String,
+            default: 'USD' 
+        },
+        amount: {
+            type: Number,
+            default:0.00 
+        },
         recurringBilling: {
             enabled: {
                 type: Boolean,
-                required: false
+                default: false
             },
             interval: {
                 type: String,
-                required: false
+                default: 'monthly'
             }
         },
+        providers: [{
+            name: { 
+                type: String, 
+                default: '' 
+            },
+            enabled: { 
+                type: Boolean, 
+                default: false 
+            },
+            config: {
+                // publicKey: { type: String, default: '' },
+                // secretKey: { type: String, default: '' },
+                // webhookSecret: { type: String, default: '' },
+                // clientId: { type: String, default: '' },
+                // clientSecret: { type: String, default: '' },
+                // environment: { type: String, default: '' }
+                type: Object,
+                default: {}
+            }
+        }],
         taxRates: {
             default: {
                 type: Number,
-                required: false
+                default: 0.00
             },
             byCountry: {
-                type: Map,
-                of: Number,
-                required: false
+                type: Object,
+                default: {}
             }
         },
         invoicing: {
             enabled: {
                 type: Boolean,
-                required: false
+                default: true
             },
             companyName: {
                 type: String,
-                required: false
+                default: ''
             },
             companyAddress: {
                 type: String,
-                required: false
+               default: ''
             }
         },
-        enabled: {
-            type: Boolean,
-            required: false
-        },
-        mode: {
-            type: String,
-            required: false
-        },
-        currency: {
-            type: String,
-            required: false
-        },
-        amount: {
-            type: Number,
-            required: false
-        },
-        providers: {
-            type: [mongoose.Schema.Types.Mixed],
-            required: false
-        }
+       
+       
     }
-});
+}, { timestamps: true });
 
 const App = mongoose.model('App', appSchema);
 module.exports = App;

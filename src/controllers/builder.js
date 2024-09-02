@@ -21,6 +21,8 @@ module.exports = {
     createApp: async (req, res) => {
         try {
             let appData = req.body;
+         
+            appData.name = appData.agent.type + '-1' ;
             let newApp = new App(appData);
             newApp['appUUID'] = uuidv4();
             let savedApp = await newApp.save();
@@ -35,7 +37,8 @@ module.exports = {
 
     getAppById: async (req, res) => {
         try {
-            let app = await App.findById(req.params.appId).populate('user').lean();
+            // let app = await App.findById(req.params.appId).populate('user').lean();
+             let app = await App.findById(req.params.appId);
             if (!app) {
                 return res.status(404).json({ error: 'App not found' });
             }
@@ -70,15 +73,16 @@ module.exports = {
     updateApp: async (req, res) => {
         try {
             let appId = req.params.appId;
-            let { name, ...updateData } = req.body;
+            // let { name } = req.body;
+            let updateData = req.body;
 
-            if (name) {
-                let existingApp = await App.findOne({ name, _id: { $ne: appId },status: { $ne: 'DELETED' } }).lean();
-                if (existingApp) {
-                    return res.status(400).json({ error: 'An app with this name already exists' });
-                }
-                updateData.name = name;
-            }
+            // if (name) {
+            //     let existingApp = await App.findOne({ name, _id: { $ne: appId },status: { $ne: 'DELETED' } }).lean();
+            //     if (existingApp) {
+            //         return res.status(400).json({ error: 'An app with this name already exists' });
+            //     }
+            //     updateData.name = name;
+            // }
 
             let updatedApp = await App.findByIdAndUpdate(appId, updateData, { new: true }).lean();
             if (!updatedApp) {
