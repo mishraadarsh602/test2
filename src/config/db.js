@@ -3,7 +3,7 @@ require('dotenv').config();
 
 const connectDB = async () => {
     try {
-        const DB_URL = process.env.MONGO_URI || "";
+        const DB_URL = process.env.MONGO_URI || "mongodb://localhost:27017/agentai";
         mongoose.connect(DB_URL);
         mongoose.set('debug', true);
         const db = mongoose.connection;

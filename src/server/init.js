@@ -8,7 +8,7 @@ const errorHandle = require("../utils/errorHandle");
 require('dotenv').config();
 
 // Connect to database
-// connectDB();
+connectDB();
 
 const app = express();
 
@@ -21,6 +21,7 @@ const corsOptions = {
       "http://127.0.0.1:4500",
       "http://localhost:4500",
       "http://localhost:4200",
+       "http://localhost:3001",
     ],
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
     allowedHeaders: ["Content-Type", "x-refresh-token", "Authorization"],
