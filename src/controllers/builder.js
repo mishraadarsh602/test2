@@ -21,10 +21,11 @@ module.exports = {
     createApp: async (req, res) => {
         try {
             let appData = req.body;
-         
-            appData.name = appData.agent.type + '-1' ;
-            let newApp = new App(appData);
-            newApp['appUUID'] = uuidv4();
+            appData['appUUID'] = uuidv4();
+            if(appData.agent.type=='weather'){
+                appData.name = 'Weather Forecast-' + appData['appUUID'].substring(0,5);
+                }
+            let newApp = new App(appData);           
             let savedApp = await newApp.save();
             res.status(201).json({
                 message: "App created successfully",

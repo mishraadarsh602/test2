@@ -5,7 +5,8 @@ const fieldsSchema = require('./fields');
 const appSchema = new mongoose.Schema({
     name: {
         type: String,
-        required: true
+        required: true,
+        unique: true
     },
     // user:{
     //     type: mongoose.Schema.Types.ObjectId,
