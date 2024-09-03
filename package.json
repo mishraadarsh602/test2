@@ -5,7 +5,10 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "start:dev": "NODE_ENV=development node src/server/init.js",
+    "start:staging": "NODE_ENV=staging node src/server/init.js",
+    "start:prod": "NODE_ENV=production node src/server/init.js"
   },
   "dependencies": {
     "axios": "^1.7.5",
