@@ -53,11 +53,12 @@ module.exports = {
 
     getAllAppsOfUser: async (req, res) => {
         try {
-            let condition = {
-                user:req.body.userId,
-                status:'DEV'
-            };
-            let apps = await App.find(condition).populate('user').lean();
+            // let condition = {
+            //     user:req.body.userId,
+            //     status:'DEV'
+            // };
+            // let apps = await App.find(condition).populate('user').lean();
+            let apps=await App.find();
             if (!apps || apps.length == 0) {
                 return res.status(404).json({ error: 'App not found' });
             }
@@ -65,7 +66,7 @@ module.exports = {
                 message: "All Apps fetched successfully",
                 data: apps,
               });
-        } catch (error) {
+        } catch (error) {          
             res.status(500).json({ error: error.message });
         }
     },
