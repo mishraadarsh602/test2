@@ -59,9 +59,9 @@ module.exports = {
             //     status:'DEV'
             // };
             // let apps = await App.find(condition).populate('user').lean();
-            let apps=await App.find();
+            let apps=await App.find({status:'dev'}).lean();
             if (!apps || apps.length == 0) {
-                return res.status(404).json({ error: 'App not found' });
+                return res.status(200).json({ message: 'No app found' });
             }
             res.status(200).json({
                 message: "All Apps fetched successfully",
@@ -103,7 +103,7 @@ module.exports = {
     deleteApp: async (req, res) => {
         try {
             const appId = req.params.appId;
-            const deletedApp = await App.findByIdAndUpdate(appId, { status: 'DELETED' }).exec();
+            const deletedApp = await App.findByIdAndUpdate(appId, { status: 'deleted' }).exec();
             if (!deletedApp) {
                 return res.status(404).json({ error: 'App not found' });
             }

@@ -19,17 +19,18 @@ const appSchema = new mongoose.Schema({
     },
     status: { 
         type: String, 
-        enum: ['LIVE', 'DEV', 'DELETED'], 
-        default: 'DEV' 
+        enum: ['live', 'dev', 'deleted'], 
+        default: 'dev' 
     },
     agent: {
         type: {
             type: String,
             default: 'weather'
         },
-        status: {
-            type: String,
-            default: 'active'
+        status: { 
+            type: String, 
+            enum: ['active','deleted'], 
+            default: 'active' 
         },
         heading: {
             type: String,
