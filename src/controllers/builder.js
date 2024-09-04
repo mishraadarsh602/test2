@@ -111,9 +111,22 @@ module.exports = {
         } catch (error) {
             res.status(500).json({ error: error.message });
         }
+    },
+
+    checkUniqueApp: async (req, res) => {
+        try {
+            let name = decodeURIComponent(req.params.name);
+            let appId = req.params.appId;
+            let existingApp = await App.findOne({ name, _id: { $ne: appId }}).lean();
+            if (existingApp) {
+                return res.status(200).json({ exists: true });
+            } else {
+                return res.status(200).json({ exists: false });
+            }
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
     }
-
-
 
 }
 

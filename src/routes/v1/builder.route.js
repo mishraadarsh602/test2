@@ -13,6 +13,7 @@ router.get('/get_app/:appId', builderController.getAppById);
 router.post('/update_app/:appId', builderController.updateApp);
 router.delete('/delete_app/:appId', builderController.deleteApp);
 router.post('/get_all_apps', builderController.getAllAppsOfUser);
+router.get('/check_unique_app_name/:name/:appId', builderController.checkUniqueApp);
 
 
 module.exports = router;
