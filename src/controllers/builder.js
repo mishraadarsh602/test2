@@ -1,5 +1,5 @@
 const App = require('../models/app');
-const User = require('../models/user');
+const User = require('../models/user.model');
 const { v4: uuidv4 } = require('uuid');
 
 module.exports = {
