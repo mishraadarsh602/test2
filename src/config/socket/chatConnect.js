@@ -12,7 +12,13 @@ module.exports = (server) => {
   // Create a new Socket.IO instance attached to the server
   const io = new Server(server, {
     cors: {
-      origin: "http://localhost:3000", // Enable CORS for development
+      origin: [
+        "http://127.0.0.1:4500",
+        "http://localhost:4500",
+        "http://localhost:4200",
+        "http://localhost:3000",
+        "https://gen-purpose-builder.web.app"
+      ],
       methods: ["GET", "POST"],
     },
   });
