@@ -2,6 +2,8 @@ const { Server } = require("socket.io"); // Import the Socket.IO server class
 const {
   startChatSession,
   fetchPreviousChat,
+  startLLMChat,
+  updateAIMessageToChatSession
 } = require("../../controllers/chat/chat.controller");
 
 module.exports = (server) => {
@@ -19,36 +21,74 @@ module.exports = (server) => {
     console.log("A client connected:", socket.id);
 
     // Listen for the 'startChat' event from the client
-    socket.on("startChat", (data) => {
+    socket.on("startChat", async (data) => {
       console.log("Chat started by user:", data);
 
-      startChatSession(data.userId, data.agentId, data.message);
+      await startChatSession(data.userId, data.agentId, data.message);
 
-      generateChatgptOutput();
+      const messages = await fetchPreviousChat(data.userId, data.agentId);
+      let msg = [];
+
+      for (let i = 0; i < messages.length; i++) {
+        if (i === 0) {
+          msg.push(["system", messages[i].content]);
+        } else if (i % 2 !== 0) {
+          msg.push(["human", messages[i].content]);
+        } else {
+          msg.push(["ai", messages[i].content]);
+        }
+      }
+
+      const aiMsg = await startLLMChat(msg);
+
+      await updateAIMessageToChatSession(data.userId, data.agentId, aiMsg);
 
       // Optionally, emit a response to the client
-      socket.emit("message", "Welcome! Let’s start chatting.");
+      socket.emit("message", aiMsg);
     });
 
     socket.on("fetchPreviousChat", async (data) => {
       console.log("Chat fetched:", data);
       const messages = await fetchPreviousChat(data.userId, data.agentId);
+      console.log(messages);
       let msg = [];
-      for(let i = 1; i < messages.length; i++){
-        if(i % 2 !== 0){
-          msg.push({text: messages[i].content, sender: 'user'});
-        }else{
-          msg.push({text: messages[i].content, sender: 'bot'});
+      if (messages.length > 0) {
+        for (let i = 1; i < messages.length; i++) {
+          if (i % 2 !== 0) {
+            msg.push({ text: messages[i].content, sender: "user" });
+          } else {
+            msg.push({ text: messages[i].content, sender: "bot" });
+          }
         }
       }
+      console.log(msg);
       socket.emit("previousMessages", msg);
     });
 
-    socket.on("continueChat", (data) => {
+    socket.on("continueChat", async (data) => {
       console.log("Chat Continued by user:", data);
 
+      const messages = await fetchPreviousChat(data.userId, data.agentId);
+      let msg = [];
+
+      for (let i = 0; i < messages.length; i++) {
+        if (i === 0) {
+          msg.push(["system", messages[i].content]);
+        } else if (i % 2 !== 0) {
+          msg.push(["human", messages[i].content]);
+        } else {
+          msg.push(["ai", messages[i].content]);
+        }
+      }
+
+      msg.push(['human', data.message])
+
+      const aiMsg = await startLLMChat(msg);
+
+      await updateAIMessageToChatSession(data.userId, data.agentId, aiMsg);
+
       // Optionally, emit a response to the client
-      socket.emit("message", "Welcome! Let’s Continue Chatting.");
+      socket.emit("message", aiMsg);
     });
 
     socket.on("disconnect", () => {

@@ -2,6 +2,7 @@ const systemPromptSession = require('../../models/chat/systemPrompt.model');
 const chatSession = require('./../../models/chat/chatSession.model');
 const userSession = require('./../../models/chat/globalSession.model');
 const { v4: uuidv4 } = require('uuid');
+const { ChatAnthropic } = require("@langchain/anthropic");
 
 const generateSessionId = () => {
   return uuidv4();  // Generates a unique UUID
@@ -91,7 +92,7 @@ const fetchPreviousChat = async (userId, agentId) => {
     const ongoingSession = await chatSession.findOne({ userId, agentId });
 
     if (!ongoingSession) {
-      throw new Error("Session not found");
+      return []; // Return the updated session
     }
 
     return ongoingSession.messages; // Return the updated session
@@ -101,8 +102,61 @@ const fetchPreviousChat = async (userId, agentId) => {
   }
 };
 
+const startLLMChat = async (messages) => {
+  try {
+    const llm = new ChatAnthropic({
+      model: "claude-3-5-sonnet-20240620",
+      temperature: 0,
+      maxRetries: 2,
+    });
+    const aiMsg = await llm.invoke(messages);
+    return aiMsg.content;
+  } catch (error) {
+    console.error("Error continuing chat session:", error);
+    throw error;
+  }
+};
+
+const updateAIMessageToChatSession = async (userId, agentId, message) => {
+  try {
+    // Find the existing chat session
+    const oldChatSession = await chatSession
+      .findOne({ userId, agentId })
+      .lean();
+
+    // Ensure oldChatSession exists before proceeding
+    if (!oldChatSession) {
+      throw new Error('Chat session not found');
+    }
+
+    // Push a new message to the existing chat session's messages array
+    const newChatSession = await chatSession.updateOne(
+      { userId, agentId },
+      {
+        $set: { lastTime: new Date() },
+        $push: {
+          messages: {
+            sno: oldChatSession.messages.length + 1,
+            role: 'ai',
+            content: message,
+          },
+        },
+      },
+      { new: true }
+    );
+
+    return newChatSession; // Return the updated session
+  } catch (error) {
+    console.error('Error updating chat session:', error);
+    throw error;
+  }
+};
+
+
 module.exports = {
   startChatSession,
   continueChatSession,
-  fetchPreviousChat
+  fetchPreviousChat,
+  startLLMChat,
+  updateAIMessageToChatSession
 };
