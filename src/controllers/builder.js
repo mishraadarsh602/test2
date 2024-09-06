@@ -23,7 +23,7 @@ module.exports = {
             let appData = req.body;
             appData['appUUID'] = uuidv4();
             if(appData.agent.type=='weather'){
-                appData.name = 'Weather Forecast-' + appData['appUUID'].substring(0,5);
+                appData.name = 'Weather Forecast-' + appData['appUUID'].substring(0,7);
                 }
             let newApp = new App(appData);           
             let savedApp = await newApp.save();
