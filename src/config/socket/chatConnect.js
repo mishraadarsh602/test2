@@ -3,7 +3,8 @@ const {
   startChatSession,
   fetchPreviousChat,
   startLLMChat,
-  updateAIMessageToChatSession
+  updateAIMessageToChatSession,
+  updateHumanMessageToChatSession
 } = require("../../controllers/chat/chat.controller");
 
 module.exports = (server) => {
@@ -81,6 +82,8 @@ module.exports = (server) => {
         }
       }
 
+      await updateHumanMessageToChatSession(data.userId, data.agentId, data.message)
+      
       msg.push(['human', data.message])
 
       const aiMsg = await startLLMChat(msg);

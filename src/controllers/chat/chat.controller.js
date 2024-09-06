@@ -152,11 +152,47 @@ const updateAIMessageToChatSession = async (userId, agentId, message) => {
   }
 };
 
+const updateHumanMessageToChatSession = async (userId, agentId, message) => {
+  try {
+    // Find the existing chat session
+    const oldChatSession = await chatSession
+      .findOne({ userId, agentId })
+      .lean();
+
+    // Ensure oldChatSession exists before proceeding
+    if (!oldChatSession) {
+      throw new Error('Chat session not found');
+    }
+
+    // Push a new message to the existing chat session's messages array
+    const newChatSession = await chatSession.updateOne(
+      { userId, agentId },
+      {
+        $set: { lastTime: new Date() },
+        $push: {
+          messages: {
+            sno: oldChatSession.messages.length + 1,
+            role: 'human',
+            content: message,
+          },
+        },
+      },
+      { new: true }
+    );
+
+    return newChatSession; // Return the updated session
+  } catch (error) {
+    console.error('Error updating chat session:', error);
+    throw error;
+  }
+};
+
 
 module.exports = {
   startChatSession,
   continueChatSession,
   fetchPreviousChat,
   startLLMChat,
-  updateAIMessageToChatSession
+  updateAIMessageToChatSession,
+  updateHumanMessageToChatSession
 };
