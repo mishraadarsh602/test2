@@ -1,128 +1,108 @@
-// const httpStatus = require("http-status");
-// const {
-//   chatCompletionService,
-//   chatSessionService,
-// } = require("../../services/chat");
-// const { User } = require("../../models/client");
+const systemPromptSession = require('../../models/chat/systemPrompt.model');
+const chatSession = require('./../../models/chat/chatSession.model');
+const userSession = require('./../../models/chat/globalSession.model');
+const { v4: uuidv4 } = require('uuid');
 
-// const promptSuggestion = catchAsync(async (req, res) => {
-//   const { value, topicData } = req.body;
-//   const suggestions = await chatCompletionService.promptSuggestion(
-//     value,
-//     topicData
-//   );
-//   return res.status(httpStatus.CREATED).json({ suggestions });
-// });
+const generateSessionId = () => {
+  return uuidv4();  // Generates a unique UUID
+};
 
-// const getTopics = catchAsync(async (req, res) => {
-//   const getTopics = await Topic.find({}, { prompt: 0 });
-//   return res.status(httpStatus.CREATED).json({ available_topics: getTopics });
-// });
+const startChatSession = async (userId, agentId, message) => {
+  try {
 
-// const getWebsiteTopics = catchAsync(async (req, res) => {
-//   const getTopics = await Topic.find(
-//     { type: "topic" },
-//     { name: 1, imageUrl: 1, type: 1, "sub_topics.name": 1, _id: 0 }
-//   );
-//   return res.status(httpStatus.CREATED).json({ available_topics: getTopics });
-// });
+    // get main system prompt from db
+    const mainSystemPrompt = await systemPromptSession.findOne({});
 
-// const searchTopic = catchAsync(async (req, res) => {
-//   const { value } = req.body;
-//   // console.log(req.body);
-//   const result = await chatCompletionService.searchTopic(value);
-//   return res.status(httpStatus.CREATED).json({ result: result });
-// });
-// const chatSession = catchAsync(async (req, res) => {
-//   const chatSessions = await chatSessionService.getUserSession(req.user_id);
-//   return res.status(httpStatus.OK).json({ chatSessions });
-// });
+    const newChatSession = await chatSession.create({
+      userId,
+      agentId,
+      sessionId: generateSessionId(), // Create a unique sessionId
+      conversationId: generateSessionId(), // Create a unique sessionId
+      startTime: new Date(),
+      lastTime: new Date(),
+      date: new Date(),
+      messages: [
+        {
+          sno: 1,
+          role: 'system',
+          content: mainSystemPrompt.mainSystemPrompt
+        },
+        {
+          sno: 1,
+          role: 'user',
+          content: message
+        }
+      ]
+    });
 
-// const globalSession = catchAsync(async (req, res) => {
-//   const globalSession = await chatSessionService.getGlobalConversationState(
-//     req.user_id
-//   );
-//   return res.status(httpStatus.OK).json({ globalSession });
-// });
+    // Check if a userSession already exists for this user
+    let userSessionDoc = await userSession.findOne({ userId });
 
-// const currentSession = catchAsync(async (req, res) => {
-//   const currentSession = await chatSessionService.currentConversation(
-//     req.user_id
-//   );
-//   return res.status(httpStatus.OK).json({ currentSession });
-// });
-// const getConversation = catchAsync(async (req, res) => {
-//   const conversation = await chatSessionService.getConversationById(
-//     req.user_id,
-//     req.params.conversationId,
-//     false
-//   );
-//   return res.status(httpStatus.OK).json({ conversation });
-// });
+    if (!userSessionDoc) {
+      // Create a new user session if none exists
+      userSessionDoc = await userSession.create({
+        userId,
+        chatsessions: [newChatSession._id],
+        timeSpent: 0,
+        date: new Date(),
+      });
+    } else {
+      // Add the new chat session to the existing user session
+      userSessionDoc.chatsessions.push(newChatSession._id);
+      await userSessionDoc.save();
+    }
 
-// const emailTranscript = catchAsync(async (req, res) => {
-//   const conversation = await chatSessionService.getConversationById(
-//     req.user_id,
-//     req.body.activeConversationId,
-//     false
-//   );
-//   const user_data = await User.findOne({ _id: req.user_id });
-//   let lines = [];
-//   for (let i = 0; i < conversation.threads.length; i++) {
-//     lines.push("Thread Name: ", conversation.threads[i].threadName);
-//     for (let j = 0; j < conversation.threads[i].messages.length; j++) {
-//       if (conversation.threads[i].messages[j].role == "assistant") {
-//         lines.push("CoachChat: ", conversation.threads[i].messages[j].content);
-//       } else {
-//         lines.push("You: ", conversation.threads[i].messages[j].content);
-//       }
-//     }
-//   }
-//   console.log(lines);
-//   await emailService.sendEmailRequestChatTranscript(
-//     user_data,
-//     lines,
-//     req.body.activeConversationId
-//   );
-//   return res.status(httpStatus.OK).json({ msg: "done" });
-// });
+    return newChatSession; // Return the new session
+  } catch (error) {
+    console.error("Error starting chat session:", error);
+    throw error;
+  }
+};
 
-// const checkTopicChatLimit = catchAsync(async (req, res) => {
-//   let bodyData = req.body;
-//   let resObj = { flag: false, timeflag: false };
-//   const chatLimit = await chatSessionService.getConversationByTopic(
-//     req.user_id,
-//     bodyData
-//   );
-//   if (chatLimit) {
-//     const Subscriptions = await Subscription.find({ userId: req.user_id });
-//     const currentDate = new Date();
-//     if (
-//       currentDate.getDate() == new Date(chatLimit.timeSpentDate).getDate() &&
-//       chatLimit.dayTimeSpent > 10 * 60 * 1000 &&
-//       (Subscriptions[0].plan_id == "free_m" ||
-//         Subscriptions[0].subscription_detail.status == "trial" ||
-//         Subscriptions[0].subscription_detail.status == "trial_expired")
-//     ) {
-//       resObj["timeflag"] = true;
-//     }
-//   }
-//   resObj["message"] = "Limit checked Successfully!";
-//   if (!chatLimit) {
-//     resObj["flag"] = true;
-//   }
-//   return res.status(httpStatus.OK).json(resObj);
-// });
+const continueChatSession = async (userId, sessionId, newMessage) => {
+  try {
+    // Find the ongoing chat session for the user
+    const ongoingSession = await chatSession.findOne({ userId, sessionId });
 
-// module.exports = {
-//   promptSuggestion,
-//   getTopics,
-//   searchTopic,
-//   chatSession,
-//   globalSession,
-//   currentSession,
-//   getConversation,
-//   getWebsiteTopics,
-//   checkTopicChatLimit,
-//   emailTranscript,
-// };
+    if (!ongoingSession) {
+      throw new Error("Session not found");
+    }
+
+    // Update the session's messages and lastTime
+    ongoingSession.messages.push(newMessage);
+    ongoingSession.lastTime = new Date();
+
+    // Optionally update the timeSpent if you want to track session duration
+    const sessionDuration = new Date() - new Date(ongoingSession.startTime);
+    ongoingSession.timeSpent = Math.floor(sessionDuration / 1000); // Time spent in seconds
+
+    await ongoingSession.save();
+
+    return ongoingSession; // Return the updated session
+  } catch (error) {
+    console.error("Error continuing chat session:", error);
+    throw error;
+  }
+};
+
+const fetchPreviousChat = async (userId, agentId) => {
+  try {
+    // Find the ongoing chat session for the user
+    const ongoingSession = await chatSession.findOne({ userId, agentId });
+
+    if (!ongoingSession) {
+      throw new Error("Session not found");
+    }
+
+    return ongoingSession.messages; // Return the updated session
+  } catch (error) {
+    console.error("Error continuing chat session:", error);
+    throw error;
+  }
+};
+
+module.exports = {
+  startChatSession,
+  continueChatSession,
+  fetchPreviousChat
+};
