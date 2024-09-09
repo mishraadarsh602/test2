@@ -110,7 +110,9 @@ const startLLMChat = async (messages) => {
       maxRetries: 2,
     });
     const aiMsg = await llm.invoke(messages);
-    return aiMsg.content;
+    let message = JSON.stringify(aiMsg.content.trim()).split("@$@$@$");
+    let obj = { code: message[0], message: message[1] };
+    return JSON.stringify(obj);
   } catch (error) {
     console.error("Error continuing chat session:", error);
     throw error;
