@@ -11,7 +11,7 @@ module.exports = {
             let aiData = req.body;
             const prompts = await systemPromptSession.findOne({});
             let parentPrompt = prompts?.parentPrompt;
-            let apiList = [
+            let apiList = `[
                 {
                     API: 'http://api.weatherapi.com/v1/forecast.json?q=gurgaon&key=YOUR_API&days=2',
                     Purpose: 'To retrieve the 2-day weather forecast (current day and next day) for a specific location, including hourly updates.',
@@ -22,11 +22,11 @@ module.exports = {
                     Purpose: 'To get the  weather data of particular location  of current date and time',
                     key: 'FORCAST'
                 }
-            ]
+            ]`
 
             parentPrompt = parentPrompt.replace('{userInput}', aiData.customPrompt);
             parentPrompt = parentPrompt.replace('{apiList}', apiList);
-            parentPrompt
+            console.log("parentPrompt",parentPrompt)
             const message = await client.messages.create({
                 max_tokens: 1024,
                 messages: [{ role: 'user', content: parentPrompt }],
