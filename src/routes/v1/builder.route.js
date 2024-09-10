@@ -14,6 +14,6 @@ router.post('/update_app/:appId', builderController.updateApp);
 router.delete('/delete_app/:appId', builderController.deleteApp);
 router.post('/get_all_apps', builderController.getAllAppsOfUser);
 router.get('/check_unique_app_name/:name/:appId', builderController.checkUniqueApp);
-
+router.post('/create_log', builderController.createLog);
 
 module.exports = router;
