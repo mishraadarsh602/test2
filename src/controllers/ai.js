@@ -29,14 +29,14 @@ module.exports = {
             parentPrompt
             const message = await client.messages.create({
                 max_tokens: 1024,
-                messages: [{ role: 'user', content: prompts?.parentPrompt }],
+                messages: [{ role: 'user', content: parentPrompt }],
                 model: 'claude-3-5-sonnet-20240620',
             });
 
-            console.log(message.content);
+            console.log(message.content[0].text.trim());
             res.status(201).json({
                 message: "Prompt Chaining",
-                data: message.content,
+                data: message.content[0].text.trim(),
             });
         } catch (error) {
             res.status(500).json({ error: error.message });
