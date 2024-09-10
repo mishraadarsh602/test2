@@ -39,7 +39,7 @@ module.exports = {
                 let childPrompt = prompts?.childPrompt?.aibased;
                 childPrompt = childPrompt.replace('{userInput}', aiData.customPrompt);
                 const mesg = await client.messages.create({
-                    max_tokens: 4000,
+                    max_tokens: 8192,
                     messages: [{ role: 'user', content: childPrompt }],
                     model: 'claude-3-5-sonnet-20240620',
                 });
