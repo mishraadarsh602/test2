@@ -25,7 +25,7 @@ module.exports = (server) => {
 
   // Set up a basic connection event
   io.on("connection", (socket) => {
-    console.log("A client connected:", socket.id);
+    console.log("Socket connected with ID:", socket.id);
 
     // Listen for the 'startChat' event from the client
     socket.on("startChat", async (data) => {

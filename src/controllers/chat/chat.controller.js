@@ -12,7 +12,7 @@ const startChatSession = async (userId, agentId, message) => {
   try {
 
     // get main system prompt from db
-    const mainSystemPrompt = await systemPromptSession.findOne({});
+    const prompts = await systemPromptSession.findOne({});
 
     const newChatSession = await chatSession.create({
       userId,
@@ -26,7 +26,7 @@ const startChatSession = async (userId, agentId, message) => {
         {
           sno: 1,
           role: 'system',
-          content: mainSystemPrompt.mainSystemPrompt
+          content: prompts.childPrompt?.apibased
         },
         {
           sno: 1,

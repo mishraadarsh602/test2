@@ -2,7 +2,17 @@ const mongoose = require("mongoose");
 
 const SystemPromptSchema = new mongoose.Schema(
   {
-    mainSystemPrompt: { type: String },
+    parentPrompt: {
+      type: String
+    },
+    childPrompt: {
+      aibased: {
+        type: String
+      },
+      apibased: {
+        type: String
+      }
+    }
   },
   { timestamps: true }
 );
