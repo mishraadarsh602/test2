@@ -26,17 +26,35 @@ module.exports = {
 
             parentPrompt = parentPrompt.replace('{userInput}', aiData.customPrompt);
             parentPrompt = parentPrompt.replace('{apiList}', apiList);
-            console.log("parentPrompt",parentPrompt)
+            console.log("parentPrompt", parentPrompt)
             const message = await client.messages.create({
                 max_tokens: 1024,
                 messages: [{ role: 'user', content: parentPrompt }],
                 model: 'claude-3-5-sonnet-20240620',
             });
+            let parentResponse = JSON.parse(message.content[0].text.trim());
+            console.log(parentResponse);
 
-            console.log(message.content[0].text.trim());
+            if (parentResponse && parentResponse.ToolTYPE === 'AIBASED') {
+                let childPrompt = prompts?.childPrompt?.aibased;
+                childPrompt = childPrompt.replace('{userInput}', aiData.customPrompt);
+                const mesg = await client.messages.create({
+                    max_tokens: 4000,
+                    messages: [{ role: 'user', content: childPrompt }],
+                    model: 'claude-3-5-sonnet-20240620',
+                });
+                let childResponse = mesg.content[0].text.trim();
+                console.log(childResponse);
+            }
+            else if (parentResponse && parentResponse.ToolTYPE === 'APIBASED') {
+                let childPrompt = prompts?.childPrompt?.apibased;
+                childPrompt = childPrompt.replace('{userInput}', aiData.customPrompt);
+                console.log(childPrompt)
+            }
+
             res.status(201).json({
                 message: "Prompt Chaining",
-                data: message.content[0].text.trim(),
+                data: parentResponse,
             });
         } catch (error) {
             res.status(500).json({ error: error.message });
