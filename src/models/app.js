@@ -17,6 +17,10 @@ const appSchema = new mongoose.Schema({
         type: String,
         default:''
     },
+    componentCode: {
+        type: String,
+        default :''
+    },
     status: { 
         type: String, 
         enum: ['live', 'dev', 'deleted'], 
