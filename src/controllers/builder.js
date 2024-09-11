@@ -2,6 +2,14 @@ const App = require('../models/app');
 const User = require('../models/user.model');
 const { v4: uuidv4 } = require('uuid');
 const builderLogsModel=require('../models/logs/logs-builder');
+async function createLog(data) {
+    try {
+        let logCreated = new builderLogsModel(data);
+         await logCreated.save();
+    } catch (error) {
+        // res.status(500).json({ error: error.message });
+    }
+}
 module.exports = {
 
     createUser: async (req, res) => {
@@ -18,18 +26,7 @@ module.exports = {
         }
     },
 
-    createLog: async (req, res) => {
-        try {
-            let logCreated = new builderLogsModel(req.body);
-            let response = await logCreated.save();
-            res.status(201).json({
-                message: "Log Created Successfully",
-                data: response,
-              });
-        } catch (error) {
-            res.status(500).json({ error: error.message });
-        }
-    },
+
     createApp: async (req, res) => {
         try {
             let appData = req.body;
@@ -60,6 +57,7 @@ module.exports = {
                 data: app,
               });
         } catch (error) {
+            await createLog({userId:'66d18a4caf4d3c54cdeb44f6',error:error.message,appId:req.params.appId})
             res.status(500).json({ error: error.message });
         }
     },
@@ -108,6 +106,7 @@ module.exports = {
                 data: updatedApp,
             });
         } catch (error) {
+            await createLog({userId:'66d18a4caf4d3c54cdeb44f6',error:error.message,appId:req.params.appId})
             res.status(500).json({ error: error.message });
         }
     },
