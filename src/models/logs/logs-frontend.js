@@ -1,10 +1,7 @@
 const mongoose = require('mongoose');
 
-const logsBuilder = new mongoose.Schema(
+const logsFrontend = new mongoose.Schema(
     {
-        appId: {
-            type: mongoose.Schema.ObjectId, ref: "App"
-        },
         userId: { type: mongoose.Schema.ObjectId, ref: "user" },
         error: {
             type: String,
@@ -17,5 +14,5 @@ const logsBuilder = new mongoose.Schema(
     }
 );
 
-const LogsBuilder = mongoose.model('LogsBuilder', logsBuilder);
-module.exports = LogsBuilder;
+const LogsFrontend = mongoose.model('LogsFrontend', logsFrontend);
+module.exports = LogsFrontend;
