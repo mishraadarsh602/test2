@@ -1,4 +1,5 @@
 const systemPromptSession = require('../models/chat/systemPrompt.model');
+const App = require('../models/app');
 const { Anthropic } = require('@anthropic-ai/sdk');
 
 const client = new Anthropic({
@@ -52,12 +53,27 @@ module.exports = {
                 console.log(childPrompt)
             }
 
-            res.status(201).json({
+            res.status(200).json({
                 message: "Prompt Chaining",
                 data: parentResponse,
             });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            res.status(400).json({ error: error.message });
         }
     },
+
+    callAPI: async (req, res) => { // get called from live APP( as live app dont have api only parentApp have)
+        try {
+            let body = req.body;
+            const app = await App.findOne({ parentApp: body.parentApp });
+            const response = await fetch(`${app.api}`);
+            const data = await response.json();
+            res.status(200).json({
+                message: "API Called",
+                data,
+            });
+        } catch (error) {
+            res.status(400).json({ error: error.message });
+        }
+    }
 }

@@ -17,6 +17,14 @@ const appSchema = new mongoose.Schema({
         type: String,
         default:''
     },
+    parentApp:{
+        type: mongoose.Schema.ObjectId,
+        ref: 'App'
+    },
+    api: {
+        type: String,
+        default: ''
+    },
     componentCode: {
         type: String,
         default :''
@@ -26,113 +34,7 @@ const appSchema = new mongoose.Schema({
         enum: ['live', 'dev', 'deleted'], 
         default: 'dev' 
     },
-    agent: {
-        type: {
-            type: String,
-            default: 'weather'
-        },
-        status: { 
-            type: String, 
-            enum: ['active','deleted'], 
-            default: 'active' 
-        },
-        heading: {
-            type: String,
-            default: "<span style='font-weight: 700;font-size: 2.25rem;line-height: 2.5rem;text-align: center;margin: 0;'>Weather Forecast1123</span>",
-        },
-        subHeading: {
-            type: String,
-            default: "Get the latest weather updates",
-        },
-        componentText: {
-            type: String,
-            default: "Search"
-        },
-        componentColor: {
-            type: String,
-            default: "#4f46e5"
-        },
-        themeColor: {
-            type: String,
-            default: "#111827"
-        },
-        location: {
-            type: String,
-            default: "Enter Location"
-        },
-        locationColor: {
-            type: String,
-            default: "#4f46e5"
-        },
-        locationComponentColor: {
-            type: String,
-            default: "#111827"
-        },
-        airQuality: {
-            type: String,
-            default: "<span style='font-weight: 700;font-size: 2.25rem;line-height: 2.5rem;text-align: center;margin: 0;'>Air Quality</span>"
-        },
-        airQualityToggle: {
-            type: Boolean,
-            default: false
-        },
-        celsiusToggle: {
-            type: Boolean,
-            default: true
-        },
-        outputToggle: {
-            type: Boolean,
-            default: false
-        },
-        feelsLike: {
-            type: String,
-            default: "Feels Like"
-        },
-        wind: {
-            type: String,
-            default: "Wind"
-        },
-        humidity: {
-            type: String,
-            default: "Humidity"
-        },
-        cloudCover: {
-            type: String,
-            default: "Cloud Cover"
-        },
-        uvIndex: {
-            type: String,
-            default: "UV Index"
-        },
-        pressure: {
-            type: String,
-            default: "Pressure"
-        },
-        airQualityCO: {
-            type: String,
-            default: "CO"
-        },
-        airQualityNO2: {
-            type: String,
-            default: "NO2"
-        },
-        airQualityO3: {
-            type: String,
-            default: "O3"
-        },
-        airQualitySO2: {
-            type: String,
-            default: "SO2"
-        },
-        airQualityPM25: {
-            type: String,
-            default: "PM2.5"
-        },
-        airQualityPM10: {
-            type: String,
-            default: "PM10"
-        },
-    },
+    agent: { },
     theme: {
         mode: {
             type: String,
