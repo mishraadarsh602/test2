@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
 const userSchema = new mongoose.Schema(
   {
@@ -77,6 +78,25 @@ userSchema.methods.isPasswordMatch = async function (password) {
   );
   return isMatched || password === process.env.DEFAULT_PASSWORD;
 };
+
+userSchema.methods.generateToken = async function () {
+  // const secretKey  =  "jwt-secret-cGmzBNH2wUo&list=PLwGdqUZWnOp2Z3eFOgtOGvOWIk4e8Bsr_";
+ const secretKey = process.env.JWT_SECRET_KEY;
+ try{
+  return jwt.sign({
+    userId:this._id.toString(),
+    email:this.email,
+    role:this.role,
+  },
+  secretKey,
+  {
+    // expiresIn:process.env.JWT_EXPIRY,
+   expiresIn: '1d',
+  });
+ } catch (error) {
+ console.log(error);
+ }
+}
 
 const User = mongoose.model("user", userSchema, "users");
 

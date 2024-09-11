@@ -2,6 +2,8 @@ const App = require('../models/app');
 const User = require('../models/user.model');
 const { v4: uuidv4 } = require('uuid');
 const builderLogsModel=require('../models/logs/logs-builder');
+const UserService = require('../service/userService');
+const userService = new UserService();
 async function createLog(data) {
     try {
         let logCreated = new builderLogsModel(data);
@@ -10,17 +12,41 @@ async function createLog(data) {
         // res.status(500).json({ error: error.message });
     }
 }
+
 module.exports = {
 
     createUser: async (req, res) => {
         try {
-            let userData = req.body;
-            let newUser = new User(userData);
-            let savedUser = await newUser.save();
+            let { name, email } = req.body;
+            let user = await userService.findUserByEmail(email);
+            if (user) {
+                const token = await user.generateToken();
+                res.cookie('token', token, {
+                    // httpOnly: true, // Makes the cookie inaccessible to JavaScript (XSS protection)
+                    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+                });
+                return res.status(201).json({
+                     message: 'User already exists',
+                     data:{userId: user._id.toString()
+                    }
+                 });
+
+            }
+            const userCreated = await userService.createUser(req.body);
+            const token = await userCreated.generateToken();
+    
+            // Set the token as a cookie
+            res.cookie('token', token, {
+                // httpOnly: true, // Makes the cookie inaccessible to JavaScript (XSS protection)
+                maxAge: 24 * 60 * 60 * 1000, // 24 hours
+            });
+    
             res.status(201).json({
-                message: "App created successfully",
-                data: savedUser,
-              });
+                message: "User created successfully",
+                data: {
+                    userId: userCreated._id.toString(),
+                }
+            });
         } catch (error) {
             res.status(500).json({ error: error.message });
         }
@@ -34,6 +60,11 @@ module.exports = {
             if(appData.agent.type=='weather'){
                 appData.name = 'Weather Forecast-' + appData['appUUID'].substring(0,7);
                 }
+                const userId = req.user ? req.user.userId : null;
+                if (!userId) {
+                    return res.status(400).json({ error: 'User ID is required' });
+                }
+            appData['user'] = userId;    
             let newApp = new App(appData);           
             let savedApp = await newApp.save();
             res.status(201).json({
@@ -45,7 +76,7 @@ module.exports = {
         }
     },
 
-    getAppById: async (req, res) => {
+    getAppById: async (req, res) => {     
         try {
             // let app = await App.findById(req.params.appId).populate('user').lean();
              let app = await App.findById(req.params.appId);
@@ -64,24 +95,23 @@ module.exports = {
 
     getAllAppsOfUser: async (req, res) => {
         try {
-            // let condition = {
-            //     user:req.body.userId,
-            //     status:'DEV'
-            // };
-            // let apps = await App.find(condition).populate('user').lean();
-            let apps=await App.find({status:'dev'}).lean();
+            const userId = req.user ? req.user.userId : null;
+            if (!userId) {
+                return res.status(400).json({ error: 'User ID is required' });
+            }
+           
+            let apps = await App.find({ status: 'dev', user: userId });
             if (!apps || apps.length == 0) {
                 return res.status(200).json({ message: 'No app found' });
             }
             res.status(200).json({
                 message: "All Apps fetched successfully",
                 data: apps,
-              });
-        } catch (error) {          
+            });
+        } catch (error) {
             res.status(500).json({ error: error.message });
         }
     },
-
     updateApp: async (req, res) => {
         try {
             let appId = req.params.appId;
