@@ -17,7 +17,6 @@ async function createLog(data){
 module.exports = {
 
     getUserDetail: async (req, res) => { 
-        console.log("req.user:",req.user)  
             try {
                 let user = await User.findById(req.user.userId.toString());
                 if (!user) {
@@ -86,7 +85,7 @@ module.exports = {
             }
             res.status(200).json({ message: 'App deleted successfully' }); // app: deletedApp
         } catch (error) {
-            createLog({userId:'66d18a4caf4d3c54cdeb44f6',error:error.message})
+            createLog({userId:req.user.userId,error:error.message})
             res.status(500).json({ error: error.message });
         }
     },

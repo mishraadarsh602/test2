@@ -11,11 +11,11 @@ router.post('/create_user', builderController.createUser);
 router.get('/get_user',auth, builderController.getUserDetail);
 router.post('/create_app',auth, builderController.createApp);
 router.post('/create_app_by_AI', aiController.createAppByAI);
-router.get('/get_app/:appId', builderController.getAppById);
-router.post('/update_app/:appId', builderController.updateApp);
+router.get('/get_app/:appId',auth, builderController.getAppById);
+router.post('/update_app/:appId',auth, builderController.updateApp);
 router.delete('/delete_app/:appId', builderController.deleteApp);
 router.get('/get_all_apps',auth, builderController.getAllAppsOfUser);
 router.get('/check_unique_app_name/:name/:appId', builderController.checkUniqueApp);
-router.post('/liveApp', builderController.liveApp);
+router.post('/liveApp',auth, builderController.liveApp);
 
 module.exports = router;

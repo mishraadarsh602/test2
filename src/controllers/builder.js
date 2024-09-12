@@ -107,7 +107,7 @@ module.exports = {
                 isLive:isLive?true:false
               });
         } catch (error) {
-            createLog({userId:'66d18a4caf4d3c54cdeb44f6',error:error.message,appId:req.params.appId})
+            createLog({userId:req.user.userId,error:error.message,appId:req.params.appId})
             res.status(500).json({ error: error.message });
         }
     },
@@ -155,7 +155,7 @@ module.exports = {
                 data: updatedApp,
             });
         } catch (error) {
-            createLog({userId:'66d18a4caf4d3c54cdeb44f6',error:error.message,appId:req.params.appId})
+            createLog({userId:req.user.userId.toString(),error:error.message,appId:req.params.appId})
             res.status(500).json({ error: error.message });
         }
     },
@@ -213,7 +213,7 @@ module.exports = {
         } catch (error) {
             console.log('error is -----> ',error);
             
-            createLog({userId:'66d18a4caf4d3c54cdeb44f6',error:error.message,appId:req.body.appId})
+            createLog({userId:req.user.userId.toString(),error:error.message,appId:req.body.appId})
             res.status(500).json({ error: error.message });
         }
     },
