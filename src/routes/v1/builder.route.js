@@ -8,6 +8,7 @@ router.get("/", async (req, res) => {
 });
 
 router.post('/create_user', builderController.createUser);
+router.get('/get_user',auth, builderController.getUserDetail);
 router.post('/create_app',auth, builderController.createApp);
 router.post('/create_app_by_AI', aiController.createAppByAI);
 router.get('/get_app/:appId', builderController.getAppById);

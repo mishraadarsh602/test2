@@ -8,7 +8,7 @@ const path = require('path');
 const dotenv = require('dotenv');
 const cookieParser = require('cookie-parser'); // Ensure cookie-parser is required
 
-const env = process.env.NODE_ENV || 'development';
+const env = process.env.NODE_ENV;
 dotenv.config({ path: path.resolve(__dirname, `../../env/.env.${env}`) });
 connectDB();
 
