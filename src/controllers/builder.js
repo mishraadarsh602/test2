@@ -3,6 +3,7 @@ const User = require('../models/user.model');
 const { v4: uuidv4 } = require('uuid');
 const builderLogsModel=require('../models/logs/logs-builder');
 const UserService = require('../service/userService');
+const mongoose=require('mongoose');
 const userService = new UserService();
 async function createLog(data) {
     try {
@@ -210,6 +211,8 @@ module.exports = {
                 data: savedApp,
               });
         } catch (error) {
+            console.log('error is -----> ',error);
+            
             createLog({userId:'66d18a4caf4d3c54cdeb44f6',error:error.message,appId:req.body.appId})
             res.status(500).json({ error: error.message });
         }
