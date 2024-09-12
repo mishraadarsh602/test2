@@ -27,7 +27,7 @@ module.exports = {
                 data: savedApp,
               });
         } catch  (error) {
-           await createLog({userId:'66d18a4caf4d3c54cdeb44f6',error:error.message})
+            createLog({userId:'66d18a4caf4d3c54cdeb44f6',error:error.message})
             res.status(500).json({ error: error.message });
         }
     },
@@ -47,7 +47,7 @@ module.exports = {
                 data: apps,
               });
         } catch (error) {      
-            await createLog({userId:'66d18a4caf4d3c54cdeb44f6',error:error.message})    
+            createLog({userId:'66d18a4caf4d3c54cdeb44f6',error:error.message})    
             res.status(500).json({ error: error.message });
         }
     },
@@ -61,7 +61,7 @@ module.exports = {
             }
             res.status(200).json({ message: 'App deleted successfully' }); // app: deletedApp
         } catch (error) {
-            await createLog({userId:'66d18a4caf4d3c54cdeb44f6',error:error.message})
+            createLog({userId:'66d18a4caf4d3c54cdeb44f6',error:error.message})
             res.status(500).json({ error: error.message });
         }
     },

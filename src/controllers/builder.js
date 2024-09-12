@@ -80,15 +80,17 @@ module.exports = {
         try {
             // let app = await App.findById(req.params.appId).populate('user').lean();
              let app = await App.findById(req.params.appId);
+            const isLive=await App.findOne({parentApp:req.params.appId});      
             if (!app) {
                 return res.status(404).json({ error: 'App not found' });
             }
             res.status(200).json({
                 message: "App fetched successfully",
                 data: app,
+                isLive:isLive?true:false
               });
         } catch (error) {
-            await createLog({userId:'66d18a4caf4d3c54cdeb44f6',error:error.message,appId:req.params.appId})
+            createLog({userId:'66d18a4caf4d3c54cdeb44f6',error:error.message,appId:req.params.appId})
             res.status(500).json({ error: error.message });
         }
     },
@@ -136,7 +138,7 @@ module.exports = {
                 data: updatedApp,
             });
         } catch (error) {
-            await createLog({userId:'66d18a4caf4d3c54cdeb44f6',error:error.message,appId:req.params.appId})
+            createLog({userId:'66d18a4caf4d3c54cdeb44f6',error:error.message,appId:req.params.appId})
             res.status(500).json({ error: error.message });
         }
     },
@@ -167,7 +169,35 @@ module.exports = {
         } catch (error) {
             res.status(500).json({ error: error.message });
         }
-    }
+    },
+    liveApp:async (req,res)=>{
+        try {
+            let previousLiveApp=await App.findOne({parentApp:req.body.appId,status:'live'});
+            if(previousLiveApp){
+                previousLiveApp.status='old';
+                await previousLiveApp.save();
+                // changing status of parentApp
+                const parentApp=await App.findOne({_id:req.body.appId});
+                parentApp.changed=false;
+                await parentApp.save();
+            }
+            let appData = {...req.body.data};
+            appData['appUUID'] = uuidv4();
+            appData['parentApp']=req.body.appId;
+            appData['status']='live';
+            appData.parentApp= new mongoose.Types.ObjectId (req.body.appId);
+            delete appData['_id'];
+            let newApp = new App(appData);           
+            let savedApp = await newApp.save();
+            res.status(201).json({
+                message: "App live successfully",
+                data: savedApp,
+              });
+        } catch (error) {
+            createLog({userId:'66d18a4caf4d3c54cdeb44f6',error:error.message,appId:req.body.appId})
+            res.status(500).json({ error: error.message });
+        }
+    },
 
 }
 

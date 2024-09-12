@@ -6,7 +6,7 @@ const appSchema = new mongoose.Schema({
     name: {
         type: String,
         required: true,
-        unique: true
+        // unique: true
     },
     user:{
         type: mongoose.Schema.Types.ObjectId,
@@ -31,7 +31,7 @@ const appSchema = new mongoose.Schema({
     },
     status: { 
         type: String, 
-        enum: ['live', 'dev', 'deleted'], 
+        enum: ['live', 'dev', 'deleted','old'], 
         default: 'dev' 
     },
     agent: { },
@@ -176,6 +176,14 @@ const appSchema = new mongoose.Schema({
         },
        
        
+    },
+    visitorCount:{
+        type: Number,
+        default:0 
+    },
+    changed:{
+        type:Boolean,
+        default:false
     }
 }, { timestamps: true });
 
