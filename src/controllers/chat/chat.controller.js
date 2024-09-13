@@ -3,6 +3,7 @@ const chatSession = require('./../../models/chat/chatSession.model');
 const userSession = require('./../../models/chat/globalSession.model');
 const { v4: uuidv4 } = require('uuid');
 const { ChatAnthropic } = require("@langchain/anthropic");
+const { default: Anthropic } = require('@anthropic-ai/sdk');
 
 const generateSessionId = () => {
   return uuidv4();  // Generates a unique UUID
@@ -104,20 +105,81 @@ const fetchPreviousChat = async (userId, agentId) => {
 
 const startLLMChat = async (messages) => {
   try {
-    const llm = new ChatAnthropic({
-      model: "claude-3-5-sonnet-20240620",
-      temperature: 0,
-      maxRetries: 2,
-    });
-    const aiMsg = await llm.invoke(messages);
-    let message = JSON.stringify(aiMsg.content.trim()).split("@$@$@$");
-    let obj = { code: message[0], message: message[1] };
-    return JSON.stringify(obj);
+    const client = new Anthropic({
+      apiKey: process.env['ANTHROPIC_API_KEY'],
+  });
+    const prompts = await systemPromptSession.findOne({});
+            let parentPrompt = prompts?.parentPrompt;
+            let apiList = `[
+                {
+                    API: 'http://api.weatherapi.com/v1/forecast.json?q=gurgaon&key=YOUR_API&days=2',
+                    Purpose: 'To retrieve the 2-day weather forecast (current day and next day) for a specific location, including hourly updates.',
+                    key: 'FORCAST'
+                },
+                {
+                    API: 'http://api.weatherapi.com/v1/current.json?q=mumbai&key=YOUR_API&aqi=yes',
+                    Purpose: 'To get the  weather data of particular location  of current date and time',
+                    key: 'FORCAST'
+                }
+            ]`
+
+            parentPrompt = parentPrompt.replace('{userInput}', 'do you know about react tailwind?');
+            parentPrompt = parentPrompt.replace('{apiList}', apiList);
+            console.log("parentPrompt", parentPrompt)
+            const message = await client.messages.create({
+                max_tokens: 1024,
+                messages: [{ role: 'user', content: parentPrompt }],
+                model: 'claude-3-5-sonnet-20240620',
+            });
+            let parentResponse = JSON.parse(message.content[0].text.trim());
+            console.log(parentResponse);
+
+            if (parentResponse && parentResponse.ToolTYPE === 'AIBASED') {
+                let childPrompt = prompts?.childPrompt?.aibased;
+                childPrompt = childPrompt.replace('{userInput}',  'do you know about react tailwind?');
+                const mesg = await client.messages.create({
+                    max_tokens: 8192,
+                    messages: [{ role: 'user', content: childPrompt }],
+                    model: 'claude-3-5-sonnet-20240620',
+                });
+                let childResponse = mesg.content[0].text.trim();
+                console.log(childResponse);
+                let message = JSON.stringify(childResponse).split("@$@$@$");
+                let obj = { code: message[0], message: message[1] };
+                return JSON.stringify(obj);
+            }
+            else if (parentResponse && parentResponse.ToolTYPE === 'APIBASED') {
+                let childPrompt = prompts?.childPrompt?.apibased;
+                childPrompt = childPrompt.replace('{userInput}',  'do you know about react tailwind?');
+                console.log(childPrompt);
+                let message = JSON.stringify(childResponse).split("@$@$@$");
+                let obj = { code: message[0], message: message[1] };
+                return JSON.stringify(obj);
+            }
+
+
+    // if(aiMsg.content.trim().contains('@$@$@$')){
+    //   let message = JSON.stringify(aiMsg.content.trim()).split("@$@$@$");
+    //   let obj = { code: message[0], message: message[1] };
+    //   return JSON.stringify(obj);
+    // }else{
+    //   let message = aiMsg.content.trim()
+    //   return message;
+    // }
   } catch (error) {
     console.error("Error continuing chat session:", error);
     throw error;
   }
 };
+
+function isJsonString(message) {
+  try {
+      JSON.parse(message);
+      return true;
+  } catch (e) {
+      return false;
+  }
+}
 
 const updateAIMessageToChatSession = async (userId, agentId, message) => {
   try {
@@ -131,6 +193,11 @@ const updateAIMessageToChatSession = async (userId, agentId, message) => {
       throw new Error('Chat session not found');
     }
 
+    if(isJsonString(message)){
+      code = JSON.parse(message).code;
+      message = JSON.parse(message).message;
+    }
+
     // Push a new message to the existing chat session's messages array
     const newChatSession = await chatSession.updateOne(
       { userId, agentId },
@@ -141,6 +208,7 @@ const updateAIMessageToChatSession = async (userId, agentId, message) => {
             sno: oldChatSession.messages.length + 1,
             role: 'ai',
             content: message,
+            code
           },
         },
       },
