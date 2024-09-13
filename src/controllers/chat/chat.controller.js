@@ -123,7 +123,7 @@ const startLLMChat = async (messages) => {
                 }
             ]`
 
-            parentPrompt = parentPrompt.replace('{userInput}', 'do you know about react tailwind?');
+            parentPrompt = parentPrompt.replace('{userInput}', 'generate a weather app in which user can able to input city and get weather data. use Weather API key to complete this task.');
             parentPrompt = parentPrompt.replace('{apiList}', apiList);
             console.log("parentPrompt", parentPrompt)
             const message = await client.messages.create({
@@ -136,7 +136,7 @@ const startLLMChat = async (messages) => {
 
             if (parentResponse && parentResponse.ToolTYPE === 'AIBASED') {
                 let childPrompt = prompts?.childPrompt?.aibased;
-                childPrompt = childPrompt.replace('{userInput}',  'do you know about react tailwind?');
+                childPrompt = childPrompt.replace('{userInput}',  'generate a weather app in which user can able to input city and get weather data. use Weather API key to complete this task.');
                 const mesg = await client.messages.create({
                     max_tokens: 8192,
                     messages: [{ role: 'user', content: childPrompt }],
@@ -150,8 +150,18 @@ const startLLMChat = async (messages) => {
             }
             else if (parentResponse && parentResponse.ToolTYPE === 'APIBASED') {
                 let childPrompt = prompts?.childPrompt?.apibased;
-                childPrompt = childPrompt.replace('{userInput}',  'do you know about react tailwind?');
+                childPrompt = childPrompt.replace(
+                  "{userInput}",
+                  "generate a weather app in which user can able to input city and get weather data. use Weather API key to complete this task."
+                );
                 console.log(childPrompt);
+                const mesg = await client.messages.create({
+                  max_tokens: 8192,
+                  messages: [{ role: "user", content: childPrompt }],
+                  model: "claude-3-5-sonnet-20240620",
+                });
+                let childResponse = mesg.content[0].text.trim();
+                console.log(childResponse);
                 let message = JSON.stringify(childResponse).split("@$@$@$");
                 let obj = { code: message[0], message: message[1] };
                 return JSON.stringify(obj);
