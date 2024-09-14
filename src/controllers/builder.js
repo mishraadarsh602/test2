@@ -4,6 +4,7 @@ const { v4: uuidv4 } = require('uuid');
 const builderLogsModel=require('../models/logs/logs-builder');
 const UserService = require('../service/userService');
 const mongoose=require('mongoose');
+const appVisitorsModel = require('../models/appVisitors');
 const userService = new UserService();
 async function createLog(data) {
     try {
@@ -213,6 +214,19 @@ module.exports = {
         } catch (error) {
             console.log('error is -----> ',error);
             
+            createLog({userId:req.user.userId.toString(),error:error.message,appId:req.body.appId})
+            res.status(500).json({ error: error.message });
+        }
+    },
+
+    fetchVisitors:async (req,res)=>{
+        try {
+           const allVisitors=await appVisitorsModel.find({parentId: (req.params.appId)})
+            res.status(201).json({
+                message: "fetch visitors successfully",
+                data: allVisitors,
+              });
+        } catch (error) {
             createLog({userId:req.user.userId.toString(),error:error.message,appId:req.body.appId})
             res.status(500).json({ error: error.message });
         }

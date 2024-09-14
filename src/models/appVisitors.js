@@ -16,6 +16,10 @@ const appVisitorSchema = new mongoose.Schema(
             type: mongoose.Schema.ObjectId,
             ref:'user',
             required:true
+        },
+        browser:{
+            type:String,
+            required:true,
         }
     },
     {

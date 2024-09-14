@@ -14,7 +14,9 @@ module.exports = {
     getLiveApp:async (req,res)=>{
         try {
             const LiveApp=await App.findOne({parentApp:req.params.parentId,status:'live'})
-            const visitorCreated=new appVisitorModel({appId:LiveApp._id,parentId:LiveApp.parentApp,userId:'66d18a4caf4d3c54cdeb44f6'});
+            const visitorCreated=new appVisitorModel({appId:LiveApp._id,parentId:LiveApp.parentApp,
+                browser:req.body.browser,
+                userId:'66d18a4caf4d3c54cdeb44f6'});
             await visitorCreated.save();
             const visitorCount= await appVisitorModel.count();
             await appModel.findByIdAndUpdate(req.params.parentId,{visitorCount});
@@ -26,6 +28,6 @@ module.exports = {
                 console.log('erorr exist bro-----> ',error);
                 
         }
-    }
+    }, 
 }
 
