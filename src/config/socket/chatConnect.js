@@ -8,7 +8,7 @@ const {
 } = require("../../controllers/chat/chat.controller");
 
 module.exports = (server) => {
-  console.log("Server Connecting");
+  // console.log("Server Connecting");
   // Create a new Socket.IO instance attached to the server
   const io = new Server(server, {
     cors: {
@@ -25,11 +25,11 @@ module.exports = (server) => {
 
   // Set up a basic connection event
   io.on("connection", (socket) => {
-    console.log("Socket connected with ID:", socket.id);
+    // console.log("Socket connected with ID:", socket.id);
 
     // Listen for the 'startChat' event from the client
     socket.on("startChat", async (data) => {
-      console.log("Chat started by user:", data);
+      // console.log("Chat started by user:", data);
 
       await startChatSession(data.userId, data.agentId, data.message);
 
@@ -55,9 +55,9 @@ module.exports = (server) => {
     });
 
     socket.on("fetchPreviousChat", async (data) => {
-      console.log("Chat fetched:", data);
+      // console.log("Chat fetched:", data);
       const messages = await fetchPreviousChat(data.userId, data.agentId);
-      console.log(messages);
+      // console.log(messages);
       let msg = [];
       if (messages.length > 0) {
         for (let i = 1; i < messages.length; i++) {
@@ -68,12 +68,12 @@ module.exports = (server) => {
           }
         }
       }
-      console.log(msg);
+      // console.log(msg);
       socket.emit("previousMessages", msg);
     });
 
     socket.on("continueChat", async (data) => {
-      console.log("Chat Continued by user:", data);
+      // console.log("Chat Continued by user:", data);
 
       const messages = await fetchPreviousChat(data.userId, data.agentId);
       let msg = [];
@@ -101,7 +101,7 @@ module.exports = (server) => {
     });
 
     socket.on("disconnect", () => {
-      console.log("Client disconnected:", socket.id);
+      // console.log("Client disconnected:", socket.id);
     });
   });
 };

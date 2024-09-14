@@ -11,6 +11,7 @@ router.post('/create_user', builderController.createUser);
 router.get('/get_user',auth, builderController.getUserDetail);
 router.post('/create_app',auth, builderController.createApp);
 router.post('/create_app_by_AI', aiController.createAppByAI);
+router.get('/returnCode',aiController.returnCode);
 router.get('/get_app/:appId',auth, builderController.getAppById);
 router.post('/update_app/:appId',auth, builderController.updateApp);
 router.delete('/delete_app/:appId', builderController.deleteApp);

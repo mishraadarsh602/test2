@@ -56,7 +56,7 @@ const startChatSession = async (userId, agentId, message) => {
 
     return newChatSession; // Return the new session
   } catch (error) {
-    console.error("Error starting chat session:", error);
+    // console.error("Error starting chat session:", error);
     throw error;
   }
 };
@@ -82,7 +82,7 @@ const continueChatSession = async (userId, sessionId, newMessage) => {
 
     return ongoingSession; // Return the updated session
   } catch (error) {
-    console.error("Error continuing chat session:", error);
+    // console.error("Error continuing chat session:", error);
     throw error;
   }
 };
@@ -98,7 +98,7 @@ const fetchPreviousChat = async (userId, agentId) => {
 
     return ongoingSession.messages; // Return the updated session
   } catch (error) {
-    console.error("Error continuing chat session:", error);
+    // console.error("Error continuing chat session:", error);
     throw error;
   }
 };
@@ -125,14 +125,14 @@ const startLLMChat = async (messages) => {
 
             parentPrompt = parentPrompt.replace('{userInput}', 'generate a weather app in which user can able to input city and get weather data. use Weather API key to complete this task.');
             parentPrompt = parentPrompt.replace('{apiList}', apiList);
-            console.log("parentPrompt", parentPrompt)
+            // console.log("parentPrompt", parentPrompt)
             const message = await client.messages.create({
                 max_tokens: 1024,
                 messages: [{ role: 'user', content: parentPrompt }],
                 model: 'claude-3-5-sonnet-20240620',
             });
             let parentResponse = JSON.parse(message.content[0].text.trim());
-            console.log(parentResponse);
+            // console.log(parentResponse);
 
             if (parentResponse && parentResponse.ToolTYPE === 'AIBASED') {
                 let childPrompt = prompts?.childPrompt?.aibased;
@@ -143,7 +143,7 @@ const startLLMChat = async (messages) => {
                     model: 'claude-3-5-sonnet-20240620',
                 });
                 let childResponse = mesg.content[0].text.trim();
-                console.log(childResponse);
+                // console.log(childResponse);
                 let message = JSON.stringify(childResponse).split("@$@$@$");
                 let obj = { code: message[0], message: message[1] };
                 return JSON.stringify(obj);
@@ -154,14 +154,14 @@ const startLLMChat = async (messages) => {
                   "{userInput}",
                   "generate a weather app in which user can able to input city and get weather data. use Weather API key to complete this task."
                 );
-                console.log(childPrompt);
+                // console.log(childPrompt);
                 const mesg = await client.messages.create({
                   max_tokens: 8192,
                   messages: [{ role: "user", content: childPrompt }],
                   model: "claude-3-5-sonnet-20240620",
                 });
                 let childResponse = mesg.content[0].text.trim();
-                console.log(childResponse);
+                // console.log(childResponse);
                 let message = JSON.stringify(childResponse).split("@$@$@$");
                 let obj = { code: message[0], message: message[1] };
                 return JSON.stringify(obj);
@@ -177,7 +177,7 @@ const startLLMChat = async (messages) => {
     //   return message;
     // }
   } catch (error) {
-    console.error("Error continuing chat session:", error);
+    // console.error("Error continuing chat session:", error);
     throw error;
   }
 };
@@ -227,7 +227,7 @@ const updateAIMessageToChatSession = async (userId, agentId, message) => {
 
     return newChatSession; // Return the updated session
   } catch (error) {
-    console.error('Error updating chat session:', error);
+    // console.error('Error updating chat session:', error);
     throw error;
   }
 };
@@ -262,7 +262,7 @@ const updateHumanMessageToChatSession = async (userId, agentId, message) => {
 
     return newChatSession; // Return the updated session
   } catch (error) {
-    console.error('Error updating chat session:', error);
+    // console.error('Error updating chat session:', error);
     throw error;
   }
 };
