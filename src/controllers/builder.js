@@ -5,6 +5,7 @@ const builderLogsModel=require('../models/logs/logs-builder');
 const UserService = require('../service/userService');
 const mongoose=require('mongoose');
 const appVisitorsModel = require('../models/appVisitors');
+const CryptoJS = require("crypto-js");
 const userService = new UserService();
 async function createLog(data) {
     try {
@@ -19,8 +20,17 @@ module.exports = {
 
     createUser: async (req, res) => {
         try {
-            let { email } = req.body;
-            let userExist = await userService.findUserByEmail(email);
+            let { name,email } = req.body;
+        let decodedName = decodeURIComponent(name);
+        let decodedEmail = decodeURIComponent(email);
+        decodedName = decodedName.replace(/\s/g, "+");
+        decodedEmail = decodedEmail.replace(/\s/g, "+");
+        decryptedname = CryptoJS.AES.decrypt(decodedName, process.env.CRYPTO_SECRET_KEY).toString(CryptoJS.enc.Utf8);
+        decryptedemail = CryptoJS.AES.decrypt(decodedEmail, process.env.CRYPTO_SECRET_KEY).toString(CryptoJS.enc.Utf8); 
+        if(!decryptedname || !decryptedemail){
+            return res.status(401).json({ error: 'Please login ..' });
+        }
+            let userExist = await userService.findUserByEmail(decryptedemail);
             if(userExist) {
                 const token = await userExist.generateToken();
                 res.cookie('token', token, {
@@ -29,12 +39,13 @@ module.exports = {
                 });
                 return res.status(201).json({
                      message: 'User already exists',
-                     data:{userId: userExist._id.toString()
+                     data:{
+                            user:userExist
                     }
                  });
 
             }
-            const userCreated = await userService.createUser(req.body);
+            const userCreated = await userService.createUser({ name: decryptedname, email: decryptedemail });
             const token = await userCreated.generateToken();
     
             // Set the token as a cookie
@@ -46,7 +57,7 @@ module.exports = {
             res.status(201).json({
                 message: "User created successfully",
                 data: {
-                    userId: userCreated._id.toString(),
+                    user: userCreated
                 }
             });
         } catch (error) {
