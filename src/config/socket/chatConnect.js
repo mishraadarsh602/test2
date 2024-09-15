@@ -33,25 +33,25 @@ module.exports = (server) => {
 
       await startChatSession(data.userId, data.agentId, data.message);
 
-      const messages = await fetchPreviousChat(data.userId, data.agentId);
-      let msg = [];
+      // const messages = await fetchPreviousChat(data.userId, data.agentId);
+      // let msg = [];
 
-      for (let i = 0; i < messages.length; i++) {
-        if (i === 0) {
-          msg.push(["system", messages[i].content]);
-        } else if (i % 2 !== 0) {
-          msg.push(["human", messages[i].content]);
-        } else {
-          msg.push(["ai", messages[i].content]);
-        }
-      }
+      // for (let i = 0; i < messages.length; i++) {
+      //   if (i === 0) {
+      //     msg.push(["system", messages[i].content]);
+      //   } else if (i % 2 !== 0) {
+      //     msg.push(["human", messages[i].content]);
+      //   } else {
+      //     msg.push(["ai", messages[i].content]);
+      //   }
+      // }
 
-      const aiMsg = await startLLMChat(msg);
+      const aiMsg = await startLLMChat(data.message);
 
       await updateAIMessageToChatSession(data.userId, data.agentId, aiMsg);
 
       // Optionally, emit a response to the client
-      socket.emit("message", aiMsg);
+      socket.emit("message", {code: aiMsg, text: 'Your Request is Completed. UI Getting Rendered'});
     });
 
     socket.on("fetchPreviousChat", async (data) => {
@@ -64,7 +64,7 @@ module.exports = (server) => {
           if (i % 2 !== 0) {
             msg.push({ text: messages[i].content, sender: "user" });
           } else {
-            msg.push({ text: messages[i].content, sender: "bot" });
+            msg.push({ text: messages[i].content, code: messages[i].code, sender: "bot" });
           }
         }
       }
@@ -97,7 +97,7 @@ module.exports = (server) => {
       await updateAIMessageToChatSession(data.userId, data.agentId, aiMsg);
 
       // Optionally, emit a response to the client
-      socket.emit("message", aiMsg);
+      socket.emit("message", {code: aiMsg, text: 'Your Request is Completed. UI Getting Rendered'});
     });
 
     socket.on("disconnect", () => {
