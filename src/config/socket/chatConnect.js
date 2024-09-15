@@ -46,12 +46,13 @@ module.exports = (server) => {
       //   }
       // }
 
-      const aiMsg = await startLLMChat(data.message);
+      const returnedOutput = await startLLMChat(data.message);
 
-      await updateAIMessageToChatSession(data.userId, data.agentId, aiMsg);
+        await updateAIMessageToChatSession(data.userId, data.agentId, returnedOutput.code);
 
-      // Optionally, emit a response to the client
-      socket.emit("message", {code: aiMsg, text: 'Your Request is Completed. UI Getting Rendered'});
+        // Optionally, emit a response to the client
+        socket.emit("message", {code: returnedOutput.code, text: returnedOutput.message});
+
     });
 
     socket.on("fetchPreviousChat", async (data) => {

@@ -127,7 +127,7 @@ const startLLMChat = async (userMessage) => {
 
             parentPrompt = parentPrompt.replace('{userInput}', userMessage);
             parentPrompt = parentPrompt.replace('{apiList}', apiList);
-            // console.log("parentPrompt", parentPrompt)
+            console.log("parentPrompt", parentPrompt)
             const message = await client.messages.create({
                 max_tokens: 1024,
                 messages: [{ role: 'user', content: parentPrompt }],
@@ -347,25 +347,32 @@ async function CallingAiPrompt(parentResponse, prompts,aiData) {
           messages: [{ role: 'user', content: childPrompt }],
           model: 'claude-3-5-sonnet-20240620',
       });
-      let childResponse = mesg.content[0].text.trim();
+      let childResponseAsCode = mesg.content[0].text.trim();
+      let obj = { code: childResponseAsCode, type: 'AIBASED', message: 'Your Request is Completed. UI Getting Rendered' };
       // console.log(childResponse);
       // let message = (childResponse).split("@$@$@$");
       // let obj = { code: message[0], message: message[1] };
-      // const app = await App.findOne({ _id: "66e2cbe8ecccb0a4162b2b0c" });
-      // app.componentCode = childResponse;
+      // const app = await App.findOne({ _id: "66e2cbe8ecccb0a4162b2b0c" }); TODO
+      // app.componentCode = childResponseAsCode;
       // await app.save()
       // return app;
-      return childResponse;
+      return obj;
+  }
+  else if (parentResponse && parentResponse.ToolTYPE === 'GENERALTEXT') {
+    let obj = { code: '', type: 'GENERALTEXT', message: 'Hello. Welcome to tool builder...!' };
+    return obj
   }
   else if (parentResponse && parentResponse.ToolTYPE === 'APIBASED') {
-      let childPrompt = prompts?.childPrompt?.apibased;
-      childPrompt = childPrompt.replace('{userInput}', aiData.customPrompt);
-      // console.log(childPrompt)
-      const app = await App.findOne({ _id: "66e2cbe8ecccb0a4162b2b0c" });
-      // app.componentCode = childResponse;
-      // await app.save()
-      return app;
-  }
+    let childPrompt = prompts?.childPrompt?.apibased;
+    childPrompt = childPrompt.replace('{userInput}', aiData.customPrompt);
+    // console.log(childPrompt)
+    // const app = await App.findOne({ _id: "66e2cbe8ecccb0a4162b2b0c" });
+    // app.componentCode = childResponse;
+    // await app.save()
+    let obj = { code: '', type: 'APIBASED', message: 'Your Request is Completed. UI Getting Rendered' };
+
+    return obj;
+}
 }
 
 const updateAIMessageToChatSession = async (userId, agentId, message) => {
