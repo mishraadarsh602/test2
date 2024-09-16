@@ -132,14 +132,16 @@ async function determineApi(userPrompt, apis) {
   
 
   try {
+    let prompt =`You are a decision-maker. I want to build a tool. Based on my input, you will decide whether the context returns the most relevant API along with the response: 
+    Here is my input = ${userPrompt}`
     const response = await axios.post('https://api.anthropic.com/v1/messages', {
       model: "claude-3-5-sonnet-20240620", // Use the appropriate model
-      max_tokens: 1024,
+      max_tokens: 8000,
       tools,
       messages: [
         {
           role: "user",
-          content: "Need to return one api only which can return more correct output. Here is our user prompt:  " + userPrompt
+          content: prompt
         }
       ]
     }, {
@@ -149,10 +151,12 @@ async function determineApi(userPrompt, apis) {
         "anthropic-version": "2023-06-01"
       }
     });
+    console.log(response.data);
     if(response.data.content[1].type === 'tool_use'){
       return response.data.content[1].name;
+    } else {
+      console.log('NO API found');
     }
-    console.log(response.data);
   } catch (error) {
     console.error("Error making API call:", error.response ? error.response.data : error.message);
   }
@@ -346,7 +350,7 @@ async function CallingAiPrompt(parentResponse, prompts, aiData, appId) {
   }
   return WeatherTracker;
 `;
-  let obj = {};
+  let obj = {},childResponseAsCode;
   if (parentResponse && parentResponse.ToolTYPE === "AIBASED") {
     let childPrompt = prompts?.childPrompt?.aibased;
     childPrompt = childPrompt.replace("{userInput}", aiData.customPrompt);
@@ -356,7 +360,7 @@ async function CallingAiPrompt(parentResponse, prompts, aiData, appId) {
       messages: [{ role: "user", content: childPrompt }],
       model: "claude-3-5-sonnet-20240620",
     });
-    let childResponseAsCode = mesg.content[0].text.trim();
+    childResponseAsCode = mesg.content[0].text.trim();
     obj = {
       code: childResponseAsCode,
       type: "AIBASED",
@@ -372,7 +376,7 @@ async function CallingAiPrompt(parentResponse, prompts, aiData, appId) {
     let childPrompt = prompts?.childPrompt?.apibased;
     childPrompt = childPrompt.replace("{userInput}", aiData.customPrompt);
     let getAllAPIs = await Api.find({}, "key purpose").lean();
-    const apiKey = await determineApi(userMessage, getAllAPIs);
+    const apiKey = await determineApi(aiData.customPrompt, getAllAPIs);
     let apiOutput = await Api.find({ key: apiKey });
     childPrompt = childPrompt.replace("{API_Output}", apiOutput.output);
     childPrompt = childPrompt.replace("{reactCode}", reactCode);
@@ -381,16 +385,19 @@ async function CallingAiPrompt(parentResponse, prompts, aiData, appId) {
       messages: [{ role: "user", content: childPrompt }],
       model: "claude-3-5-sonnet-20240620",
     });
-    let childResponseAsCode = mesg.content[0].text.trim();
+    childResponseAsCode = mesg.content[0].text.trim();
     obj = {
       code: childResponseAsCode,
       type: "APIBASED",
       message: "Your Request is Completed. UI Getting Rendered",
     };
   }
-  const app = await App.findOne({ _id: appId });
-  app.componentCode = childResponseAsCode;
-  await app.save();
+  if (childResponseAsCode) {
+    const app = await App.findOne({ _id: appId });
+    app.componentCode = childResponseAsCode;
+    await app.save();
+  }
+
   return obj;
 }
 
