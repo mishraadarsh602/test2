@@ -46,7 +46,7 @@ module.exports = (server) => {
       //   }
       // }
 
-      const returnedOutput = await startLLMChat(data.message);
+      const returnedOutput = await startLLMChat(data.message, data.agentId);
 
         await updateAIMessageToChatSession(data.userId, data.agentId, returnedOutput.code);
 
