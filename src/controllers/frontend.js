@@ -62,7 +62,82 @@ module.exports = {
                 return res.status(400).json({ error: 'User ID is required' });
             }
            
-            let apps = await App.find({ status: 'dev', user: userId }).sort({ createdAt: -1 });
+            // let apps = await App.find({ status: 'dev', user: userId }).sort({ createdAt: -1 });
+          let apps = await App.aggregate([
+            {
+              $facet: {
+                dev: [
+                  {
+                    $match: {
+                      user: new mongoose.Types.ObjectId(userId),
+                      status: "dev",
+                    },
+                  },
+                  {
+                    $project: {
+                      name: 1,
+                      status: 1,
+                    },
+                  },
+                ],
+                live: [
+                  {
+                    $match: {
+                      user: new mongoose.Types.ObjectId(userId),
+                      status: "live",
+                    },
+                  },
+                  {
+                    $project: {
+                      name: 1,
+                      parentApp: 1,
+                    },
+                  },
+                ],
+              },
+            },
+
+            {
+              $unwind: {
+                path: "$dev",
+              },
+            },
+
+            {
+              $project: {
+                dev: 1,
+                live: {
+                  $cond: {
+                    if: {
+                      $in: [
+                        "$dev._id",
+                        {
+                          $map: {
+                            input: "$live",
+                            as: "liveDoc",
+                            in: "$$liveDoc.parentApp",
+                          },
+                        },
+                      ],
+                    },
+                    then: true,
+                    else: false,
+                  },
+                },
+              },
+            },
+            {
+              $replaceRoot: {
+                newRoot: { $mergeObjects: ["$dev", { live: "$live" }] },
+              },
+            },
+            {
+              $match: {
+                status: "dev",
+              },
+            },
+          ]);
+
             if (!apps || apps.length == 0) {
                 return res.status(200).json({ message: 'No app found' });
             }
