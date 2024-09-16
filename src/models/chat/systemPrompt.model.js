@@ -12,6 +12,9 @@ const SystemPromptSchema = new mongoose.Schema(
       apibased: {
         type: String
       }
+    },
+    apiMatchingPrompt: {
+      type: String
     }
   },
   { timestamps: true }
