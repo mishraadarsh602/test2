@@ -374,7 +374,7 @@ async function CallingAiPrompt(parentResponse, prompts, aiData, appId) {
     let getAllAPIs = await Api.find({}, "key purpose").lean();
     const apiKey = await determineApi(userMessage, getAllAPIs);
     let apiOutput = await Api.find({ key: apiKey });
-    childPrompt = childPrompt.replace("{API_Output}", apiOutput);
+    childPrompt = childPrompt.replace("{API_Output}", apiOutput.output);
     childPrompt = childPrompt.replace("{reactCode}", reactCode);
     const mesg = await client.messages.create({
       max_tokens: 8192,
