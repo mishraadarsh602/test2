@@ -136,6 +136,9 @@ module.exports = {
                 status: "dev",
               },
             },
+            {
+              $sort: { _id: -1 }
+            },
           ]);
 
             if (!apps || apps.length == 0) {
