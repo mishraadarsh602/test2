@@ -33,26 +33,19 @@ module.exports = (server) => {
 
       await startChatSession(data.userId, data.agentId, data.message);
 
-      // const messages = await fetchPreviousChat(data.userId, data.agentId);
-      // let msg = [];
-
-      // for (let i = 0; i < messages.length; i++) {
-      //   if (i === 0) {
-      //     msg.push(["system", messages[i].content]);
-      //   } else if (i % 2 !== 0) {
-      //     msg.push(["human", messages[i].content]);
-      //   } else {
-      //     msg.push(["ai", messages[i].content]);
-      //   }
-      // }
-
       const returnedOutput = await startLLMChat(data.message, data.agentId);
 
-        await updateAIMessageToChatSession(data.userId, data.agentId, returnedOutput.code);
+      await updateAIMessageToChatSession(
+        data.userId,
+        data.agentId,
+        returnedOutput.code
+      );
 
-        // Optionally, emit a response to the client
-        socket.emit("message", {code: returnedOutput.code, text: returnedOutput.message});
-
+      // Optionally, emit a response to the client
+      socket.emit("message", {
+        code: returnedOutput.code,
+        text: returnedOutput.message,
+      });
     });
 
     socket.on("fetchPreviousChat", async (data) => {
@@ -65,7 +58,11 @@ module.exports = (server) => {
           if (i % 2 !== 0) {
             msg.push({ text: messages[i].content, sender: "user" });
           } else {
-            msg.push({ text: messages[i].content, code: messages[i].code, sender: "bot" });
+            msg.push({
+              text: messages[i].content,
+              code: messages[i].code,
+              sender: "bot",
+            });
           }
         }
       }
@@ -89,16 +86,27 @@ module.exports = (server) => {
         }
       }
 
-      await updateHumanMessageToChatSession(data.userId, data.agentId, data.message)
+      await updateHumanMessageToChatSession(
+        data.userId,
+        data.agentId,
+        data.message
+      );
+
+      msg.push(["human", data.message]);
+
+      const returnedOutput = await startLLMChat(data.message, data.agentId);
+
+      await updateAIMessageToChatSession(
+        data.userId,
+        data.agentId,
+        returnedOutput.code
+      );
       
-      msg.push(['human', data.message])
-
-      const aiMsg = await startLLMChat(msg);
-
-      await updateAIMessageToChatSession(data.userId, data.agentId, aiMsg);
-
       // Optionally, emit a response to the client
-      socket.emit("message", {code: aiMsg, text: 'Your Request is Completed. UI Getting Rendered'});
+      socket.emit("message", {
+        code: returnedOutput.code,
+        text: returnedOutput.message,
+      });
     });
 
     socket.on("disconnect", () => {

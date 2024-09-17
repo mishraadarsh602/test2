@@ -7,6 +7,10 @@ const { default: Anthropic } = require('@anthropic-ai/sdk');
 const App = require('../../models/app');
 const Api = require('../../models/api.model');
 const { default: axios } = require('axios');
+const { InMemoryChatMessageHistory } = require("@langchain/core/chat_history");
+const { ChatPromptTemplate } = require("@langchain/core/prompts");
+const { RunnableWithMessageHistory } = require("@langchain/core/runnables");
+const { HumanMessage, AIMessage } = require("@langchain/core/messages");
 
 const generateSessionId = () => {
   return uuidv4();  // Generates a unique UUID
@@ -14,6 +18,11 @@ const generateSessionId = () => {
 
 const client = new Anthropic({
   apiKey: process.env['ANTHROPIC_API_KEY'],
+});
+
+const model = new ChatAnthropic({
+  model: "claude-3-5-sonnet-20240620",
+  temperature: 0
 });
 
 const startChatSession = async (userId, agentId, message) => {
@@ -161,7 +170,6 @@ async function determineApi(userPrompt, apis) {
     console.error("Error making API call:", error.response ? error.response.data : error.message);
   }
 }
-
 
 const startLLMChat = async (userMessage, appId) => {
   try {
@@ -350,28 +358,51 @@ async function CallingAiPrompt(parentResponse, prompts, aiData, appId) {
   }
   return WeatherTracker;
 `;
-  let obj = {},childResponseAsCode;
+  let messages = [];
+  const ongoingSession = await chatSession.findOne({ agentId: appId });
+
+  if (!ongoingSession) {
+    return [];
+  }
+
+  for (let i = 0; i < ongoingSession.messages.length > 0; i++) {
+    if (ongoingSession.messages[i].role === "user") {
+      messages.push(
+        new HumanMessage({ content: ongoingSession.messages[i].content })
+      );
+    } else if (ongoingSession.messages[i].role === "bot") {
+      messages.push(
+        new AIMessage({ content: ongoingSession.messages[i].content })
+      );
+    }
+  }
+
+  let obj = {};
+  let childResponseAsCode;
   if (parentResponse && parentResponse.ToolTYPE === "AIBASED") {
     let childPrompt = prompts?.childPrompt?.aibased;
-    childPrompt = childPrompt.replace("{userInput}", aiData.customPrompt);
     childPrompt = childPrompt.replace("{reactCode}", reactCode);
-    const mesg = await client.messages.create({
-      max_tokens: 8192,
-      messages: [{ role: "user", content: childPrompt }],
-      model: "claude-3-5-sonnet-20240620",
-    });
-    childResponseAsCode = mesg.content[0].text.trim();
+    
+    const data = await memoryBasedChatOutput(childPrompt, messages, aiData.customPrompt, appId);
+    
     obj = {
-      code: childResponseAsCode,
+      code: data.trim(),
       type: "AIBASED",
       message: "Your Request is Completed. UI Getting Rendered",
     };
+    
   } else if (parentResponse && parentResponse.ToolTYPE === "GENERALTEXT") {
+
+    let childPrompt = "You can return normal output for conversation";
+
+    const data = await memoryBasedChatOutput(childPrompt, messages, aiData.customPrompt, appId)
+    
     obj = {
       code: "",
       type: "GENERALTEXT",
-      message: "Hello. Welcome to tool builder...!",
+      message: data,
     };
+
   } else if (parentResponse && parentResponse.ToolTYPE === "APIBASED") {
     let childPrompt = prompts?.childPrompt?.apibased;
     childPrompt = childPrompt.replace("{userInput}", aiData.customPrompt);
@@ -380,14 +411,11 @@ async function CallingAiPrompt(parentResponse, prompts, aiData, appId) {
     let apiOutput = await Api.find({ key: apiKey });
     childPrompt = childPrompt.replace("{API_Output}", apiOutput.output);
     childPrompt = childPrompt.replace("{reactCode}", reactCode);
-    const mesg = await client.messages.create({
-      max_tokens: 8192,
-      messages: [{ role: "user", content: childPrompt }],
-      model: "claude-3-5-sonnet-20240620",
-    });
-    childResponseAsCode = mesg.content[0].text.trim();
+
+    const data = await memoryBasedChatOutput(childPrompt, messages, aiData.customPrompt, appId);
+
     obj = {
-      code: childResponseAsCode,
+      code: data.trim(),
       type: "APIBASED",
       message: "Your Request is Completed. UI Getting Rendered",
     };
@@ -399,6 +427,47 @@ async function CallingAiPrompt(parentResponse, prompts, aiData, appId) {
   }
 
   return obj;
+}
+
+const memoryBasedChatOutput = async (childPrompt, messages, humanInput, appId) => {
+  const prompt = ChatPromptTemplate.fromMessages([
+    ["system", childPrompt.replaceAll('{', "{{").replaceAll('}', "}}")],
+    ["placeholder", "{chat_history}"],
+    ["human", "{input}"],
+  ]);
+
+  const chain = prompt.pipe(model);
+  const messageHistories = {};
+  const withMessageHistory = new RunnableWithMessageHistory({
+    runnable: chain,
+    getMessageHistory: async (sessionId) => {
+      if (messageHistories[sessionId] === undefined) {
+        const messageHistory = new InMemoryChatMessageHistory();
+        await messageHistory.addMessages(messages);
+        messageHistories[sessionId] = messageHistory;
+      }
+      return messageHistories[sessionId];
+    },
+    inputMessagesKey: "input",
+    historyMessagesKey: "chat_history",
+  });
+
+  const config = {
+    configurable: {
+      sessionId: appId,
+    },
+  };
+
+  const response = await withMessageHistory.invoke(
+    {
+      input: humanInput,
+    },
+    config
+  );
+
+  const data = response.content;
+  console.log(data);
+  return data;
 }
 
 const updateAIMessageToChatSession = async (userId, agentId, message) => {
@@ -471,7 +540,6 @@ const updateHumanMessageToChatSession = async (userId, agentId, message) => {
     throw error;
   }
 };
-
 
 module.exports = {
   startChatSession,
