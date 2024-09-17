@@ -35,9 +35,7 @@ module.exports = {
         try {
             let appData = req.body;
             appData['appUUID'] = uuidv4();
-            if (appData.agent.type == 'weather') {
-                appData.name = 'Weather Forecast-' + appData['appUUID'].substring(0, 7);
-            }
+            appData.name = appData.type +'-'+ appData['appUUID'].substring(0, 7);
             const userId = req.user ? req.user.userId : null;
             if (!userId) {
                 return res.status(400).json({ error: 'User ID is required' });

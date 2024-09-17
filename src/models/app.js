@@ -8,6 +8,10 @@ const appSchema = new mongoose.Schema({
         required: true,
         // unique: true
     },
+    type:{
+        type: String,
+        default: 'weather'
+    },
     user:{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
