@@ -232,7 +232,7 @@ module.exports = {
 
     fetchVisitors:async (req,res)=>{
         try {
-           const allVisitors=await appVisitorsModel.find({parentId: (req.params.appId)})
+           const allVisitors=await appVisitorsModel.find({parentId: (req.params.appId)})      
             res.status(201).json({
                 message: "fetch visitors successfully",
                 data: allVisitors,

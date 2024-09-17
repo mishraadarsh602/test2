@@ -13,12 +13,17 @@ const appModel=require('../models/app');
 module.exports = {
     getLiveApp:async (req,res)=>{
         try {
+            const userId = req.user ? req.user.userId : null;
+            if (!userId) {
+                return res.status(400).json({ error: 'User ID is required' });
+            }
             const LiveApp=await App.findOne({parentApp:req.params.parentId,status:'live'})
             const visitorCreated=new appVisitorModel({appId:LiveApp._id,parentId:LiveApp.parentApp,
                 browser:req.body.browser,
-                userId:'66d18a4caf4d3c54cdeb44f6'});
+                userId:userId  
+             });
             await visitorCreated.save();
-            const visitorCount= await appVisitorModel.count();
+            const visitorCount= await appVisitorModel.count({parentId:LiveApp.parentApp});
             await appModel.findByIdAndUpdate(req.params.parentId,{visitorCount});
            return res.status(200).status({
             message:'Live app fetched successfully',

@@ -77,6 +77,7 @@ module.exports = {
                     $project: {
                       name: 1,
                       status: 1,
+                      visitorCount:1
                     },
                   },
                 ],
@@ -89,7 +90,7 @@ module.exports = {
                   },
                   {
                     $project: {
-                      name: 1,
+                    _id:0,
                       parentApp: 1,
                     },
                   },
