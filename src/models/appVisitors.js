@@ -2,12 +2,12 @@ const mongoose = require('mongoose');
 
 const appVisitorSchema = new mongoose.Schema(
     {
-        appId: {
+        appId: { // refer to liveAppId with status=> live
             type: mongoose.Schema.ObjectId,
              ref: "App",
             required: true,
         },
-        parentId: { 
+        parentId: {  // // refer to parentAppId with status=> dev
             type: mongoose.Schema.ObjectId,
             ref: "App" ,
             required: true,
@@ -20,6 +20,14 @@ const appVisitorSchema = new mongoose.Schema(
         browser:{
             type:String,
             required:true,
+        },
+        device:{
+            type:String,
+            required:true,
+        },
+        ipAddress:{
+            type:String,
+            required:true
         }
     },
     {

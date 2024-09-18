@@ -222,9 +222,9 @@ module.exports = {
                 message: "App live successfully",
                 data: savedApp,
               });
-        } catch (error) {
+        } catch (error) {            
             console.log('error is -----> ',error);
-            
+          
             createLog({userId:req.user.userId.toString(),error:error.message,appId:req.body.appId})
             res.status(500).json({ error: error.message });
         }
@@ -232,7 +232,7 @@ module.exports = {
 
     fetchVisitors:async (req,res)=>{
         try {
-           const allVisitors=await appVisitorsModel.find({parentId: (req.params.appId)})      
+           const allVisitors=await appVisitorsModel.find({parentId: (req.params.appId)},{browser:1,updatedAt:1,createdAt:1,device:1,})      
             res.status(201).json({
                 message: "fetch visitors successfully",
                 data: allVisitors,
@@ -242,6 +242,47 @@ module.exports = {
             res.status(500).json({ error: error.message });
         }
     },
+
+     deleteVisitors:async (req, res) => {
+        try {
+            // Extract the array of visitor IDs from the request body
+            const { visitorIds } = req.body;
+            console.log("visitpr Ids is -------> ",visitorIds)
+            // Ensure visitorIds is an array
+            if (!Array.isArray(visitorIds) || visitorIds.length === 0) {
+                return res.status(400).json({ error: 'No visitor IDs provided' });
+            }
+    
+            // Delete multiple visitors based on the provided IDs
+            // const result = await appVisitorsModel.deleteMany({ _id: { $in: visitorIds } });
+    
+            // // Send response with the count of deleted documents
+            // res.status(200).json({
+            //     message: 'Visitors deleted successfully',
+            //     deletedCount: result.deletedCount
+            // });
+
+            
+        } catch (error) {
+            // Log the error
+            createLog({ userId: req.user.userId.toString(), error: error.message, appId: req.body.appId });
+    
+            // Send error response
+            res.status(500).json({ error: error.message });
+        }
+    },
+    getPreviewApp:async (req,res)=>{
+        try {
+            const appId=req.params.appId;
+            const fetchedApp=await App.findById(appId);
+            res.status(201).json({
+                message: "fetch preview app",
+                data: fetchedApp,
+              });
+        } catch (error) {
+            
+        }
+    }
 
 }
 
