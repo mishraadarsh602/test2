@@ -171,7 +171,7 @@ async function determineApi(userPrompt, apis) {
   }
 }
 
-const startLLMChat = async (userMessage, appId) => {
+const startLLMChat = async (userId, userMessage, appId, isStartChat) => {
   try {
     const prompts = await systemPromptSession.findOne({});
     let parentPrompt = prompts?.parentPrompt;
@@ -189,14 +189,15 @@ const startLLMChat = async (userMessage, appId) => {
 
     let waitForChildOperation = await CallingAiPrompt(parentResponse, prompts, {
       customPrompt: userMessage,
-    }, appId);
+    }, appId, userId, isStartChat);
     return waitForChildOperation;
   } catch (error) {
     throw error;
   }
 };
 
-async function CallingAiPrompt(parentResponse, prompts, aiData, appId) {
+async function CallingAiPrompt(parentResponse, prompts, aiData, appId, userId, isStartChat) {
+  // console.log(parentResponse, prompts, aiData, appId, isStartChat)
   let reactCode = `
   function WeatherApp() {
     const [weather, setWeather] = React.useState(null);
@@ -260,27 +261,28 @@ async function CallingAiPrompt(parentResponse, prompts, aiData, appId) {
 
   return WeatherApp;
 `;
-  let messages = [];
-  const ongoingSession = await chatSession.findOne({ agentId: appId });
+let messages = [];
+  if(!isStartChat){
+    const ongoingSession = await chatSession.findOne({ userId: userId, agentId: appId });
 
-  if (!ongoingSession) {
-    return [];
-  }
+    if (!ongoingSession) {
+      return [];
+    }
 
-  for (let i = 0; i < ongoingSession.messages.length > 0; i++) {
-    if (ongoingSession.messages[i].role === "user") {
-      messages.push(
-        new HumanMessage({ content: ongoingSession.messages[i].content })
-      );
-    } else if (ongoingSession.messages[i].role === "bot") {
-      messages.push(
-        new AIMessage({ content: ongoingSession.messages[i].content })
-      );
+    for (let i = 0; i < ongoingSession.messages.length - 1 > 0; i++) {
+      if (ongoingSession.messages[i].role === "user") {
+        messages.push(
+          new HumanMessage({ content: ongoingSession.messages[i].content })
+        );
+      } else if (ongoingSession.messages[i].role === "bot") {
+        messages.push(
+          new AIMessage({ content: ongoingSession.messages[i].content })
+        );
+      }
     }
   }
 
   let obj = {};
-  let childResponseAsCode;
   if (parentResponse && parentResponse.ToolTYPE === "AIBASED") {
     let childPrompt = prompts?.childPrompt?.aibased;
     childPrompt = childPrompt.replace("{reactCode}", reactCode);
@@ -322,9 +324,14 @@ async function CallingAiPrompt(parentResponse, prompts, aiData, appId) {
       message: "Your Request is Completed. UI Getting Rendered",
     };
   }
-  if (childResponseAsCode) {
+
+  if(isStartChat){
+    await startChatSession(userId, appId, aiData.customPrompt);
+  }
+
+  if (obj.code) {
     const app = await App.findOne({ _id: appId });
-    app.componentCode = childResponseAsCode;
+    app.componentCode = obj.code;
     await app.save();
   }
 

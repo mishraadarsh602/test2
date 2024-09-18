@@ -31,9 +31,9 @@ module.exports = (server) => {
     socket.on("startChat", async (data) => {
       // console.log("Chat started by user:", data);
 
-      await startChatSession(data.userId, data.agentId, data.message);
+      // await startChatSession(data.userId, data.agentId, data.message);
 
-      const returnedOutput = await startLLMChat(data.message, data.agentId);
+      const returnedOutput = await startLLMChat(data.userId, data.message, data.agentId, true);
 
       await updateAIMessageToChatSession(
         data.userId,
@@ -94,7 +94,7 @@ module.exports = (server) => {
 
       msg.push(["human", data.message]);
 
-      const returnedOutput = await startLLMChat(data.message, data.agentId);
+      const returnedOutput = await startLLMChat(data.userId, data.message, data.agentId, false);
 
       await updateAIMessageToChatSession(
         data.userId,
