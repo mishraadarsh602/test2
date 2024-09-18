@@ -38,7 +38,8 @@ module.exports = (server) => {
       await updateAIMessageToChatSession(
         data.userId,
         data.agentId,
-        returnedOutput.code
+        returnedOutput.code,
+        returnedOutput.message
       );
 
       // Optionally, emit a response to the client
@@ -99,7 +100,8 @@ module.exports = (server) => {
       await updateAIMessageToChatSession(
         data.userId,
         data.agentId,
-        returnedOutput.code
+        returnedOutput.code,
+        returnedOutput.message
       );
       
       // Optionally, emit a response to the client

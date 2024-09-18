@@ -25,11 +25,11 @@ const model = new ChatAnthropic({
   temperature: 0
 });
 
-const startChatSession = async (userId, agentId, message) => {
+const startChatSession = async (userId, agentId, message, prompt) => {
   try {
 
     // get main system prompt from db
-    const prompts = await systemPromptSession.findOne({});
+    // const prompts = await systemPromptSession.findOne({});
 
     const newChatSession = await chatSession.create({
       userId,
@@ -43,7 +43,7 @@ const startChatSession = async (userId, agentId, message) => {
         {
           sno: 1,
           role: 'system',
-          content: prompts.childPrompt?.apibased
+          content: prompt
         },
         {
           sno: 1,
@@ -359,7 +359,9 @@ async function CallingAiPrompt(parentResponse, prompts, aiData, appId, userId, i
   }
   return WeatherTracker;
 `;
-let messages = [];
+  let obj = {};
+  let messages = [];
+let childPrompt = prompts?.childPrompt?.aibased;
   if(!isStartChat){
     const ongoingSession = await chatSession.findOne({ userId: userId, agentId: appId });
 
@@ -380,33 +382,32 @@ let messages = [];
     }
   }
 
-  let obj = {};
   if (parentResponse && parentResponse.ToolTYPE === "AIBASED") {
-    let childPrompt = prompts?.childPrompt?.aibased;
+    childPrompt = prompts?.childPrompt?.aibased;
     childPrompt = childPrompt.replace("{reactCode}", reactCode);
     
-    const data = await memoryBasedChatOutput(childPrompt, messages, aiData.customPrompt, appId);
+    const {code, msg} = await memoryBasedChatOutput(childPrompt, messages, aiData.customPrompt, appId, true);
     
     obj = {
-      code: data.trim(),
+      code: code.trim(),
       type: "AIBASED",
-      message: "Your Request is Completed. UI Getting Rendered",
+      message: msg,
     };
     
   } else if (parentResponse && parentResponse.ToolTYPE === "GENERALTEXT") {
 
     let childPrompt = "You can return normal output for conversation";
 
-    const data = await memoryBasedChatOutput(childPrompt, messages, aiData.customPrompt, appId)
+    const { code } = await memoryBasedChatOutput(childPrompt, messages, aiData.customPrompt, appId, false)
     
     obj = {
       code: "",
       type: "GENERALTEXT",
-      message: data,
+      message: code,
     };
 
   } else if (parentResponse && parentResponse.ToolTYPE === "APIBASED") {
-    let childPrompt = prompts?.childPrompt?.apibased;
+    childPrompt = prompts?.childPrompt?.apibased;
     childPrompt = childPrompt.replace("{userInput}", aiData.customPrompt);
     let getAllAPIs = await Api.find({}, "key purpose").lean();
     const apiKey = await determineApi(aiData.customPrompt, getAllAPIs);
@@ -414,17 +415,17 @@ let messages = [];
     childPrompt = childPrompt.replace("{API_Output}", apiOutput.output);
     childPrompt = childPrompt.replace("{reactCode}", reactCode);
 
-    const data = await memoryBasedChatOutput(childPrompt, messages, aiData.customPrompt, appId);
+    const {code, msg} = await memoryBasedChatOutput(childPrompt, messages, aiData.customPrompt, appId, true);
 
     obj = {
-      code: data.trim(),
+      code: code.trim(),
       type: "APIBASED",
-      message: "Your Request is Completed. UI Getting Rendered",
+      message: msg.trim(),
     };
   }
 
   if(isStartChat){
-    await startChatSession(userId, appId, aiData.customPrompt);
+    await startChatSession(userId, appId, aiData.customPrompt, childPrompt);
   }
 
   if (obj.code) {
@@ -436,7 +437,7 @@ let messages = [];
   return obj;
 }
 
-const memoryBasedChatOutput = async (childPrompt, messages, humanInput, appId) => {
+const memoryBasedChatOutput = async (childPrompt, messages, humanInput, appId, generateCode) => {
   const prompt = ChatPromptTemplate.fromMessages([
     ["system", childPrompt.replaceAll('{', "{{").replaceAll('}', "}}")],
     ["placeholder", "{chat_history}"],
@@ -465,19 +466,28 @@ const memoryBasedChatOutput = async (childPrompt, messages, humanInput, appId) =
     },
   };
 
-  const response = await withMessageHistory.invoke(
+  const code = await withMessageHistory.invoke(
     {
       input: humanInput,
     },
     config
   );
 
-  const data = response.content;
-  console.log(data);
-  return data;
+  let msg = {content: ''};
+
+  if(generateCode){
+    msg = await withMessageHistory.invoke(
+      {
+        input: "This is user input : " + humanInput + "for this user input, you need to generate one message for the user about changes and updations in plain English for code which you have just generate before one step.",
+      },
+      config
+    );
+  }
+  
+  return {code: code.content, msg: msg.content};
 }
 
-const updateAIMessageToChatSession = async (userId, agentId, message) => {
+const updateAIMessageToChatSession = async (userId, agentId, code, message) => {
   try {
     // Find the existing chat session
     const oldChatSession = await chatSession
@@ -498,8 +508,8 @@ const updateAIMessageToChatSession = async (userId, agentId, message) => {
           messages: {
             sno: oldChatSession.messages.length + 1,
             role: 'ai',
-            content: 'Your Request is Completed. UI Getting Rendered',
-            code: message
+            content: message,
+            code: code
           },
         },
       },
