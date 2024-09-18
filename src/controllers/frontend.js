@@ -75,7 +75,8 @@ module.exports = {
                     $project: {
                       name: 1,
                       status: 1,
-                      visitorCount:1
+                      visitorCount:1,
+                      type:1
                     },
                   },
                 ],
