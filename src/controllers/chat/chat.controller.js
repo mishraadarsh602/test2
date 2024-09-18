@@ -27,10 +27,6 @@ const model = new ChatAnthropic({
 
 const startChatSession = async (userId, agentId, message, prompt) => {
   try {
-
-    // get main system prompt from db
-    // const prompts = await systemPromptSession.findOne({});
-
     const newChatSession = await chatSession.create({
       userId,
       agentId,
@@ -72,8 +68,8 @@ const startChatSession = async (userId, agentId, message, prompt) => {
 
     return newChatSession; // Return the new session
   } catch (error) {
-    // console.error("Error starting chat session:", error);
-    throw error;
+    console.error("Error starting chat session:", error);
+    throw new Error('Failed to start chat session');
   }
 };
 
@@ -98,8 +94,8 @@ const continueChatSession = async (userId, sessionId, newMessage) => {
 
     return ongoingSession; // Return the updated session
   } catch (error) {
-    // console.error("Error continuing chat session:", error);
-    throw error;
+    console.error("Error continuing chat session:", error);
+    throw new Error('Failed to continue chat session');
   }
 };
 
@@ -114,8 +110,8 @@ const fetchPreviousChat = async (userId, agentId) => {
 
     return ongoingSession.messages; // Return the updated session
   } catch (error) {
-    // console.error("Error continuing chat session:", error);
-    throw error;
+    console.error("Error fetching previous chat:", error);
+    throw new Error('Failed to fetch previous chat');
   }
 };
 
@@ -192,7 +188,8 @@ const startLLMChat = async (userId, userMessage, appId, isStartChat) => {
     }, appId, userId, isStartChat);
     return waitForChildOperation;
   } catch (error) {
-    throw error;
+    console.error("Error starting LLM chat:", error);
+    throw new Error('Failed to start LLM chat');
   }
 };
 
@@ -385,7 +382,7 @@ const memoryBasedChatOutput = async (childPrompt, messages, humanInput, appId, g
       config
     );
   }
-  
+
   return {code: code.content, msg: msg.content};
 }
 
@@ -420,8 +417,8 @@ const updateAIMessageToChatSession = async (userId, agentId, code, message) => {
 
     return newChatSession; // Return the updated session
   } catch (error) {
-    // console.error('Error updating chat session:', error);
-    throw error;
+    console.error('Error updating AI message:', error);
+    throw new Error('Failed to update AI message in chat session');
   }
 };
 
@@ -455,8 +452,8 @@ const updateHumanMessageToChatSession = async (userId, agentId, message) => {
 
     return newChatSession; // Return the updated session
   } catch (error) {
-    // console.error('Error updating chat session:', error);
-    throw error;
+    console.error('Error updating human message:', error);
+    throw new Error('Failed to update human message in chat session');
   }
 };
 
