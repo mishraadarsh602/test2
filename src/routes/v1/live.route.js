@@ -6,6 +6,6 @@ router.get("/", async (req, res) => {
   return res.status(200).json({ success: true, message: "live#index" });
 });
 
-router.post('/updateVisitorCount/:parentId', auth,liveController.updateVisitorCount);
+router.post('/gen_visitor', auth,liveController.generateVisitor);
 router.get('/getLivePreview/:appId', auth,liveController.getLivePreview);
 module.exports = router;
