@@ -28,6 +28,10 @@ const appVisitorSchema = new mongoose.Schema(
         ipAddress:{
             type:String,
             required:true
+        },
+        deleted:{
+            type:Boolean,
+            default:false
         }
     },
     {

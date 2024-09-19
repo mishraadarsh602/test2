@@ -232,7 +232,7 @@ module.exports = {
 
     fetchVisitors:async (req,res)=>{
         try {
-           const allVisitors=await appVisitorsModel.find({parentId: (req.params.appId)},{browser:1,updatedAt:1,createdAt:1,device:1,})      
+           const allVisitors=await appVisitorsModel.find({parentId: (req.params.appId),deleted:false},{browser:1,updatedAt:1,createdAt:1,device:1,})      
             res.status(201).json({
                 message: "fetch visitors successfully",
                 data: allVisitors,
@@ -244,25 +244,20 @@ module.exports = {
     },
 
      deleteVisitors:async (req, res) => {
-        try {
-            // Extract the array of visitor IDs from the request body
-            const { visitorIds } = req.body;
-            console.log("visitpr Ids is -------> ",visitorIds)
-            // Ensure visitorIds is an array
-            if (!Array.isArray(visitorIds) || visitorIds.length === 0) {
-                return res.status(400).json({ error: 'No visitor IDs provided' });
-            }
-    
-            // Delete multiple visitors based on the provided IDs
-            // const result = await appVisitorsModel.deleteMany({ _id: { $in: visitorIds } });
-    
-            // // Send response with the count of deleted documents
-            // res.status(200).json({
-            //     message: 'Visitors deleted successfully',
-            //     deletedCount: result.deletedCount
-            // });
+         try {
+             const { visitorIds } = req.body;
+             if (!Array.isArray(visitorIds) || visitorIds.length === 0) {
+                 return res.status(400).json({ error: 'No visitor IDs provided' });
+             }
 
-            
+             const result = await appVisitorsModel.updateMany(
+                 { _id: { $in: visitorIds } },
+                 { $set: { deleted: true } }
+             );
+
+             res.status(200).json({
+                 message: 'Visitors deleted successfully',
+             });
         } catch (error) {
             // Log the error
             createLog({ userId: req.user.userId.toString(), error: error.message, appId: req.body.appId });
