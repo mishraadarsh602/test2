@@ -1,6 +1,7 @@
 const App = require('../models/app');
 const appVisitorModel = require('../models/appVisitors');
 const appModel=require('../models/app');
+const featureListModel=require('../models/featureList');
 // const frontendLogsModel=require('../models/logs/logs-frontend');
 // async function createLog(data){
 //     try {
@@ -17,7 +18,7 @@ module.exports = {
             if (!userId) {
                 return res.status(400).json({ error: 'User ID is required' });
             }
-            const LiveApp=await App.findOne({parentApp:req.body.parentId,status:'live'})
+            const LiveApp=await App.findOne({parentApp:req.body.parentId,status:'live'},{parentApp:1,type:1});
             const visitorCreated=new appVisitorModel({appId:LiveApp._id,parentApp:LiveApp.parentApp,
                 ...req.body,
                 user:userId  
@@ -25,7 +26,8 @@ module.exports = {
             await visitorCreated.save();
             const visitorCount= await appVisitorModel.count({parentApp:LiveApp.parentApp});
             await appModel.findByIdAndUpdate(req.body.parentId,{visitorCount});
-           return res.status(200).status({
+            await featureListModel.updateOne({type:LiveApp.type},{$inc:{visitorCount:1}})
+           return res.status(200).json({
             message:'Visits updated successfully',
            }) 
         } catch (error) {

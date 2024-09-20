@@ -3,10 +3,13 @@ const router = express.Router();
 const builderController = require('../../controllers/builder');
 const aiController = require('../../controllers/ai');
 const auth = require('../../middleware/auth');
+const multer = require('multer');
+const { memoryStorage } = multer;
+const storage = memoryStorage();
+const upload = multer({ storage: storage });
 router.get("/", async (req, res) => {
   return res.status(200).json({ success: true, message: "builder#index" });
 });
-
 router.post('/create_user', builderController.createUser);
 router.get('/get_user',auth, builderController.getUserDetail);
 router.post('/create_app',auth, builderController.createApp);
@@ -22,4 +25,10 @@ router.get('/visitor/:appId',auth, builderController.fetchVisitors);
 router.get('/getOverView/:appId',auth,builderController.getOverViewDetails)
 router.post('/visitor/delete',auth, builderController.deleteVisitors);
 router.get('/getPreviewApp/:appId', auth,builderController.getPreviewApp);
+router.post('/brand_guide',auth, builderController.getBrandGuide);
+router.post('/upload_file_aws',auth,upload.single("image"),builderController.uploadFile);
+router.get('/get_company',auth, builderController.getCompanyByUserId);
+router.get('/get_user_custom_brand',auth, builderController.getUserCustomBrand);
+router.put('/update_brand_guide',auth, builderController.updateBrandGuide);
+
 module.exports = router;
