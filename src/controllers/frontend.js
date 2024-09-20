@@ -4,7 +4,7 @@ const User = require('../models/user.model');
 const { v4: uuidv4 } = require('uuid');
 const frontendLogsModel=require('../models/logs/logs-frontend');
 const UserService = require('../service/userService');
-
+const featureListModel=require('../models/featureList');
 const userService = new UserService();
 async function createLog(data){
     try {
@@ -56,6 +56,7 @@ module.exports = {
     getAllAppsOfUser: async (req, res) => {
         try {
             const userId = req.user ? req.user.userId : null;
+            const regexPattern = new RegExp(`^${req.body.name}`, 'i');
             if (!userId) {
                 return res.status(400).json({ error: 'User ID is required' });
             }
@@ -69,6 +70,7 @@ module.exports = {
                     $match: {
                       user: new mongoose.Types.ObjectId(userId),
                       status: "dev",
+                      name: { $regex:regexPattern}
                     },
                   },
                   {
@@ -131,22 +133,32 @@ module.exports = {
                 newRoot: { $mergeObjects: ["$dev", { live: "$live" }] },
               },
             },
+            // {
+            //   $match: {
+            //     status: "dev",
+            //   },
+          // },
             {
-              $match: {
-                status: "dev",
-              },
+              $skip:req.body.skip
+            },
+
+            {
+              $limit:req.body.limit
             },
             {
-              $sort: { _id: -1 }
+              $sort: { _id: -1 },
             },
           ]);
-
-            if (!apps || apps.length == 0) {
-                return res.status(200).json({ message: 'No app found' });
-            }
+    
+            // if (!apps || apps.length == 0) {
+            //     return res.status(200).json({ message: 'No app found'});
+            // }
+            const appCount=await App.count({user:new mongoose.Types.ObjectId(userId),status:'dev',  name: { $regex:regexPattern}});
+            const showMore=(req.body.skip+req.body.limit)<appCount;
             res.status(200).json({
                 message: "All Apps fetched successfully",
                 data: apps,
+                showMore
             });
         } catch (error) {      
             await createLog({userId:req.user.userId,error:error.message})    
@@ -167,5 +179,42 @@ module.exports = {
             res.status(500).json({ error: error.message });
         }
     },
+    getFeatureLists:async (req,res)=>{
+      try {
+        const allFeatureLists=await featureListModel.find({active:true},{type:1,icon:1,visitorCount:1,title:1,description:1});
+        res.status(200).json({
+          message: "All featureLists fetched successfully",
+          data: allFeatureLists,
+      });
+      } catch (error) {
+        res.status(500).json({ error: error.message });
+      }
+    },
+    searchApp:async (req,res)=>{
+      try {
+        const userId = req.user ? req.user.userId : null;
+        if (!userId) {
+            return res.status(400).json({ error: 'User ID is required' });
+        }
+        const regexPattern = new RegExp(`^${req.body.name}`, 'i');
+        const results = await App.find(
+          { name: { $regex: regexPattern }, user: userId },
+          { name: 1, status: 1, visitorCount: 1, type: 1 }
+        )
+          .skip(req.body.skip)
+          .limit(req.body.limit);
+
+      const appCount=await App.count({user:new mongoose.Types.ObjectId(userId),status:'dev',  name: { $regex:regexPattern}});
+      const showMore=(req.body.skip+req.body.limit)<appCount;
+        res.status(200).json({
+          message: "All featureLists fetched successfully",
+          data: results,
+          showMore
+      });
+      } catch (error) {
+        res.status(500).json({ error: error.message });
+      }
+    },
+  
 }
 

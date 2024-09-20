@@ -5,6 +5,14 @@ const featureListSchema = new mongoose.Schema(
             type: String,
             required: true,
         },
+        title:{
+            type:String,
+            required:true
+        },
+        description:{
+            type:String,
+            required:true
+        },
         active: {  
             type: Boolean,
             required: true,
@@ -17,7 +25,11 @@ const featureListSchema = new mongoose.Schema(
         icon:{
             type:String,
             required:true
-        }
+        },
+        visitorCount:{
+            type: Number,
+            default:0 
+        },
     },
     {
         timestamps: true,
