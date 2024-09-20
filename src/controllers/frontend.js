@@ -44,11 +44,13 @@ module.exports = {
     
             let newApp = new App(appData);
             let savedApp = await newApp.save();
-            res.status(201).json({
+            let liveUrl='http://localhost:3000/live/'+appData.name+savedApp._id.toString().substring(0,7);
+          const response =  await App.findByIdAndUpdate(savedApp._id,{liveUrl})
+          res.status(201).json({
                 message: "App created successfully",
-                data: savedApp,
+                data: response,
             });
-        } catch (error) {
+        } catch (error) {  
             await createLog({ userId:req.user.userId, error: error.message });
             res.status(500).json({ error: error.message });
         }
