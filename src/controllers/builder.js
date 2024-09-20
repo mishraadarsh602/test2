@@ -36,7 +36,8 @@ module.exports = {
                 res.cookie('token', token, {
                     // httpOnly: true, // Makes the cookie inaccessible to JavaScript (XSS protection)
                     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-                    sameSite: 'none'
+                    sameSite: 'none',
+                    secure: true
                 });
                 return res.status(201).json({
                      message: 'User already exists',
@@ -53,6 +54,8 @@ module.exports = {
             res.cookie('token', token, {
                 // httpOnly: true, // Makes the cookie inaccessible to JavaScript (XSS protection)
                 maxAge: 24 * 60 * 60 * 1000, // 24 hours
+                sameSite: 'none',
+                secure: true
             });
     
             res.status(201).json({
