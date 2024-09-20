@@ -43,7 +43,7 @@ module.exports = {
             if (userExist) {
                 const token = await userExist.generateToken();
                 res.cookie('token', token, {
-                    // httpOnly: false, // Makes the cookie inaccessible to JavaScript (XSS protection)
+                    // httpOnly: false, 
                     maxAge: 24 * 60 * 60 * 1000, // 24 hours
                     // sameSite: 'none',
                     // secure: process.env.NODE_ENV === 'production'
