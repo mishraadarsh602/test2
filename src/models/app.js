@@ -57,33 +57,6 @@ const appSchema = new mongoose.Schema({
             default: '#FFFFFF'
         }
     },
-    domain: {
-        type: { 
-            type: String,
-            default: '' 
-        },
-        default: { 
-            type: String,
-            default: '' 
-        },
-        trim: { 
-            type: Boolean,
-            default: true
-        }
-    },
-    useBrandDetail: {
-        type: Boolean,
-        default: true 
-    },
-    brand_detail: {
-        fonts: { type: Array, default: [] },
-        colors: { type: Array, default: [] },
-        logo: { type: String, default: '' },
-        favicon: { type: String, default: '' },
-        title: { type: String, default: '' },
-        description: { type: String, default: '' },
-        topImages: { type: Array, default: [] }
-    },
     leadForm: {
         enabled: {
             type: Boolean,
