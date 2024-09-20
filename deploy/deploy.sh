@@ -35,7 +35,7 @@ echo "ALL_SERVERS ${ALL_SERVERS}"
 for server in "${ALL_SERVERS[@]}"
 do
   echo "deploying to ${server}"
-  ssh ec2-user@${server} 'bash -s' < ./deploy/updateAndRestart.sh
+  ssh ubuntu@${server} 'bash -s' < ./deploy/updateAndRestart.sh
 done
 
 
