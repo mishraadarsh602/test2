@@ -190,31 +190,31 @@ module.exports = {
         res.status(500).json({ error: error.message });
       }
     },
-    searchApp:async (req,res)=>{
-      try {
-        const userId = req.user ? req.user.userId : null;
-        if (!userId) {
-            return res.status(400).json({ error: 'User ID is required' });
-        }
-        const regexPattern = new RegExp(`^${req.body.name}`, 'i');
-        const results = await App.find(
-          { name: { $regex: regexPattern }, user: userId },
-          { name: 1, status: 1, visitorCount: 1, type: 1 }
-        )
-          .skip(req.body.skip)
-          .limit(req.body.limit);
+    // searchApp:async (req,res)=>{
+    //   try {
+    //     const userId = req.user ? req.user.userId : null;
+    //     if (!userId) {
+    //         return res.status(400).json({ error: 'User ID is required' });
+    //     }
+    //     const regexPattern = new RegExp(`^${req.body.name}`, 'i');
+    //     const results = await App.find(
+    //       { name: { $regex: regexPattern }, user: userId },
+    //       { name: 1, status: 1, visitorCount: 1, type: 1 }
+    //     )
+    //       .skip(req.body.skip)
+    //       .limit(req.body.limit);
 
-      const appCount=await App.count({user:new mongoose.Types.ObjectId(userId),status:'dev',  name: { $regex:regexPattern}});
-      const showMore=(req.body.skip+req.body.limit)<appCount;
-        res.status(200).json({
-          message: "All featureLists fetched successfully",
-          data: results,
-          showMore
-      });
-      } catch (error) {
-        res.status(500).json({ error: error.message });
-      }
-    },
+    //   const appCount=await App.count({user:new mongoose.Types.ObjectId(userId),status:'dev',  name: { $regex:regexPattern}});
+    //   const showMore=(req.body.skip+req.body.limit)<appCount;
+    //     res.status(200).json({
+    //       message: "All featureLists fetched successfully",
+    //       data: results,
+    //       showMore
+    //   });
+    //   } catch (error) {
+    //     res.status(500).json({ error: error.message });
+    //   }
+    // },
   
 }
 
