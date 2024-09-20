@@ -17,14 +17,14 @@ staging-build-main:
     - npm install
     # - npm run test
   only:
-    staging
+    - staging
 
 # Job 2:
 # Deploy to staging
 staging-deploy-main:
   image: ruby:latest
   only:
-    staging
+    - staging
   stage: deploy
   script:
     - bash deploy/deploy.sh
