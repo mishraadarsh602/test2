@@ -330,7 +330,7 @@ module.exports = {
             //find data from buildercompany where company id is company._id
             let brandDetail = await BuilderCompany.findOne({ company: company._id });
             if (!brandDetail) {
-                return res.status(404).json({ error: 'Brand Detail not found' });
+                return res.status(200).json({ message: 'No Brand Found' });
             }
 
             

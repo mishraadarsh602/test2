@@ -63,7 +63,8 @@ module.exports = {
                 }
                 if(brandType==="file"){
                     let logo  = url;
-                    brandGuideResult = await brandGuideController.extractColorsLogos(logo);
+                   let extractedColors = await brandGuideController.extractColorsLogos(logo);
+                   brandGuideResult = {...brandGuideResult,colors:extractedColors,logo:logo};
                 }
                 console.log("brandGuideResult: ", brandGuideResult);
                 if(brandGuideResult && brandGuideResult.colors && brandGuideResult.colors.length>0){
