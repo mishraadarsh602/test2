@@ -74,6 +74,11 @@ module.exports = {
                     },
                   },
                   {
+                    $sort:{
+                        createdAt:-1
+                    }
+                  },
+                  {
                     $project: {
                       name: 1,
                       status: 1,
@@ -144,9 +149,6 @@ module.exports = {
 
             {
               $limit:req.body.limit
-            },
-            {
-              $sort: { _id: -1 },
             },
           ]);
     
