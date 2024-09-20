@@ -7,5 +7,5 @@ router.get("/", async (req, res) => {
 });
 
 router.post('/gen_visitor', auth,liveController.generateVisitor);
-router.get('/getLivePreview/:appId', auth,liveController.getLivePreview);
+router.post('/getLivePreview', auth,liveController.getLivePreview);
 module.exports = router;
