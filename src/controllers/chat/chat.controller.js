@@ -374,10 +374,13 @@ const memoryBasedChatOutput = async (childPrompt, messages, humanInput, appId, g
 
   let msg = {content: ''};
 
-  if(generateCode){
+  if (generateCode) {
     msg = await withMessageHistory.invoke(
       {
-        input: "This is user input : " + humanInput + "for this user input, you need to generate one message for the user about changes and updations in plain English for code which you have just generate before one step.",
+        input:
+          "Given the user input: '" +
+          humanInput +
+          "', generate a clear and concise message summarizing the changes and updates made to the code in the previous step. Ensure the explanation is simple and easy to understand in plain English in 4-5 lines only.",
       },
       config
     );
