@@ -18,12 +18,12 @@ module.exports = {
                 return res.status(400).json({ error: 'User ID is required' });
             }
             const LiveApp=await App.findOne({parentApp:req.body.parentId,status:'live'})
-            const visitorCreated=new appVisitorModel({appId:LiveApp._id,parentId:LiveApp.parentApp,
+            const visitorCreated=new appVisitorModel({appId:LiveApp._id,parentApp:LiveApp.parentApp,
                 ...req.body,
-                userId:userId  
+                user:userId  
              });
             await visitorCreated.save();
-            const visitorCount= await appVisitorModel.count({parentId:LiveApp.parentApp});
+            const visitorCount= await appVisitorModel.count({parentApp:LiveApp.parentApp});
             await appModel.findByIdAndUpdate(req.body.parentId,{visitorCount});
            return res.status(200).status({
             message:'Visits updated successfully',

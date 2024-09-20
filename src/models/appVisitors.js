@@ -7,12 +7,12 @@ const appVisitorSchema = new mongoose.Schema(
              ref: "App",
             required: true,
         },
-        parentId: {  // // refer to parentAppId with status=> dev
+        parentApp: {  // // refer to parentAppId with status=> dev
             type: mongoose.Schema.ObjectId,
             ref: "App" ,
             required: true,
         },
-        userId:{
+        user:{
             type: mongoose.Schema.ObjectId,
             ref:'user',
             required:true

@@ -232,7 +232,8 @@ module.exports = {
 
     fetchVisitors:async (req,res)=>{
         try {
-           const allVisitors=await appVisitorsModel.find({parentId: (req.params.appId),deleted:false},{browser:1,updatedAt:1,createdAt:1,device:1,})      
+            const userId = req.user ? req.user.userId : null;
+           const allVisitors=await appVisitorsModel.find({parentApp: (req.params.appId),user:userId,deleted:false},{browser:1,updatedAt:1,createdAt:1,device:1,})      
             res.status(201).json({
                 message: "fetch visitors successfully",
                 data: allVisitors,
@@ -276,6 +277,51 @@ module.exports = {
               });
         } catch (error) {
             
+        }
+    },
+    getOverViewDetails:async (req,res)=>{
+        try {
+            const appId=req.params.appId;
+            
+            const userId = req.user ? req.user.userId : null;
+            const visitorCounts = await appVisitorsModel.aggregate(
+                [
+                {
+                    $match: {
+                        deleted: false ,
+                        parentApp:new mongoose.Types.ObjectId(appId),
+                        user:new mongoose.Types.ObjectId(userId)
+                    }
+                },
+                {
+                    $group: {
+                        _id: {
+                            $dateToString: { format: "%Y-%m-%d", date: "$createdAt" }  
+                        },
+                        count: { $sum: 1 }  
+                    }
+                },
+                {
+                    $sort: { _id: 1 }  
+                },
+                {
+                    $project: {
+                        _id: 0,         
+                        date: "$_id",    
+                        count: 1         
+                    }
+                }
+            ]
+        
+        );
+            res.status(201).json({
+                message: "fetch overview successfully",
+                data: visitorCounts,
+              });
+
+        } catch (error) {
+                // console.log('erorr is ----> ',error);
+                
         }
     }
 

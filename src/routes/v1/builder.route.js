@@ -19,6 +19,7 @@ router.get('/get_all_apps',auth, builderController.getAllAppsOfUser);
 router.get('/check_unique_app_name/:name/:appId', builderController.checkUniqueApp);
 router.post('/liveApp',auth, builderController.liveApp);
 router.get('/visitor/:appId',auth, builderController.fetchVisitors);
+router.get('/getOverView/:appId',auth,builderController.getOverViewDetails)
 router.post('/visitor/delete',auth, builderController.deleteVisitors);
 router.get('/getPreviewApp/:appId', auth,builderController.getPreviewApp);
 module.exports = router;
