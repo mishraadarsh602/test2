@@ -304,7 +304,7 @@ module.exports = {
             }
             let company = await Company.findOne({ user_id: userId });
             if (!company) {
-                return res.status(404).json({ error: 'Company not found' });
+                return res.status(403).json({ error: 'Company not found' });
             }
             res.status(200).json({
                 message: "Company fetched successfully",
@@ -324,7 +324,7 @@ module.exports = {
             }
             let company = await Company.findOne({ user_id: userId });
             if (!company) {
-                return res.status(404).json({ error: 'Company not found' });
+                return res.status(403).json({ error: 'Company not found' });
             }
             // let brandDetail = company.userCustomBrandDetail;
             //find data from buildercompany where company id is company._id
