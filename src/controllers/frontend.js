@@ -49,7 +49,7 @@ module.exports = {
       // appData['thread_id'] = thread.id;
       appData['thread_id'] = 'thread_fS0zR54kRicI2cke6Wl1tIjW';
 
-      if (agent_type !== 'AI_Tool') {
+      if (appData.agent_type !== 'AI_Tool') {
         let feature = await featureListModel.findOne({ type: appData['agent_type'] }, { componentCode: 1 });
         appData['componentCode'] = feature.componentCode;
       }
