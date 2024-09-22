@@ -24,7 +24,7 @@ const SessionSchema = new mongoose.Schema(
     timeSpent: { type: Number },
     sessionId: { type: String },
     conversationId: { type: String },
-    agentId: { type: String },
+    agentId: { type: mongoose.Schema.ObjectId, ref: "App" },
     date: { type: Date },
     messages: [messageSchema],
   },
