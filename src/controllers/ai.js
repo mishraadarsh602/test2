@@ -81,11 +81,14 @@ module.exports = {
     try {
       const assistant = await openai.beta.assistants.create({
         name: "AI Assistant",
+        description: `An AI Assistant which is reponsible for React tsx and tailwind based code generation.`,
         instructions: `You are a decision-maker. I want to build a tool. Based on my input, you will decide whether the context requires some APIs to perform actions or if it's a general AI-based requirement that doesn’t require any APIs or just a general text. 
         If APIs are required return: \n'ToolTYPE': 'APIBASED'\n If the requirement is general AI-based and does not require APIs, return: \n'ToolTYPE': 'AIBASED'.\nIf it is general or random text, return:\n'ToolTYPE':'GENERALTEXT'.
         Your response should follow this JSON structure: {\"ToolTYPE\": \"\"}`,
-        response_format: { type: "json_object" },
-        model: "gpt-4o-mini"
+        tools: [{ type: "code_interpreter" },{ type: "file_search" }],
+        model: "gpt-4o-mini",
+        temperature: 0.1,
+        top_p: 0.9
       });
       console.log("assistant", assistant);
       res.status(200).json({

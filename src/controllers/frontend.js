@@ -48,8 +48,10 @@ module.exports = {
       const thread = await openai.beta.threads.create();
       appData['thread_id'] = thread.id;
 
-      let feature = await featureListModel.findOne({ type: appData['agent_type'] }, { componentCode: 1 });
-      appData['componentCode'] = feature.componentCode;
+      if (agent_type !== 'AI_Tool') {
+        let feature = await featureListModel.findOne({ type: appData['agent_type'] }, { componentCode: 1 });
+        appData['componentCode'] = feature.componentCode;
+      }
 
       let newApp = new App(appData);
       let savedApp = await newApp.save();
