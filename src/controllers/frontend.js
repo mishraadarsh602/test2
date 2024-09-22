@@ -44,12 +44,13 @@ module.exports = {
       }
       appData['user'] = new mongoose.Types.ObjectId(userId); // Use new keyword
 
-      const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY });
-      const thread = await openai.beta.threads.create();
-      appData['thread_id'] = thread.id;
+      // const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY });
+      // const thread = await openai.beta.threads.create();
+      // appData['thread_id'] = thread.id;
+      appData['thread_id'] = '';
 
-      let feature = await featureListModel.findOne({ type: appData['agent_type'] }, { componentCode: 1 });
-      appData['componentCode'] = feature.componentCode;
+      // let feature = await featureListModel.findOne({ type: appData['agent_type'] }, { componentCode: 1 });
+      // appData['componentCode'] = feature.componentCode;
 
       let newApp = new App(appData);
       let savedApp = await newApp.save();
