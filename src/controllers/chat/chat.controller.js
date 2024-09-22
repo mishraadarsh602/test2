@@ -118,23 +118,8 @@ const fetchPreviousChat = async (userId, agentId) => {
 async function determineApi(userPrompt, apis) {
   const tools = apis.map(api => ({
     name: api.key,
-    description: `Use this API for ${api.purpose} functionality.`,
-    input_schema: {
-      type: "object",
-      properties: {
-        key: {
-          type: "string",
-          description: `The API key for ${api.key}.`
-        },
-        purpose: {
-          type: "string",
-          description: `The API purpose is ${api.purpose}.`
-        }
-      },
-      required: ["key", "purpose"]
-    }
-  }));
-  
+    description: api.purpose // Keep the description concise
+  }));  
 
   try {
     let prompt =`You are a decision-maker. Based on my input return one of the most relevant API only, without any extra content: 
@@ -169,6 +154,8 @@ async function determineApi(userPrompt, apis) {
 
 const startLLMChat = async (userId, userMessage, appId, isStartChat) => {
   try {
+    console.log("-------------------------------------------------------New----------------------------------------------")
+
     const prompts = await systemPromptSession.findOne({});
     let parentPrompt = prompts?.parentPrompt;
     let getAllAPIs = await Api.find({}, 'key purpose').lean();
@@ -389,6 +376,142 @@ const memoryBasedChatOutput = async (childPrompt, messages, humanInput, appId, g
   return {code: code.content, msg: msg.content};
 }
 
+const continueChatSessionMessages = async (
+  userId,
+  humanInput,
+  appId
+) => {
+
+  console.log("-------------------------------------------------------Continue ----------------------------------------------")
+
+  let reactCode = `
+  function WeatherApp() {
+    const [weather, setWeather] = React.useState(null);
+    const [loading, setLoading] = React.useState(true);
+    const [error, setError] = React.useState(null);
+
+    React.useEffect(() => {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          fetch(\`https://api.weatherapi.com/v1/current.json?key=323e6c0135f941f7a0b95629242808&q=\${latitude},\${longitude}\`)
+            .then(response => response.json())
+            .then(data => {
+              setWeather(data);
+              setLoading(false);
+            })
+            .catch(err => {
+              setError('Failed to fetch weather data');
+              setLoading(false);
+            });
+        },
+        () => {
+          setError('Unable to retrieve your location');
+          setLoading(false);
+        }
+      );
+    }, []);
+
+    if (loading) return React.createElement('div', { className: 'flex justify-center items-center h-screen' }, 'Loading...');
+    if (error) return React.createElement('div', { className: 'text-red-500 text-center' }, error);
+
+    return React.createElement('div', { className: 'flex flex-col items-center justify-center min-h-screen bg-gradient-to-r from-blue-400 to-blue-600 p-4' },
+      React.createElement('div', { className: 'bg-white rounded-lg shadow-xl p-6 max-w-sm w-full' },
+        React.createElement('h1', { className: 'text-2xl font-bold mb-4 text-center' }, weather.location.name),
+        React.createElement('div', { className: 'flex items-center justify-center mb-4' },
+          React.createElement('img', { src: weather.current.condition.icon, alt: weather.current.condition.text, className: 'w-16 h-16 mr-4' }),
+          React.createElement('span', { className: 'text-5xl font-bold' }, \`\${weather.current.temp_c}°C\`)
+        ),
+        React.createElement('p', { className: 'text-center text-gray-700 mb-4' }, weather.current.condition.text),
+        React.createElement('div', { className: 'grid grid-cols-2 gap-4 text-sm' },
+          React.createElement('div', { className: 'flex items-center' },
+            React.createElement(Wind, { className: 'w-4 h-4 mr-2' }),
+            \`\${weather.current.wind_kph} km/h\`
+          ),
+          React.createElement('div', { className: 'flex items-center' },
+            React.createElement(Droplets, { className: 'w-4 h-4 mr-2' }),
+            \`\${weather.current.humidity}%\`
+          ),
+          React.createElement('div', { className: 'flex items-center' },
+            React.createElement(Thermometer, { className: 'w-4 h-4 mr-2' }),
+            \`Feels like \${weather.current.feelslike_c}°C\`
+          ),
+          React.createElement('div', { className: 'flex items-center' },
+            React.createElement(Sun, { className: 'w-4 h-4 mr-2' }),
+            \`UV \${weather.current.uv}\`
+          )
+        )
+      )
+    );
+  }
+
+  return WeatherApp;
+`;
+  let obj = {};
+  let messages = [];
+  let childPrompt = "";
+  const ongoingSession = await chatSession.findOne({
+    userId: userId,
+    agentId: appId,
+  });
+
+  if (!ongoingSession) {
+    return [];
+  }
+
+// Loop through the session messages and add the system message first if it exists
+for (let i = 0; i < ongoingSession.messages.length; i++) {
+  let message = ongoingSession.messages[i];
+  
+  if (message.role === "system") {
+    // Ensure system message is only added as the first message
+    if (messages.length === 0) {
+      // messages.push(new SystemMessage({ content: message.content }));
+      childPrompt = message.content; // Storing the system message content in childPrompt
+    } else {
+      console.error("System message is not allowed after the first message.");
+    }
+  } else if (message.role === "user") {
+    messages.push(new HumanMessage({ content: message.content }));
+  } else if (message.role === "bot") {
+    messages.push(new AIMessage({ content: message.content }));
+  }
+}
+
+
+  if (childPrompt.includes("{API_Output}")) {
+    childPrompt = childPrompt.replace("{userInput}", humanInput);
+    let getAllAPIs = await Api.find({}, "key purpose").lean();
+    const apiKey = await determineApi(humanInput, getAllAPIs);
+    let apiOutput = await Api.find({ key: apiKey });
+    childPrompt = childPrompt.replace("{API_Output}", apiOutput.output);
+  }
+  childPrompt = childPrompt.replace("{reactCode}", reactCode);
+
+  const { code, msg } = await memoryBasedChatOutput(
+    childPrompt,
+    messages,
+    humanInput,
+    appId,
+    true
+  );
+
+  obj = {
+    code: code.trim(),
+    type: "AIBASED",
+    message: msg,
+  };
+
+  
+  if (obj.code) {
+    const app = await App.findOne({ _id: appId });
+    app.componentCode = obj.code;
+    await app.save();
+  }
+
+  return obj;
+};
+
 const updateAIMessageToChatSession = async (userId, agentId, code, message) => {
   try {
     // Find the existing chat session
@@ -466,5 +589,6 @@ module.exports = {
   fetchPreviousChat,
   startLLMChat,
   updateAIMessageToChatSession,
-  updateHumanMessageToChatSession
+  updateHumanMessageToChatSession,
+  continueChatSessionMessages
 };
