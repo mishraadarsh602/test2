@@ -6,9 +6,8 @@ const connectDB = require('./src/config/db');
 const appRoutes = require("./src/routes");
 const errorHandle = require("./src/utils/errorHandle");
 const path = require('path');
-const dotenv = require('dotenv'); // Ensure dotenv is required
-// const env = process.env.NODE_ENV || 'development';
-// dotenv.config({ path: path.resolve(__dirname, `../../env/.env.${env}`) });
+const dotenv = require('dotenv');
+const cookieParser = require('cookie-parser');
 connectDB();
 const app = express();
 const server = http.createServer(app);  // Create the HTTP server
@@ -16,6 +15,7 @@ require('./src/config/socket/chatConnect')(server);
 
 app.use(express.json({ limit: "40mb" }));
 app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser()); // Ensure cookie-parser middleware is used
 
 // Middleware
 const corsOptions = {

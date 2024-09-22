@@ -3,20 +3,8 @@ const jwt = require('jsonwebtoken');
 const secretKey = process.env.JWT_SECRET_KEY;
 const auth = async (req, res, next) => {
     try {
-        const cookieHeader = req.headers.cookie;
-        console.log("req.headers",req.headers)
-        console.log("cookieHeader",cookieHeader)
-        if (!cookieHeader) return res.status(401).json({ error: 'Access Denied' });
-        const cookies = cookieHeader.split(';').reduce((acc, cookie) => {
-            const [key, value] = cookie.trim().split('=');
-            acc[key] = value;
-            return acc;
-        }, {});
-        let token = cookies.token;
-        if (token) {
-            token = token.replace(/\s+/g, ''); // Remove all whitespace characters
-        }
-        console.log("token",token)
+     
+        const token = req.cookies.token;
         if(!token) return res.status(401).json({ error: 'Access Denied' });
         const verified = jwt.verify(token, secretKey);
         req.user = verified;
