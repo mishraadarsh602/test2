@@ -11,6 +11,8 @@ const CryptoJS = require("crypto-js");
 const userService = new UserService();
 const dashboardHelper = require('../helpers/dashboard');
 const companyHelper = require('../helpers/company');
+const { OpenAI } = require("openai");
+
 async function createLog(data) {
     try {
         let logCreated = new builderLogsModel(data);
@@ -101,31 +103,6 @@ module.exports = {
                 res.status(500).json({ error: error.message });
             }
         },
-
-    createApp: async (req, res) => {
-        try {
-            let appData = req.body;
-            appData['appUUID'] = uuidv4();
-            if(appData.agent.type=='weather'){
-                appData.name = 'Weather Forecast-' + appData['appUUID'].substring(0,7);
-                }
-                const userId = req.user ? req.user.userId : null;
-                if (!userId) {
-                    return res.status(400).json({ error: 'User ID is required' });
-                }
-            // appData['user'] = userId;   
-            appData['user'] = mongoose.Types.ObjectId(userId); // Convert userId to ObjectId
- 
-            let newApp = new App(appData);           
-            let savedApp = await newApp.save();
-            res.status(201).json({
-                message: "App created successfully",
-                data: savedApp,
-              });
-        } catch (error) {
-            res.status(500).json({ error: error.message });
-        }
-    },
 
     getAppById: async (req, res) => {     
         try {

@@ -8,20 +8,24 @@ const appSchema = new mongoose.Schema({
         required: true,
         // unique: true
     },
-    type:{
+    type: {
         type: String,
         default: 'weather'
     },
-    user:{
+    user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
     },
     appUUID: {
         type: String,
-        default:''
+        default: ''
     },
-    parentApp:{
+    thread_id: {
+        type: String,
+        default: ''
+    },
+    parentApp: {
         type: mongoose.Schema.ObjectId,
         ref: 'App'
     },
@@ -31,28 +35,27 @@ const appSchema = new mongoose.Schema({
     },
     componentCode: {
         type: String,
-        default :''
+        default: ''
     },
-    status: { 
-        type: String, 
-        enum: ['live', 'dev', 'deleted','old'], 
-        default: 'dev' 
+    status: {
+        type: String,
+        enum: ['live', 'dev', 'deleted', 'old'],
+        default: 'dev'
     },
-    agent: { },
+    agent_type: {
+        type: String,
+        default: ''
+    },
     theme: {
-        mode: {
+        primaryColor: {
             type: String,
-            default: 'dark' 
+            default: '#6366F1'
         },
-        primaryColor: { 
+        backgroundColor: {
             type: String,
-            default: '#6366F1' 
+            default: '#1F2937'
         },
-        backgroundColor: { 
-            type: String,
-            default: '#1F2937' 
-        },
-        textColor: { 
+        secondryColor: {
             type: String,
             default: '#FFFFFF'
         }
@@ -60,12 +63,12 @@ const appSchema = new mongoose.Schema({
     leadForm: {
         enabled: {
             type: Boolean,
-           default: false
+            default: false
         },
         fields: [fieldsSchema],
         thankYouMessage: {
             type: String,
-            default: "Thank you for your interest! We'll be in touch soon." 
+            default: "Thank you for your interest! We'll be in touch soon."
         },
         enableRedirect: {
             type: Boolean,
@@ -83,19 +86,19 @@ const appSchema = new mongoose.Schema({
     payments: {
         enabled: {
             type: Boolean,
-            default: false 
+            default: false
         },
         mode: {
             type: String,
-            default: 'live' 
+            default: 'live'
         },
         currency: {
             type: String,
-            default: 'USD' 
+            default: 'USD'
         },
         amount: {
             type: Number,
-            default:0.00 
+            default: 0.00
         },
         recurringBilling: {
             enabled: {
@@ -108,13 +111,13 @@ const appSchema = new mongoose.Schema({
             }
         },
         providers: [{
-            name: { 
-                type: String, 
-                default: '' 
+            name: {
+                type: String,
+                default: ''
             },
-            enabled: { 
-                type: Boolean, 
-                default: false 
+            enabled: {
+                type: Boolean,
+                default: false
             },
             config: {
                 // publicKey: { type: String, default: '' },
@@ -148,22 +151,22 @@ const appSchema = new mongoose.Schema({
             },
             companyAddress: {
                 type: String,
-               default: ''
+                default: ''
             }
         },
-       
-       
+
+
     },
-    visitorCount:{
+    visitorCount: {
         type: Number,
-        default:0 
+        default: 0
     },
-    changed:{
-        type:Boolean,
-        default:false
+    changed: {
+        type: Boolean,
+        default: false
     },
-    liveUrl:{
-        type:String,
+    liveUrl: {
+        type: String,
     }
 }, { timestamps: true });
 

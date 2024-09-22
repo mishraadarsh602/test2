@@ -137,7 +137,7 @@ async function determineApi(userPrompt, apis) {
   
 
   try {
-    let prompt =`You are a decision-maker. I want to build a tool. Based on my input, you will decide whether the context returns the most relevant API along with the response: 
+    let prompt =`You are a decision-maker. Based on my input return one of the most relevant API only, without any extra content: 
     Here is my input = ${userPrompt}`
     const response = await axios.post('https://api.anthropic.com/v1/messages', {
       model: "claude-3-5-sonnet-20240620", // Use the appropriate model
@@ -163,7 +163,7 @@ async function determineApi(userPrompt, apis) {
       console.log('NO API found');
     }
   } catch (error) {
-    console.error("Error making API call:", error.response ? error.response.data : error.message);
+    console.error("Error making determineApi call via tool:", error.response ? error.response.data : error.message);
   }
 }
 

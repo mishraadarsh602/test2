@@ -5,6 +5,8 @@ const { v4: uuidv4 } = require('uuid');
 const frontendLogsModel=require('../models/logs/logs-frontend');
 const UserService = require('../service/userService');
 const featureListModel=require('../models/featureList');
+const { OpenAI } = require("openai");
+
 const userService = new UserService();
 async function createLog(data){
     try {
@@ -16,45 +18,52 @@ async function createLog(data){
 }
 module.exports = {
 
-    getUserDetail: async (req, res) => { 
-            try {
-                let user = await User.findById(req.user.userId.toString());
-                if (!user) {
-                    return res.status(404).json({ error: 'User not found' });
-                }
-                res.status(200).json({
-                    message: "User fetched successfully",
-                    data: user,
-                  });
-            } catch (error) {
-                res.status(500).json({ error: error.message });
-            }
-        },
-    
-    createApp: async (req, res) => {
-        try {
-            let appData = req.body;
-            appData['appUUID'] = uuidv4();
-            appData.name = appData.type +'-'+ appData['appUUID'].substring(0, 7);
-            const userId = req.user ? req.user.userId : null;
-            if (!userId) {
-                return res.status(400).json({ error: 'User ID is required' });
-            }
-            appData['user'] = new mongoose.Types.ObjectId(userId); // Use new keyword
-    
-            let newApp = new App(appData);
-            let savedApp = await newApp.save();
-            let liveUrl='http://localhost:3000/live/'+appData.name+savedApp._id.toString().substring(0,7);
-          const response =  await App.findByIdAndUpdate(savedApp._id,{liveUrl})
-          res.status(201).json({
-                message: "App created successfully",
-                data: response,
-            });
-        } catch (error) {  
-            await createLog({ userId:req.user.userId, error: error.message });
-            res.status(500).json({ error: error.message });
-        }
-    },
+  getUserDetail: async (req, res) => {
+    try {
+      let user = await User.findById(req.user.userId.toString());
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      res.status(200).json({
+        message: "User fetched successfully",
+        data: user,
+      });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  createApp: async (req, res) => {
+    try {
+      let appData = req.body;
+      appData['appUUID'] = uuidv4();
+      appData.name = appData.type + '-' + appData['appUUID'].substring(0, 7);
+      const userId = req.user ? req.user.userId : null;
+      if (!userId) {
+        return res.status(400).json({ error: 'User ID is required' });
+      }
+      appData['user'] = new mongoose.Types.ObjectId(userId); // Use new keyword
+
+      const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY });
+      const thread = await openai.beta.threads.create();
+      appData['thread_id'] = thread.id;
+
+      let componentCode = await featureListModel.findOne({ type: appData['agent_type'] }, { componentCode: 1 });
+      appData['componentCode'] = componentCode;
+
+      let newApp = new App(appData);
+      let savedApp = await newApp.save();
+      let liveUrl = 'http://localhost:3000/live/' + appData.name + savedApp._id.toString().substring(0, 7);
+      const response = await App.findByIdAndUpdate(savedApp._id, { liveUrl })
+      res.status(201).json({
+        message: "App created successfully",
+        data: response,
+      });
+    } catch (error) {
+      await createLog({ userId: req.user.userId, error: error.message });
+      res.status(500).json({ error: error.message });
+    }
+  },
     getAllAppsOfUser: async (req, res) => {
         try {
             const userId = req.user ? req.user.userId : null;

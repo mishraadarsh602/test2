@@ -30,7 +30,7 @@
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
     "multer-s3": "^3.0.1",
-    "openai": "^4.57.3",
+    "openai": "^4.63.0",
     "postcss": "^8.4.47",
     "postcss-scss": "^4.0.9",
     "sharp": "^0.33.5",
