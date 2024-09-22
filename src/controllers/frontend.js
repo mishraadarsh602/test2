@@ -37,7 +37,7 @@ module.exports = {
     try {
       let appData = req.body;
       appData['appUUID'] = uuidv4();
-      appData.name = appData.type + '-' + appData['appUUID'].substring(0, 7);
+      appData.name = appData.agent_type + '-' + appData['appUUID'].substring(0, 7);
       const userId = req.user ? req.user.userId : null;
       if (!userId) {
         return res.status(400).json({ error: 'User ID is required' });
@@ -48,8 +48,8 @@ module.exports = {
       const thread = await openai.beta.threads.create();
       appData['thread_id'] = thread.id;
 
-      let componentCode = await featureListModel.findOne({ type: appData['agent_type'] }, { componentCode: 1 });
-      appData['componentCode'] = componentCode;
+      let feature = await featureListModel.findOne({ type: appData['agent_type'] }, { componentCode: 1 });
+      appData['componentCode'] = feature.componentCode;
 
       let newApp = new App(appData);
       let savedApp = await newApp.save();
