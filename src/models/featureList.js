@@ -18,6 +18,11 @@ const featureListSchema = new mongoose.Schema(
             required: true,
             default:true,
         },
+        comingSoon:{  
+            type: Boolean,
+            required: true,
+            default:true,
+        },
         componentCode:{
             type: String,
             required:true
