@@ -11,6 +11,9 @@ const { InMemoryChatMessageHistory } = require("@langchain/core/chat_history");
 const { ChatPromptTemplate } = require("@langchain/core/prompts");
 const { RunnableWithMessageHistory } = require("@langchain/core/runnables");
 const { HumanMessage, AIMessage } = require("@langchain/core/messages");
+const { OpenAI } = require("openai");
+const { default: mongoose } = require('mongoose');
+const { obj } = require('../../models/fields');
 
 const generateSessionId = () => {
   return uuidv4();  // Generates a unique UUID
@@ -25,7 +28,9 @@ const model = new ChatAnthropic({
   temperature: 0
 });
 
-const startChatSession = async (userId, agentId, message, prompt) => {
+const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY });
+
+const startChatSession = async (userId, agentId, message) => {
   try {
     const newChatSession = await chatSession.create({
       userId,
@@ -36,11 +41,6 @@ const startChatSession = async (userId, agentId, message, prompt) => {
       lastTime: new Date(),
       date: new Date(),
       messages: [
-        {
-          sno: 1,
-          role: 'system',
-          content: prompt
-        },
         {
           sno: 1,
           role: 'user',
@@ -154,26 +154,26 @@ async function determineApi(userPrompt, apis) {
 
 const startLLMChat = async (userId, userMessage, appId, isStartChat) => {
   try {
-    console.log("-------------------------------------------------------New----------------------------------------------")
+    // console.log("-------------------------------------------------------New----------------------------------------------")
+    return await aiAssistantChatStart(userId, userMessage, appId, null, true);
+    // const prompts = await systemPromptSession.findOne({});
+    // let parentPrompt = prompts?.parentPrompt;
+    // let getAllAPIs = await Api.find({}, 'key purpose').lean();
+    // parentPrompt = parentPrompt.replace("{userInput}", userMessage);
+    // parentPrompt = parentPrompt.replace("{apiList}", getAllAPIs);
+    // console.log("parentPrompt", parentPrompt);
+    // const message = await client.messages.create({
+    //   max_tokens: 1024,
+    //   messages: [{ role: "user", content: parentPrompt }],
+    //   model: "claude-3-5-sonnet-20240620",
+    // });
+    // let parentResponse = JSON.parse(message.content[0].text.trim());
+    // console.log(parentResponse);
 
-    const prompts = await systemPromptSession.findOne({});
-    let parentPrompt = prompts?.parentPrompt;
-    let getAllAPIs = await Api.find({}, 'key purpose').lean();
-    parentPrompt = parentPrompt.replace("{userInput}", userMessage);
-    parentPrompt = parentPrompt.replace("{apiList}", getAllAPIs);
-    console.log("parentPrompt", parentPrompt);
-    const message = await client.messages.create({
-      max_tokens: 1024,
-      messages: [{ role: "user", content: parentPrompt }],
-      model: "claude-3-5-sonnet-20240620",
-    });
-    let parentResponse = JSON.parse(message.content[0].text.trim());
-    console.log(parentResponse);
-
-    let waitForChildOperation = await CallingAiPrompt(parentResponse, prompts, {
-      customPrompt: userMessage,
-    }, appId, userId, isStartChat);
-    return waitForChildOperation;
+    // let waitForChildOperation = await CallingAiPrompt(parentResponse, prompts, {
+    //   customPrompt: userMessage,
+    // }, appId, userId, isStartChat);
+    // return waitForChildOperation;
   } catch (error) {
     console.error("Error starting LLM chat:", error);
     throw new Error('Failed to start LLM chat');
@@ -383,133 +383,134 @@ const continueChatSessionMessages = async (
 ) => {
 
   console.log("-------------------------------------------------------Continue ----------------------------------------------")
+  return await aiAssistantChatStart(userId, humanInput, appId, null, false);
 
-  let reactCode = `
-  function WeatherApp() {
-    const [weather, setWeather] = React.useState(null);
-    const [loading, setLoading] = React.useState(true);
-    const [error, setError] = React.useState(null);
+//   let reactCode = `
+//   function WeatherApp() {
+//     const [weather, setWeather] = React.useState(null);
+//     const [loading, setLoading] = React.useState(true);
+//     const [error, setError] = React.useState(null);
 
-    React.useEffect(() => {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          fetch(\`https://api.weatherapi.com/v1/current.json?key=323e6c0135f941f7a0b95629242808&q=\${latitude},\${longitude}\`)
-            .then(response => response.json())
-            .then(data => {
-              setWeather(data);
-              setLoading(false);
-            })
-            .catch(err => {
-              setError('Failed to fetch weather data');
-              setLoading(false);
-            });
-        },
-        () => {
-          setError('Unable to retrieve your location');
-          setLoading(false);
-        }
-      );
-    }, []);
+//     React.useEffect(() => {
+//       navigator.geolocation.getCurrentPosition(
+//         (position) => {
+//           const { latitude, longitude } = position.coords;
+//           fetch(\`https://api.weatherapi.com/v1/current.json?key=323e6c0135f941f7a0b95629242808&q=\${latitude},\${longitude}\`)
+//             .then(response => response.json())
+//             .then(data => {
+//               setWeather(data);
+//               setLoading(false);
+//             })
+//             .catch(err => {
+//               setError('Failed to fetch weather data');
+//               setLoading(false);
+//             });
+//         },
+//         () => {
+//           setError('Unable to retrieve your location');
+//           setLoading(false);
+//         }
+//       );
+//     }, []);
 
-    if (loading) return React.createElement('div', { className: 'flex justify-center items-center h-screen' }, 'Loading...');
-    if (error) return React.createElement('div', { className: 'text-red-500 text-center' }, error);
+//     if (loading) return React.createElement('div', { className: 'flex justify-center items-center h-screen' }, 'Loading...');
+//     if (error) return React.createElement('div', { className: 'text-red-500 text-center' }, error);
 
-    return React.createElement('div', { className: 'flex flex-col items-center justify-center min-h-screen bg-gradient-to-r from-blue-400 to-blue-600 p-4' },
-      React.createElement('div', { className: 'bg-white rounded-lg shadow-xl p-6 max-w-sm w-full' },
-        React.createElement('h1', { className: 'text-2xl font-bold mb-4 text-center' }, weather.location.name),
-        React.createElement('div', { className: 'flex items-center justify-center mb-4' },
-          React.createElement('img', { src: weather.current.condition.icon, alt: weather.current.condition.text, className: 'w-16 h-16 mr-4' }),
-          React.createElement('span', { className: 'text-5xl font-bold' }, \`\${weather.current.temp_c}°C\`)
-        ),
-        React.createElement('p', { className: 'text-center text-gray-700 mb-4' }, weather.current.condition.text),
-        React.createElement('div', { className: 'grid grid-cols-2 gap-4 text-sm' },
-          React.createElement('div', { className: 'flex items-center' },
-            React.createElement(Wind, { className: 'w-4 h-4 mr-2' }),
-            \`\${weather.current.wind_kph} km/h\`
-          ),
-          React.createElement('div', { className: 'flex items-center' },
-            React.createElement(Droplets, { className: 'w-4 h-4 mr-2' }),
-            \`\${weather.current.humidity}%\`
-          ),
-          React.createElement('div', { className: 'flex items-center' },
-            React.createElement(Thermometer, { className: 'w-4 h-4 mr-2' }),
-            \`Feels like \${weather.current.feelslike_c}°C\`
-          ),
-          React.createElement('div', { className: 'flex items-center' },
-            React.createElement(Sun, { className: 'w-4 h-4 mr-2' }),
-            \`UV \${weather.current.uv}\`
-          )
-        )
-      )
-    );
-  }
+//     return React.createElement('div', { className: 'flex flex-col items-center justify-center min-h-screen bg-gradient-to-r from-blue-400 to-blue-600 p-4' },
+//       React.createElement('div', { className: 'bg-white rounded-lg shadow-xl p-6 max-w-sm w-full' },
+//         React.createElement('h1', { className: 'text-2xl font-bold mb-4 text-center' }, weather.location.name),
+//         React.createElement('div', { className: 'flex items-center justify-center mb-4' },
+//           React.createElement('img', { src: weather.current.condition.icon, alt: weather.current.condition.text, className: 'w-16 h-16 mr-4' }),
+//           React.createElement('span', { className: 'text-5xl font-bold' }, \`\${weather.current.temp_c}°C\`)
+//         ),
+//         React.createElement('p', { className: 'text-center text-gray-700 mb-4' }, weather.current.condition.text),
+//         React.createElement('div', { className: 'grid grid-cols-2 gap-4 text-sm' },
+//           React.createElement('div', { className: 'flex items-center' },
+//             React.createElement(Wind, { className: 'w-4 h-4 mr-2' }),
+//             \`\${weather.current.wind_kph} km/h\`
+//           ),
+//           React.createElement('div', { className: 'flex items-center' },
+//             React.createElement(Droplets, { className: 'w-4 h-4 mr-2' }),
+//             \`\${weather.current.humidity}%\`
+//           ),
+//           React.createElement('div', { className: 'flex items-center' },
+//             React.createElement(Thermometer, { className: 'w-4 h-4 mr-2' }),
+//             \`Feels like \${weather.current.feelslike_c}°C\`
+//           ),
+//           React.createElement('div', { className: 'flex items-center' },
+//             React.createElement(Sun, { className: 'w-4 h-4 mr-2' }),
+//             \`UV \${weather.current.uv}\`
+//           )
+//         )
+//       )
+//     );
+//   }
 
-  return WeatherApp;
-`;
-  let obj = {};
-  let messages = [];
-  let childPrompt = "";
-  const ongoingSession = await chatSession.findOne({
-    userId: userId,
-    agentId: appId,
-  });
+//   return WeatherApp;
+// `;
+//   let obj = {};
+//   let messages = [];
+//   let childPrompt = "";
+//   const ongoingSession = await chatSession.findOne({
+//     userId: userId,
+//     agentId: appId,
+//   });
 
-  if (!ongoingSession) {
-    return [];
-  }
+//   if (!ongoingSession) {
+//     return [];
+//   }
 
-// Loop through the session messages and add the system message first if it exists
-for (let i = 0; i < ongoingSession.messages.length; i++) {
-  let message = ongoingSession.messages[i];
+// // Loop through the session messages and add the system message first if it exists
+// for (let i = 0; i < ongoingSession.messages.length; i++) {
+//   let message = ongoingSession.messages[i];
   
-  if (message.role === "system") {
-    // Ensure system message is only added as the first message
-    if (messages.length === 0) {
-      // messages.push(new SystemMessage({ content: message.content }));
-      childPrompt = message.content; // Storing the system message content in childPrompt
-    } else {
-      console.error("System message is not allowed after the first message.");
-    }
-  } else if (message.role === "user") {
-    messages.push(new HumanMessage({ content: message.content }));
-  } else if (message.role === "bot") {
-    messages.push(new AIMessage({ content: message.content }));
-  }
-}
+//   if (message.role === "system") {
+//     // Ensure system message is only added as the first message
+//     if (messages.length === 0) {
+//       // messages.push(new SystemMessage({ content: message.content }));
+//       childPrompt = message.content; // Storing the system message content in childPrompt
+//     } else {
+//       console.error("System message is not allowed after the first message.");
+//     }
+//   } else if (message.role === "user") {
+//     messages.push(new HumanMessage({ content: message.content }));
+//   } else if (message.role === "bot") {
+//     messages.push(new AIMessage({ content: message.content }));
+//   }
+// }
 
 
-  if (childPrompt.includes("{API_Output}")) {
-    childPrompt = childPrompt.replace("{userInput}", humanInput);
-    let getAllAPIs = await Api.find({}, "key purpose").lean();
-    const apiKey = await determineApi(humanInput, getAllAPIs);
-    let apiOutput = await Api.find({ key: apiKey });
-    childPrompt = childPrompt.replace("{API_Output}", apiOutput.output);
-  }
-  childPrompt = childPrompt.replace("{reactCode}", reactCode);
+//   if (childPrompt.includes("{API_Output}")) {
+//     childPrompt = childPrompt.replace("{userInput}", humanInput);
+//     let getAllAPIs = await Api.find({}, "key purpose").lean();
+//     const apiKey = await determineApi(humanInput, getAllAPIs);
+//     let apiOutput = await Api.find({ key: apiKey });
+//     childPrompt = childPrompt.replace("{API_Output}", apiOutput.output);
+//   }
+//   childPrompt = childPrompt.replace("{reactCode}", reactCode);
 
-  const { code, msg } = await memoryBasedChatOutput(
-    childPrompt,
-    messages,
-    humanInput,
-    appId,
-    true
-  );
+//   const { code, msg } = await memoryBasedChatOutput(
+//     childPrompt,
+//     messages,
+//     humanInput,
+//     appId,
+//     true
+//   );
 
-  obj = {
-    code: code.trim(),
-    type: "AIBASED",
-    message: msg,
-  };
+//   obj = {
+//     code: code.trim(),
+//     type: "AIBASED",
+//     message: msg,
+//   };
 
   
-  if (obj.code) {
-    const app = await App.findOne({ _id: appId });
-    app.componentCode = obj.code;
-    await app.save();
-  }
+//   if (obj.code) {
+//     const app = await App.findOne({ _id: appId });
+//     app.componentCode = obj.code;
+//     await app.save();
+//   }
 
-  return obj;
+  // return obj;
 };
 
 const updateAIMessageToChatSession = async (userId, agentId, code, message) => {
@@ -583,6 +584,178 @@ const updateHumanMessageToChatSession = async (userId, agentId, message) => {
   }
 };
 
+const addMessageToThread = async (threadId, messageText) => {
+  try {
+    const message = await openai.beta.threads.messages.create(
+      threadId,
+      {
+        role: "user",
+        content: messageText
+      }
+    );
+
+    console.log('Message Added:', message);
+    return message.data;
+  } catch (error) {
+    console.error('Error adding message to thread:', error);
+  }
+};
+
+const addImageToThread = async (threadId, imagePath) => {
+  try {
+    // Read the image file
+    const imageFile = fs.createReadStream(path.resolve(imagePath));
+
+    // Upload the image file and add it to the conversation
+    const response = await openai.beta.threads.messages.create(
+      threadId,
+      {
+        role: "user",
+        content: imageFile
+      }
+    );
+    console.log('Image Added:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error adding image to thread:', error);
+  }
+};
+
+const streamingWithFunctions = async (threadId) => {
+  const tools = [
+    {
+      type: "function",
+      function: {
+        name: "get_current_weather",
+        description: "Get the current weather in a given location",
+        parameters: {
+          type: "object",
+          properties: {
+            location: {
+              type: "string",
+              description: "The city and state, e.g. San Francisco, CA",
+            },
+            unit: { type: "string", enum: ["celsius", "fahrenheit"] },
+          },
+          required: ["location"],
+        },
+      },
+    },
+  ];
+  const stream = await openai.beta.threads.runs.create(threadId, {
+    assistant_id: process.env.ASSISTANT_ID,
+    tools: tools,
+    stream: true,
+  });
+
+  for await (const event of stream) {
+    console.log(event);
+  }
+};
+
+const aiAssistantChatStart = async (userId, userMessage, appId, imagePath=null, isStartChat) => {
+  // Fetch the thread ID using the appId and userId
+  const app = await App.findOne({ _id: new mongoose.Types.ObjectId(appId), user: new mongoose.Types.ObjectId(userId) });
+
+  if (!app) {
+    throw new Error("App or user not found");
+  }
+
+  const thread_id = app.thread_id;
+
+  // If imagePath is provided, add an image to the thread
+  if (imagePath) {
+    const imageResponse = await addImageToThread(thread_id, imagePath);
+    if (imageResponse) {
+      console.log("Image sent successfully");
+    }
+  }
+
+  // Add user message to thread
+  const messageResponse = await addMessageToThread(thread_id, userMessage);
+  if (messageResponse) {
+    console.log("Message sent successfully");
+  }
+
+  try {
+    let chatResponse = ``;
+    let obj  = {message: '', code: ''};
+    let isInsideCodeBlock = false;
+    let codeBlockBuffer = '';
+    
+    const run = await openai.beta.threads.runs.stream(
+      thread_id,
+      { assistant_id: process.env.ASSISTANT_ID }
+    )
+      .on('textDelta', (textDelta, snapshot) => {
+        chatResponse += textDelta.value;
+        process.stdout.write(textDelta.value);
+       
+        // Split the incoming text into parts to process
+        const parts = textDelta.value.split('```');
+
+        parts.forEach((part, index) => {
+            if (isInsideCodeBlock) {
+                // We're inside a code block, so this part could either complete it or be more code
+                if (index % 2 !== 0) {
+                    // Odd index means we are inside a code block (since we split by '```')
+                    codeBlockBuffer += part;
+                }
+            } else {
+                // Not inside a code block, process regular text
+                if (index % 2 === 0) {
+                    // Even index means this is a non-code text
+                    obj.message += part;
+                } else {
+                    // Start of a new code block
+                    console.log("Code block started:");
+                    codeBlockBuffer = part; // Begin buffering the code
+                    isInsideCodeBlock = true; // Mark that we're inside a code block
+                }
+            }
+        });
+      })
+      .on('textCreated', (text) => {
+        console.log(`textCreated${JSON.stringify(text)}`);
+      })
+      .on('toolCallCreated', (toolCall) => {
+        console.log(`\nassistant > Tool invoked: ${toolCall.type}\n`);
+      })
+
+    const finalFunctionCall = await run.finalMessages();
+    console.log('Run end:', finalFunctionCall, chatResponse);
+
+    // Use regex to extract everything between the triple backticks ```
+    const codeBlockRegex = /```(?:\w+)?\n([\s\S]*?)\n```/g;
+    let match;
+
+    if((match = codeBlockRegex.exec(chatResponse)) !== null) {
+        const extractedCode = match[1];
+        console.log("Extracted code:", extractedCode);
+        // Add the extracted code (remove tsx if needed)
+        obj.code += extractedCode.replace(/tsx/g, '');
+        process.stdout.write(obj.code);
+    }
+
+    if(isStartChat){
+      startChatSession(userId, appId, userMessage)
+    }
+
+    if (obj.code) {
+      const app = await App.findOne({ _id: appId });
+      app.componentCode = obj.code;
+      await app.save();
+    }
+  
+    return obj;
+    // return run;
+  } catch (error) {
+    console.error('Error running assistant:', error);
+    return {message: 'The server had an error processing your request. Sorry about that! You can retry your request.', code: ''};
+  }
+
+}
+
 module.exports = {
   startChatSession,
   continueChatSession,
@@ -590,5 +763,6 @@ module.exports = {
   startLLMChat,
   updateAIMessageToChatSession,
   updateHumanMessageToChatSession,
-  continueChatSessionMessages
+  continueChatSessionMessages,
+  aiAssistantChatStart
 };
