@@ -44,15 +44,7 @@ module.exports = {
       }
       appData['user'] = new mongoose.Types.ObjectId(userId); // Use new keyword
 
-      if (process.env.OPEN_AI_KEY) {
-        try {
-          const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY });
-          const thread = await openai.beta.threads.create();
-          appData['thread_id'] = thread.id;
-        } catch (error) {
-          console.log('Thred Creation Error:', error)
-        }
-      }
+      appData['thread_id'] = await createThread();
 
       if (appData.agent_type !== 'AI_Tool') {
         let feature = await featureListModel.findOne({ type: appData['agent_type'] }, { componentCode: 1 });
@@ -237,5 +229,18 @@ module.exports = {
     //   }
     // },
   
+}
+
+async function createThread() {
+  if (process.env.OPENAI_API_KEY) {
+    try {
+      const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY });
+      const thread = await openai.beta.threads.create();
+      return thread.id;
+    } catch (error) {
+      console.log('Thred Creation Error:', error)
+      return '';
+    }
+  }
 }
 
