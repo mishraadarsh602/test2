@@ -73,11 +73,11 @@ module.exports = (server) => {
       if (messages.length > 0) {
         for (let i = 0; i < messages.length; i++) {
           if (i % 2 !== 0) {
-            msg.push({ text: messages[i].content, sender: "bot" });
+            msg.push({ text: messages[i].content, code: messages[i].code, sender: "bot" });
           } else {
             msg.push({
               text: messages[i].content,
-              code: messages[i].code,
+              // code: messages[i].code,
               sender: "user",
             });
           }
