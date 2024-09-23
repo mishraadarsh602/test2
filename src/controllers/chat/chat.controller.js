@@ -13,7 +13,6 @@ const { RunnableWithMessageHistory } = require("@langchain/core/runnables");
 const { HumanMessage, AIMessage } = require("@langchain/core/messages");
 const { OpenAI } = require("openai");
 const { default: mongoose } = require('mongoose');
-const { obj } = require('../../models/fields');
 
 const generateSessionId = () => {
   return uuidv4();  // Generates a unique UUID
@@ -33,8 +32,8 @@ const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY });
 const startChatSession = async (userId, agentId, message) => {
   try {
     const newChatSession = await chatSession.create({
-      userId,
-      agentId,
+      agentId: new mongoose.Types.ObjectId(agentId), 
+      userId: new mongoose.Types.ObjectId(userId),
       sessionId: generateSessionId(), // Create a unique sessionId
       conversationId: generateSessionId(), // Create a unique sessionId
       startTime: new Date(),
@@ -517,7 +516,7 @@ const updateAIMessageToChatSession = async (userId, agentId, code, message) => {
   try {
     // Find the existing chat session
     const oldChatSession = await chatSession
-      .findOne({ userId, agentId })
+      .findOne({ agentId: new mongoose.Types.ObjectId(agentId), userId: new mongoose.Types.ObjectId(userId) })
       .lean();
 
     // Ensure oldChatSession exists before proceeding
@@ -527,13 +526,13 @@ const updateAIMessageToChatSession = async (userId, agentId, code, message) => {
 
     // Push a new message to the existing chat session's messages array
     const newChatSession = await chatSession.updateOne(
-      { userId, agentId },
+      { agentId: new mongoose.Types.ObjectId(agentId), userId: new mongoose.Types.ObjectId(userId) },
       {
         $set: { lastTime: new Date() },
         $push: {
           messages: {
             sno: oldChatSession.messages.length + 1,
-            role: 'ai',
+            role: 'assistant',
             content: message,
             code: code
           },
@@ -553,7 +552,7 @@ const updateHumanMessageToChatSession = async (userId, agentId, message) => {
   try {
     // Find the existing chat session
     const oldChatSession = await chatSession
-      .findOne({ userId, agentId })
+      .findOne({ agentId: new mongoose.Types.ObjectId(agentId), userId: new mongoose.Types.ObjectId(userId) })
       .lean();
 
     // Ensure oldChatSession exists before proceeding
@@ -563,13 +562,14 @@ const updateHumanMessageToChatSession = async (userId, agentId, message) => {
 
     // Push a new message to the existing chat session's messages array
     const newChatSession = await chatSession.updateOne(
-      { userId, agentId },
+      { agentId: new mongoose.Types.ObjectId(agentId), userId: new mongoose.Types.ObjectId(userId)
+      },
       {
         $set: { lastTime: new Date() },
         $push: {
           messages: {
             sno: oldChatSession.messages.length + 1,
-            role: 'human',
+            role: 'user',
             content: message,
           },
         },
@@ -653,8 +653,7 @@ const streamingWithFunctions = async (threadId) => {
   }
 };
 
-const aiAssistantChatStart = async (userId, userMessage, appId, imagePath=null, isStartChat) => {
-  // Fetch the thread ID using the appId and userId
+const aiAssistantChatStart = async (userId, userMessage, appId, imagePath = null, isStartChat, onPartialResponse) => {
   const app = await App.findOne({ _id: new mongoose.Types.ObjectId(appId), user: new mongoose.Types.ObjectId(userId) });
 
   if (!app) {
@@ -663,82 +662,99 @@ const aiAssistantChatStart = async (userId, userMessage, appId, imagePath=null, 
 
   const thread_id = app.thread_id;
 
-  // If imagePath is provided, add an image to the thread
   if (imagePath) {
-    const imageResponse = await addImageToThread(thread_id, imagePath);
-    if (imageResponse) {
-      console.log("Image sent successfully");
+    try {
+      const imageResponse = await addImageToThread(thread_id, imagePath);
+      console.log("Image sent successfully", imageResponse);
+    } catch (error) {
+      console.error("Error uploading image", error);
     }
   }
+  
+   // Add user message to thread
+   const messageResponse = await addMessageToThread(thread_id, userMessage);
+   if (messageResponse) {
+     console.log("Message sent successfully");
+   }
 
-  // Add user message to thread
-  const messageResponse = await addMessageToThread(thread_id, userMessage);
-  if (messageResponse) {
-    console.log("Message sent successfully");
-  }
+  const obj = { message: '', code: '', streaming: false };
 
   try {
-    let chatResponse = ``;
-    let obj  = {message: '', code: ''};
+    let chatResponse = '';
     let isInsideCodeBlock = false;
     let codeBlockBuffer = '';
-    
+
+    // Start streaming from OpenAI or another source
     const run = await openai.beta.threads.runs.stream(
       thread_id,
       { assistant_id: process.env.ASSISTANT_ID }
     )
-      .on('textDelta', (textDelta, snapshot) => {
-        chatResponse += textDelta.value;
-        process.stdout.write(textDelta.value);
-       
-        // Split the incoming text into parts to process
-        const parts = textDelta.value.split('```');
-
-        parts.forEach((part, index) => {
-            if (isInsideCodeBlock) {
-                // We're inside a code block, so this part could either complete it or be more code
-                if (index % 2 !== 0) {
-                    // Odd index means we are inside a code block (since we split by '```')
-                    codeBlockBuffer += part;
-                }
-            } else {
-                // Not inside a code block, process regular text
-                if (index % 2 === 0) {
-                    // Even index means this is a non-code text
-                    obj.message += part;
-                } else {
-                    // Start of a new code block
-                    console.log("Code block started:");
-                    codeBlockBuffer = part; // Begin buffering the code
-                    isInsideCodeBlock = true; // Mark that we're inside a code block
-                }
-            }
-        });
-      })
-      .on('textCreated', (text) => {
-        console.log(`textCreated${JSON.stringify(text)}`);
-      })
-      .on('toolCallCreated', (toolCall) => {
-        console.log(`\nassistant > Tool invoked: ${toolCall.type}\n`);
-      })
+    .on('textDelta', (textDelta) => {
+      chatResponse += textDelta.value;
+      
+      const parts = textDelta.value.split('```');
+      parts.forEach((part, index) => {
+        if (isInsideCodeBlock) {
+          // Call the callback to stream partial responses
+          onPartialResponse({
+            message: chatResponse,
+            fullChatResponse: chatResponse,
+            streaming: true,
+            code: obj.code,
+            codeFound: true,
+          });
+          if (index % 2 !== 0) {
+            codeBlockBuffer += part;
+          }
+        } else {
+          if (index % 2 === 0) {
+            obj.message += part;
+            obj.streaming = true;
+            // Call the callback to stream partial responses
+            onPartialResponse({
+              message: textDelta.value,
+              fullChatResponse: chatResponse,
+              streaming: true,
+              code: "",
+            });
+          } else {
+            codeBlockBuffer = part;
+            isInsideCodeBlock = true;
+            // Call the callback to stream partial responses
+            onPartialResponse({
+              message: chatResponse,
+              fullChatResponse: chatResponse,
+              streaming: true,
+              code: obj.code,
+              codeFound: true,
+            });
+          }
+        }
+      });
+    });
 
     const finalFunctionCall = await run.finalMessages();
     console.log('Run end:', finalFunctionCall, chatResponse);
 
-    // Use regex to extract everything between the triple backticks ```
     const codeBlockRegex = /```(?:\w+)?\n([\s\S]*?)\n```/g;
     let match;
-
-    if((match = codeBlockRegex.exec(chatResponse)) !== null) {
-        const extractedCode = match[1];
-        console.log("Extracted code:", extractedCode);
-        // Add the extracted code (remove tsx if needed)
-        obj.code += extractedCode.replace(/tsx/g, '');
-        process.stdout.write(obj.code);
+    if ((match = codeBlockRegex.exec(chatResponse)) !== null) {
+      const extractedCode = match[1];
+      obj.code += extractedCode.replace(/tsx/g, '');
+      process.stdout.write(obj.code);
     }
 
-    if(isStartChat){
-      startChatSession(userId, appId, userMessage)
+    // Call the callback to stream partial responses
+    onPartialResponse({
+      message: chatResponse,
+      fullChatResponse: chatResponse,
+      streaming: false,
+      code: obj.code,
+      codeFound: false
+    });
+
+    if (isStartChat) {
+      startChatSession(userId, appId, userMessage);
     }
 
     if (obj.code) {
@@ -746,15 +762,17 @@ const aiAssistantChatStart = async (userId, userMessage, appId, imagePath=null, 
       app.componentCode = obj.code;
       await app.save();
     }
-  
+
+    // Final return after the streaming is done
     return obj;
-    // return run;
+
   } catch (error) {
     console.error('Error running assistant:', error);
-    return {message: 'The server had an error processing your request. Sorry about that! You can retry your request.', code: ''};
+    onPartialResponse({ message: 'An error occurred while processing your request.', streaming: false });
+    return { message: 'The server had an error processing your request.', code: '' };
   }
+};
 
-}
 
 module.exports = {
   startChatSession,

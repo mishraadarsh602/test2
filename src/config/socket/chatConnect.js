@@ -5,7 +5,8 @@ const {
   startLLMChat,
   updateAIMessageToChatSession,
   updateHumanMessageToChatSession,
-  continueChatSessionMessages
+  continueChatSessionMessages,
+  aiAssistantChatStart
 } = require("../../controllers/chat/chat.controller");
 
 module.exports = (server) => {
@@ -30,11 +31,25 @@ module.exports = (server) => {
 
     // Listen for the 'startChat' event from the client
     socket.on("startChat", async (data) => {
-      // console.log("Chat started by user:", data);
 
-      // await startChatSession(data.userId, data.agentId, data.message);
-
-      const returnedOutput = await startLLMChat(data.userId, data.message, data.agentId, true);
+      // const returnedOutput = await startLLMChat(data.userId, data.message, data.agentId, true);
+      const returnedOutput = await aiAssistantChatStart(
+        data.userId,
+        data.message,
+        data.agentId,
+        null,
+        true,
+        (partialResponse) => {
+          // Emit each partial response as it's received
+          socket.emit("partialResponse", {
+            text: partialResponse.message,
+            fullChatResponse: partialResponse.fullChatResponse,
+            streaming: partialResponse.streaming,
+            code: partialResponse.code,
+            codeFound: partialResponse.codeFound
+          });
+        }
+      );
 
       await updateAIMessageToChatSession(
         data.userId,
@@ -44,10 +59,10 @@ module.exports = (server) => {
       );
 
       // Optionally, emit a response to the client
-      socket.emit("message", {
-        code: returnedOutput.code,
-        text: returnedOutput.message,
-      });
+      // socket.emit("message", {
+      //   code: returnedOutput.code,
+      //   text: returnedOutput.message,
+      // });
     });
 
     socket.on("fetchPreviousChat", async (data) => {
@@ -56,14 +71,14 @@ module.exports = (server) => {
       // console.log(messages);
       let msg = [];
       if (messages.length > 0) {
-        for (let i = 1; i < messages.length; i++) {
+        for (let i = 0; i < messages.length; i++) {
           if (i % 2 !== 0) {
-            msg.push({ text: messages[i].content, sender: "user" });
+            msg.push({ text: messages[i].content, sender: "bot" });
           } else {
             msg.push({
               text: messages[i].content,
               code: messages[i].code,
-              sender: "bot",
+              sender: "user",
             });
           }
         }
@@ -96,7 +111,24 @@ module.exports = (server) => {
 
       msg.push(["human", data.message]);
 
-      const returnedOutput = await continueChatSessionMessages(data.userId, data.message, data.agentId);
+      // const returnedOutput = await continueChatSessionMessages(data.userId, data.message, data.agentId);
+      const returnedOutput = await aiAssistantChatStart(
+        data.userId,
+        data.message,
+        data.agentId,
+        null,
+        false,
+        (partialResponse) => {
+          // Emit each partial response as it's received
+          socket.emit("partialResponse", {
+            text: partialResponse.message,
+            fullChatResponse: partialResponse.fullChatResponse,
+            streaming: partialResponse.streaming,
+            code: partialResponse.code,
+            codeFound: partialResponse.codeFound
+          });
+        }
+      );
 
       await updateAIMessageToChatSession(
         data.userId,
@@ -106,10 +138,10 @@ module.exports = (server) => {
       );
       
       // Optionally, emit a response to the client
-      socket.emit("message", {
-        code: returnedOutput.code,
-        text: returnedOutput.message,
-      });
+      // socket.emit("message", {
+      //   code: returnedOutput.code,
+      //   text: returnedOutput.message,
+      // });
     });
 
     socket.on("disconnect", () => {
