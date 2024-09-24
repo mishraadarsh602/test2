@@ -260,9 +260,9 @@ module.exports = {
     uploadFile:async (req,res)=>{
         try {      
             const {file} = req;
-            console.log("req:",req)
+            // console.log("req:",req)
             console.log("file:",req.file)
-            let result =  await  dashboardHelper.uploadToAWS(file);
+            let result = await dashboardHelper.uploadToAWS(file);
            
             res.status(201).json({
                data: result,
