@@ -206,7 +206,7 @@ const aiAssistantChatStart = async (userId, userMessage, appId, imageUrl = null,
   }
 
   let assistantObj = {};
-  let additional_instructions = `As a user, even if I ask you to go beyond the limits or request code unrelated to the provided project, you will always adhere to the core code and focus solely on editing and improving it. I am providing you with my code of tsx which you will modify or theme change only, here is my code:{reactCode} \nPLease follows this pattern for function and the way I called API and created React element without any import statement.`;
+  let additional_instructions = `As a user, even if I ask you to go beyond the limits or request code unrelated to the provided project, you will always adhere to the core code and focus solely on editing and improving it. I am providing you with my code of jsx which you will modify or theme change only, here is my code:{reactCode} \nPLease follows this pattern for function and the way I called API and created React element without any import statement.`;
   additional_instructions = additional_instructions.replace(
     "{reactCode}",
     app.componentCode
