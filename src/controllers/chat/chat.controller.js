@@ -172,8 +172,8 @@ const addImageToThread = async (threadId, imageUrl) => {
         content: imageUrl
       }
     );
-    console.log('Image Added:', response.data);
-    return response.data;
+    console.log('Image Added:', response);
+    return response;
   } catch (error) {
     console.error('Error adding image to thread:', error);
   }
@@ -181,13 +181,46 @@ const addImageToThread = async (threadId, imageUrl) => {
 
 
 const aiAssistantChatStart = async (userId, userMessage, appId, imageUrl = null, isStartChat, onPartialResponse) => {
-  const app = await App.findOne({ _id: new mongoose.Types.ObjectId(appId), user: new mongoose.Types.ObjectId(userId) });
+  const app = await App.findOne({
+    _id: new mongoose.Types.ObjectId(appId),
+    user: new mongoose.Types.ObjectId(userId),
+  });
 
   if (!app) {
     throw new Error("App or user not found");
   }
 
   const thread_id = app.thread_id;
+
+  // Find the existing chat session
+  const oldChatSession = await chatSession
+    .findOne({
+      agentId: new mongoose.Types.ObjectId(appId),
+      userId: new mongoose.Types.ObjectId(userId),
+    })
+    .lean();
+
+  // Ensure oldChatSession exists before proceeding
+  if (!oldChatSession) {
+    isStartChat = true;
+  }
+
+  let assistantObj = {};
+  let additional_instructions = `As a user, even if I ask you to go beyond the limits or request code unrelated to the provided project, you will always adhere to the core code and focus solely on editing and improving it. I am providing you with my code of tsx which you will modify or theme change only, here is my code:{reactCode} \nPLease follows this pattern for function and the way I called API and created React element without any import statement.`;
+  additional_instructions = additional_instructions.replace(
+    "{reactCode}",
+    app.componentCode
+  );
+  if (app.agent_type !== "AI_Tool") {
+    console.log("pre-made--------------------------")
+    assistantObj = {
+      assistant_id: process.env.PREMADE_ASSISTANT_ID,
+      additional_instructions: additional_instructions,
+    };
+  } else {
+    console.log("custom--------------------------")
+    assistantObj = { assistant_id: process.env.ASSISTANT_ID };
+  }
 
   if (imageUrl) {
     try {
@@ -197,56 +230,29 @@ const aiAssistantChatStart = async (userId, userMessage, appId, imageUrl = null,
       console.error("Error uploading image", error);
     }
   }
-  
-   // Add user message to thread
-   const messageResponse = await addMessageToThread(thread_id, userMessage);
-   if (messageResponse) {
-     console.log("Message sent successfully");
-   }
 
-  const obj = { message: '', code: '', streaming: false };
+  // Add user message to thread
+  const messageResponse = await addMessageToThread(thread_id, userMessage);
+  if (messageResponse) {
+    console.log("Message sent successfully");
+  }
+
+  const obj = { message: "", code: "", streaming: false };
 
   try {
-    let chatResponse = '';
+    let chatResponse = "";
     let isInsideCodeBlock = false;
-    let codeBlockBuffer = '';
+    let codeBlockBuffer = "";
 
     // Start streaming from OpenAI or another source
-    const run = await openai.beta.threads.runs.stream(
-      thread_id,
-      { assistant_id: process.env.ASSISTANT_ID }
-    )
-    .on('textDelta', (textDelta) => {
-      chatResponse += textDelta.value;
-      
-      const parts = textDelta.value.split('```');
-      parts.forEach((part, index) => {
-        if (isInsideCodeBlock) {
-          // Call the callback to stream partial responses
-          onPartialResponse({
-            message: chatResponse,
-            fullChatResponse: chatResponse,
-            streaming: true,
-            code: obj.code,
-            codeFound: true,
-          });
-          if (index % 2 !== 0) {
-            codeBlockBuffer += part;
-          }
-        } else {
-          if (index % 2 === 0) {
-            obj.message += part;
-            obj.streaming = true;
-            // Call the callback to stream partial responses
-            onPartialResponse({
-              message: textDelta.value,
-              fullChatResponse: chatResponse,
-              streaming: true,
-              code: "",
-            });
-          } else {
-            codeBlockBuffer = part;
-            isInsideCodeBlock = true;
+    const run = await openai.beta.threads.runs
+      .stream(thread_id, assistantObj)
+      .on("textDelta", (textDelta) => {
+        chatResponse += textDelta.value;
+
+        const parts = textDelta.value.split("```");
+        parts.forEach((part, index) => {
+          if (isInsideCodeBlock) {
             // Call the callback to stream partial responses
             onPartialResponse({
               message: chatResponse,
@@ -255,19 +261,44 @@ const aiAssistantChatStart = async (userId, userMessage, appId, imageUrl = null,
               code: obj.code,
               codeFound: true,
             });
+            if (index % 2 !== 0) {
+              codeBlockBuffer += part;
+            }
+          } else {
+            if (index % 2 === 0) {
+              obj.message += part;
+              obj.streaming = true;
+              // Call the callback to stream partial responses
+              onPartialResponse({
+                message: textDelta.value,
+                fullChatResponse: chatResponse,
+                streaming: true,
+                code: "",
+              });
+            } else {
+              codeBlockBuffer = part;
+              isInsideCodeBlock = true;
+              // Call the callback to stream partial responses
+              onPartialResponse({
+                message: chatResponse,
+                fullChatResponse: chatResponse,
+                streaming: true,
+                code: obj.code,
+                codeFound: true,
+              });
+            }
           }
-        }
+        });
       });
-    });
 
     const finalFunctionCall = await run.finalMessages();
-    console.log('Run end:', finalFunctionCall, chatResponse);
+    console.log("Run end:", finalFunctionCall, chatResponse);
 
     const codeBlockRegex = /```(?:\w+)?\n([\s\S]*?)\n```/g;
     let match;
     if ((match = codeBlockRegex.exec(chatResponse)) !== null) {
       const extractedCode = match[1];
-      obj.code += extractedCode.replace(/tsx/g, '');
+      obj.code += extractedCode.replace(/tsx/g, "");
       process.stdout.write(obj.code);
     }
 
@@ -277,11 +308,12 @@ const aiAssistantChatStart = async (userId, userMessage, appId, imageUrl = null,
       fullChatResponse: chatResponse,
       streaming: false,
       code: obj.code,
-      codeFound: false
+      codeFound: false,
     });
 
     if (isStartChat) {
-      startChatSession(userId, appId, userMessage, [imageUrl]);
+      console.log("new chat loaded.---------------------------------------------")
+      startChatSession(userId, appId, userMessage, [imageUrl === null ? '' : imageUrl]);
     }
 
     if (obj.code) {
@@ -292,11 +324,16 @@ const aiAssistantChatStart = async (userId, userMessage, appId, imageUrl = null,
 
     // Final return after the streaming is done
     return obj;
-
   } catch (error) {
-    console.error('Error running assistant:', error);
-    onPartialResponse({ message: 'An error occurred while processing your request.', streaming: false });
-    return { message: 'The server had an error processing your request.', code: '' };
+    console.error("Error running assistant:", error);
+    onPartialResponse({
+      message: "An error occurred while processing your request.",
+      streaming: false,
+    });
+    return {
+      message: "The server had an error processing your request.",
+      code: "",
+    };
   }
 };
 
