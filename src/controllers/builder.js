@@ -9,6 +9,7 @@ const CryptoJS = require("crypto-js");
 const userService = new UserService();
 const dashboardHelper = require('../helpers/dashboard');
 const { OpenAI } = require("openai");
+const redisClient = require('../utils/redisClient');
 
 async function createLog(data) {
     try {
@@ -181,6 +182,9 @@ module.exports = {
         try {
             let previousLiveApp=await App.findOne({parentApp:req.body.appId,status:'live'});
             if(previousLiveApp){
+                await redisClient.connect();
+                await redisClient.del(`componentCode-${previousLiveApp.liveUrl}`);
+                await redisClient.quit();
                 previousLiveApp.status='old';
                 await previousLiveApp.save();
                 // changing status of parentApp
@@ -211,8 +215,8 @@ module.exports = {
     fetchVisitors:async (req,res)=>{
         try {
             const userId = req.user ? req.user.userId : null;
-           const allVisitors=await appVisitorsModel.find({parentApp: (req.params.appId),user:userId,deleted:false},{browser:1,updatedAt:1,createdAt:1,device:1,})      
-            res.status(201).json({
+           const allVisitors=await appVisitorsModel.find({liveUrl: (req.params.liveUrl),user:userId,deleted:false},{browser:1,updatedAt:1,createdAt:1,device:1,})      
+           res.status(201).json({
                 message: "fetch visitors successfully",
                 data: allVisitors,
               });

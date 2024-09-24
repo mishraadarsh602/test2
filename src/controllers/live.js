@@ -55,10 +55,10 @@ module.exports = {
             const liveUrl=req.body.name;
             let response;
             await redisClient.connect();
-            let componentCode=await redisClient.get('componentCode');
+            let componentCode=await redisClient.get(`componentCode-${liveUrl}`);
             if(!componentCode){
-            response=await App.findOne({liveUrl},{componentCode:1,_id:0});
-            await redisClient.set('componentCode',response.componentCode);
+            response=await App.findOne({liveUrl},{componentCode:1,_id:0});            
+            await redisClient.set(`componentCode-${liveUrl}`,response.componentCode);
             }
             await  redisClient.quit();
             res.status(201).json({
