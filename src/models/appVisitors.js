@@ -2,15 +2,9 @@ const mongoose = require('mongoose');
 
 const appVisitorSchema = new mongoose.Schema(
     {
-        appId: { // refer to liveAppId with status=> live
-            type: mongoose.Schema.ObjectId,
-             ref: "App",
-            required: true,
-        },
-        parentApp: {  // // refer to parentAppId with status=> dev
-            type: mongoose.Schema.ObjectId,
-            ref: "App" ,
-            required: true,
+        liveUrl:{
+            type:String,
+            required:true
         },
         user:{
             type: mongoose.Schema.ObjectId,

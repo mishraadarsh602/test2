@@ -51,13 +51,12 @@ module.exports = {
         appData['componentCode'] = feature.componentCode;
       }
 
+      appData['liveUrl']= appData.name;
       let newApp = new App(appData);
       let savedApp = await newApp.save();
-      let liveUrl = 'http://localhost:3000/live/' + appData.name + savedApp._id.toString().substring(0, 7);
-      const response = await App.findByIdAndUpdate(savedApp._id, { liveUrl })
       res.status(201).json({
         message: "App created successfully",
-        data: response,
+        data: savedApp,
       });
     } catch (error) {
       await createLog({ userId: req.user.userId, error: error.message });
