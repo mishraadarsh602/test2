@@ -68,9 +68,9 @@ module.exports = (server) => {
       let msg = [];
       if (messages.length > 0) {
         for (let i = 0; i < messages.length; i++) {
-          if (i % 2 !== 0) {
+          if (messages[i].role === 'assistant') {
             msg.push({ text: messages[i].content, code: messages[i].code, sender: "bot" });
-          } else {
+          } else if (messages[i].role === 'user') {
             msg.push({
               text: messages[i].content,
               // code: messages[i].code,

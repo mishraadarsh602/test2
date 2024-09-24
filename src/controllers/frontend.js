@@ -6,6 +6,7 @@ const frontendLogsModel=require('../models/logs/logs-frontend');
 const UserService = require('../service/userService');
 const featureListModel=require('../models/featureList');
 const { OpenAI } = require("openai");
+const chatSession = require('../models/chat/chatSession.model');
 
 const userService = new UserService();
 async function createLog(data){
@@ -46,14 +47,50 @@ module.exports = {
 
       appData['thread_id'] = await createThread();
 
-      if (appData.agent_type !== 'AI_Tool') {
-        let feature = await featureListModel.findOne({ type: appData['agent_type'] }, { componentCode: 1 });
-        appData['componentCode'] = feature.componentCode;
+      if (appData.agent_type !== "AI_Tool") {
+        let feature = await featureListModel.findOne(
+          { type: appData["agent_type"] },
+          { componentCode: 1 }
+        );
+        appData["componentCode"] = feature.componentCode;
       }
 
       appData['liveUrl']= appData.name;
       let newApp = new App(appData);
       let savedApp = await newApp.save();
+
+      // Creating first message in db for premade
+
+      if (appData.agent_type !== "AI_Tool") {
+        const oldChatSession = await chatSession
+          .findOne({
+            agentId: new mongoose.Types.ObjectId(savedApp._id),
+            userId: new mongoose.Types.ObjectId(userId),
+          })
+          .lean();
+
+        // Ensure oldChatSession exists before proceeding
+        if (!oldChatSession) {
+          await chatSession.create({
+            agentId: new mongoose.Types.ObjectId(savedApp._id),
+            userId: new mongoose.Types.ObjectId(userId),
+            sessionId: uuidv4(), // Create a unique sessionId
+            conversationId: uuidv4(), // Create a unique sessionId
+            startTime: new Date(),
+            lastTime: new Date(),
+            date: new Date(),
+            messages: [
+              {
+                sno: 1,
+                role: "assistant",
+                content: "Hello, I'm your AI Assistant. How can I help you?",
+                image: [""],
+              },
+            ],
+          });
+        }
+      }
+
       res.status(201).json({
         message: "App created successfully",
         data: savedApp,
