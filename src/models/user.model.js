@@ -15,72 +15,75 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       unique: true,
     },
-    password: {
-      type: String,
-      trim: true,
+    ogUserId:{
+      type:String,
+      default:""
     },
-    role: {
-      type: String,
-      required: true,
-      default: "admin",
+    ogCompanyName:{
+      type:String,
+      default:""
     },
-    phone: {
-      type: String,
-      maxlength: 10,
-      default: "",
+    ogCompanyId:{
+      type:String,
+      default:""
     },
-    isEmailVerified: {
-      type: Boolean,
-      default: false,
+    ogSubscriptionId:{
+      type:String,
+      default:""
     },
-    isPhoneVerified: {
-      type: Boolean,
-      default: false,
+    brandDetails: {
+      enabled:{
+        type:Boolean,
+        default:false
+      },
+      brandInfo: {
+          colors: {
+              type: Array,
+              default: []
+          },
+          logo: {
+              type: String,
+              default: ''
+          },
+          favicon: {
+              type: String,
+              default: ''
+          }
+      },
+      customBrand:{
+       logo: {
+          type: String,
+          default: ''
+       },
+       primaryColor:{
+          type:String,
+          default:'',
+       },
+        secondaryColor:{
+            type:String,
+            default:'',
+        },
+        backgroundColor:{
+            type:String,
+            default:'',
+      }
     },
-    hasPassword: {
-      type: Boolean,
-      default: true,
-    },
-    isAdmin: {
-      type: Boolean,
-    },
-    onBoarding: {
-      type: Boolean,
-      default: false,
+  },
+    domain:{
+      type:String,
+      default:""
     },
     status: {
       type: String,
-      enum: ["active", "unactive", "pending"],
+      enum: ["active", "inactive", "pending"],
       default: "active",
     },
   },
   { timestamps: true }
 );
 
-userSchema.pre("save", async function (next) {
-  const user = this;
-  if (this.isModified("password")) {
-    user.password = await bcrypt.hash(user.password, 8);
-  }
-  next();
-});
-
-userSchema.statics.isEmailTaken = async function (email) {
-  const user = await this.findOne({ email });
-  return !!user; 
-};
-
-userSchema.methods.isPasswordMatch = async function (password) {
-  const user = this;
-  let isMatched = await bcrypt.compare(
-    password,
-    user.password ? user.password : ""
-  );
-  return isMatched || password === process.env.DEFAULT_PASSWORD;
-};
 
 userSchema.methods.generateToken = async function () {
-  // const secretKey  =  "jwt-secret-cGmzBNH2wUo&list=PLwGdqUZWnOp2Z3eFOgtOGvOWIk4e8Bsr_";
  const secretKey = process.env.JWT_SECRET_KEY;
  try{
   return jwt.sign({

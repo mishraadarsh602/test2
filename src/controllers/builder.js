@@ -1,7 +1,5 @@
 const App = require('../models/app');
 const User = require('../models/user.model');
-const Company = require('../models/company');
-const BuilderCompany = require('../models/builderCompany');
 const { v4: uuidv4 } = require('uuid');
 const builderLogsModel=require('../models/logs/logs-builder');
 const UserService = require('../service/userService');
@@ -10,7 +8,6 @@ const appVisitorsModel = require('../models/appVisitors');
 const CryptoJS = require("crypto-js");
 const userService = new UserService();
 const dashboardHelper = require('../helpers/dashboard');
-const companyHelper = require('../helpers/company');
 const { OpenAI } = require("openai");
 
 async function createLog(data) {
@@ -26,22 +23,15 @@ module.exports = {
 
     createUser: async (req, res) => {
         try {
-            let { name, email } = req.body;
-            let decodedName = decodeURIComponent(name);
-            let decodedEmail = decodeURIComponent(email);
-            decodedName = decodedName.replace(/\s/g, "+");
-            decodedEmail = decodedEmail.replace(/\s/g, "+");
+            console.log("req.body cerateuser:",req.body)
+            let bodyToken  =  req.body.auth;
+            let decodedToken = decodeURIComponent(bodyToken);
+            decodedToken= decodedToken.replace(/\s/g, "+");
     
-            let decryptedName = CryptoJS.AES.decrypt(decodedName, process.env.CRYPTO_SECRET_KEY).toString(CryptoJS.enc.Utf8);
-            let decryptedEmail = CryptoJS.AES.decrypt(decodedEmail, process.env.CRYPTO_SECRET_KEY).toString(CryptoJS.enc.Utf8);
-    
-            if (!decryptedName || !decryptedEmail) {
-                return res.status(401).json({ error: 'Please login ..' });
-            }
-    
-            let userExist = await userService.findUserByEmail(decryptedEmail);
-            let companyName = decryptedEmail.split('@')[1].split('.')[0];
-    
+            let decryptedToken = CryptoJS.AES.decrypt(decodedToken, process.env.CRYPTO_SECRET_KEY).toString(CryptoJS.enc.Utf8);
+            const tokenObject = JSON.parse(decryptedToken);
+            const { name, email, userId, companyId, companyName, planId } = tokenObject;
+            let userExist = await userService.findUserByEmail(email);
             if (userExist) {
                 const token = await userExist.generateToken();
                 res.cookie('token', token, {
@@ -57,18 +47,7 @@ module.exports = {
                     }
                 });
             }
-    
-            const userCreated = await userService.createUser({ name: decryptedName, email: decryptedEmail });
-           
-            if(userCreated){
-                let subDomain = await companyHelper.checkAndUpdateSubdomain(companyName);
-                let companyCreated = await companyHelper.createCompany(companyName,subDomain,userCreated._id);
-            }
-          
-            // if (companyCreated) {
-            //     appHelper.runBrandGuide(decryptedEmail, sub_domain);
-            // }
-    
+            const userCreated = await userService.createUser({ name: name, email: email, ogUserId: userId, ogCompanyId: companyId, ogCompanyName: companyName, ogSubscriptionId: planId });    
             const token = await userCreated.generateToken();
     
             res.cookie('token', token, {
@@ -244,11 +223,9 @@ module.exports = {
     },
     getBrandGuide:async (req,res)=>{
         try {
-         console.log("req.body11:",req.body)
-         let {domain,sub_domain,brand_type} = req.body;
+         let {domain,brand_type} = req.body;
          let email = req.user.email;
-         let brandresult =  await  dashboardHelper.runBrandGuide(domain,sub_domain,brand_type,email);
-         console.log("brandresult444:",brandresult)
+         let brandresult =  await  dashboardHelper.runBrandGuide(domain,brand_type,email);
          res.status(201).json({
             data: brandresult,
             message: "Brand Guide fetched successfully",
@@ -260,10 +237,8 @@ module.exports = {
     uploadFile:async (req,res)=>{
         try {      
             const {file} = req;
-            console.log("req:",req)
-            console.log("file:",req.file)
-            let result =  await  dashboardHelper.uploadToAWS(file);
-           
+
+            let result =  await  dashboardHelper.uploadToAWS(file);           
             res.status(201).json({
                data: result,
                message: "File uploaded successfully",
@@ -272,81 +247,39 @@ module.exports = {
                res.status(500).json({ error: error.message });
            }    
     },
-
-    getCompanyByUserId:async (req,res)=>{
+    updateBrandGuide: async (req, res) => {
         try {
             const userId = req.user ? req.user.userId : null;
             if (!userId) {
                 return res.status(400).json({ error: 'User ID is required' });
             }
-            let company = await Company.findOne({ user_id: userId });
-            if (!company) {
-                return res.status(403).json({ error: 'Company not found' });
+            const brandDetail = req.body;
+            const updateFields = {};
+            if (brandDetail.custombrand !== undefined) {
+                updateFields['brandDetails.customBrand'] = brandDetail.custombrand;
             }
+            if (brandDetail.enabled !== undefined) {
+                updateFields['brandDetails.enabled'] = brandDetail.enabled;
+            }
+            const updatedBrandDetail = await User.findByIdAndUpdate(
+                userId,
+                { 
+                    $set: updateFields
+                },
+                { new: true, upsert: true } // upsert: true will create the document if it doesn't exist
+            ).lean();    
+            if (!updatedBrandDetail) {
+                return res.status(404).json({ error: 'Brand Guide not found' });
+            }
+    
             res.status(200).json({
-                message: "Company fetched successfully",
-                data: company,
-              });
+                message: "Brand Guide updated successfully",
+                data: updatedBrandDetail,
+            });
         } catch (error) {
             res.status(500).json({ error: error.message });
-    }
-
-
+        }
     },
-    getUserCustomBrand:async (req,res)=>{
-        try {
-            const userId = req.user ? req.user.userId : null;
-            if (!userId) {
-                return res.status(400).json({ error: 'User ID is required' });
-            }
-            let company = await Company.findOne({ user_id: userId });
-            if (!company) {
-                return res.status(403).json({ error: 'Company not found' });
-            }
-            // let brandDetail = company.userCustomBrandDetail;
-            //find data from buildercompany where company id is company._id
-            let brandDetail = await BuilderCompany.findOne({ company: company._id });
-            if (!brandDetail) {
-                return res.status(200).json({ message: 'No Brand Found' });
-            }
-
-            
-            res.status(200).json({
-                message: "User Custom Brand fetched successfully",
-                data: brandDetail,
-              });
-        } catch (error) {
-            res.status(500).json({ error: error.message });
-    }
-   },
-   updateBrandGuide:async (req,res)=>{
-    try {
-        const userId = req.user ? req.user.userId : null;
-        if (!userId) {
-            return res.status(400).json({ error: 'User ID is required' });
-        }
-        let company = await Company.findOne({ user_id: userId });
-        if (!company) {
-            return res.status(404).json({ error: 'Company not found' });
-        }
-        let brandDetail = await BuilderCompany.findOne({ company: company._id });
-        if (!brandDetail) {
-            return res.status(404).json({ error: 'Brand Detail not found' });
-        }
-        let updatedBrandDetail = await BuilderCompany.findOneAndUpdate({ company: company._id }, req.body
-        , { new: true });
-        if (!updatedBrandDetail) {
-            return res.status(404).json({ error: 'Brand Detail not found' });
-        }
-
-             res.status(200).json({
-            message: "Brand Guide updated successfully",
-            data: updatedBrandDetail,
-          });
-    } catch (error) {
-        res.status(500).json({ error: error.message });     
-    }
-  },
 
      deleteVisitors:async (req, res) => {
          try {

@@ -9,15 +9,11 @@ module.exports = class UserService {
     }
     async createUser(userData) {
         try {
-           let  {name,email}  = userData;
-           //check user 
-           const createdUser = await User.create({name,email});
-            //   return createUser;
+           const createdUser = await User.create(userData);
             const savedUser = createdUser.save()
             return savedUser;
         } catch (error) {
             console.error(error.message);
-            // throw error;
         }
     };
 

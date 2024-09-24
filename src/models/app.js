@@ -167,6 +167,7 @@ const appSchema = new mongoose.Schema({
     },
     liveUrl: {
         type: String,
+        required:true,
     }
 }, { timestamps: true });
 

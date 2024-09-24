@@ -1,11 +1,8 @@
 const { Server } = require("socket.io"); // Import the Socket.IO server class
 const {
-  startChatSession,
   fetchPreviousChat,
-  startLLMChat,
   updateAIMessageToChatSession,
   updateHumanMessageToChatSession,
-  continueChatSessionMessages,
   aiAssistantChatStart
 } = require("../../controllers/chat/chat.controller");
 
@@ -32,12 +29,11 @@ module.exports = (server) => {
     // Listen for the 'startChat' event from the client
     socket.on("startChat", async (data) => {
 
-      // const returnedOutput = await startLLMChat(data.userId, data.message, data.agentId, true);
       const returnedOutput = await aiAssistantChatStart(
         data.userId,
         data.message,
         data.agentId,
-        null,
+        data.image,
         true,
         (partialResponse) => {
           // Emit each partial response as it's received
@@ -106,7 +102,8 @@ module.exports = (server) => {
       await updateHumanMessageToChatSession(
         data.userId,
         data.agentId,
-        data.message
+        data.message,
+        [data.image]
       );
 
       msg.push(["human", data.message]);
@@ -116,7 +113,7 @@ module.exports = (server) => {
         data.userId,
         data.message,
         data.agentId,
-        null,
+        data.image,
         false,
         (partialResponse) => {
           // Emit each partial response as it's received
