@@ -1,8 +1,6 @@
-const Company = require('../models/company');
-const BuilderCompany = require('../models/builderCompany');
+const User  = require('../models/user.model');
 const brandGuideController = require('../controllers/brandguide/brandguide-controller');
 const AWS = require('aws-sdk');
-// AWS Configuration
 AWS.config.update({
     accessKeyId: process.env.AWS_ACCESS_KEY,
     secretAccessKey: process.env.AWS_SECRET_KEY,
@@ -12,45 +10,28 @@ AWS.config.update({
 const s3 = new AWS.S3();
 
 module.exports = {
-    runBrandGuide: async (url, companySubdomain,brandType,email) => {
+    runBrandGuide: async (url,brandType,email) => {
         try {
             let brandGuideResult;
-            // const freeEmailDomains = [
-            //     "gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "aol.com", 
-            //     "icloud.com", "zoho.com", "protonmail.com", "mail.com", "yandex.com",
-            //     "live.com", "gmx.com", "inbox.com", "rediffmail.com", "mail.ru",
-            //     "rocketmail.com", "tutanota.com", "fastmail.com", "lycos.com", 
-            //     "hushmail.com", "excite.com", "runbox.com", "ow2.net", "trash-mail.com",
-            //     "guerrillamail.com", "temp-mail.org", "mailinator.com", "10minutemail.com",
-            //     "tempmailo.com", "temp-mail.ru","yopmail.com","dispostable.com","getnada.com", 
-            //     "throwawaymail.com", "jetable.org","spamgourmet.com","mintemail.com", "maildrop.cc",
-            //     "sharklasers.com","mytemp.email","e4ward.com","mailnesia.com", "bouncr.com", "spambox.us", "mailforspam.com",
-            //     "10minutemail.net", "guerrillamailblock.com","guerrillamail.biz","guerrillamail.de", "guerrillamail.net",
-            //     "guerrillamail.org"
-            // ];
-
-            // if (!freeEmailDomains.includes(email.split('@')[1])) {
-                // let url = await prepareUrl(email);
-               
                 if(brandType=="domain"){
-                    console.log("URL111: ", url);
-                    const brandExist = await BuilderCompany.findOne({
+                    if (!url.includes('https://') && !url.includes('http://')) {
+                        url = `https://${url}`;
+                    }
+                    const brandExist = await User.findOne({
                         $and: [
                             { domain: url },
-                            { 'brandDetail.colors': { $exists: true, $ne: [] } },
-                            { 'brandDetail.logo': { $exists: true } }
+                            { 'brandDetails.brandInfo.colors': { $exists: true, $ne: [] } },
+                            { 'brandDetails.brandInfo.logo': { $exists: true } }
                         ]
                     });
                     if (brandExist) {
-                        const company = await Company.findOne({ sub_domain: companySubdomain });
-                        const companyId = company._id;
-                        let res = await BuilderCompany.findOneAndUpdate(
-                            { company: companyId },
+                        let res = await User.findOneAndUpdate(
+                            { email: email },
                             { 
-                                brandDetail: brandExist.brandDetail,
-                                userCustomBrandDetail: brandExist.brandDetail,
-                                domain: url,
-                                brandDetailCount: 0 
+                                $set: {
+                                    'brandDetails.brandInfo': brandExist.brandDetails.brandInfo,
+                                    'domain': url,
+                                }
                             },
                             { 
                                 upsert: true,
@@ -66,36 +47,29 @@ module.exports = {
                    let extractedColors = await brandGuideController.extractColorsLogos(logo);
                    brandGuideResult = {...brandGuideResult,colors:extractedColors,logo:logo};
                 }
-                console.log("brandGuideResult: ", brandGuideResult);
                 if(brandGuideResult && brandGuideResult.colors && brandGuideResult.colors.length>0){
-                    console.log("before11:",brandGuideResult.colors)
                    let extractedColors = await extractBestColor(brandGuideResult.colors);
                    brandGuideResult.colors = extractedColors;
-                      console.log("after11:",brandGuideResult.colors)
-        
                  }
-                // console.log("brandGuideResult: ", brandGuideResult);
-
-                const company = await Company.findOne({ sub_domain: companySubdomain });
-                const companyId = company._id;
+               
                 if(brandType=="file"){
                     const domain = email.split('@')[1];
                     const newurl = `https://${domain}`;
                     url=newurl;                    
                 }
-                let res = await BuilderCompany.findOneAndUpdate(
-                    { company: companyId },
+                let res = await User.findOneAndUpdate(
+                    { email },
                     { 
-                        brandDetail: brandGuideResult,
-                        userCustomBrandDetail: brandGuideResult,
-                        domain: url,
-                        brandDetailCount: 0 
+                        $set: {
+                            'brandDetails.brandInfo': brandGuideResult,
+                            'domain': url,
+                        }
                     },
                     { 
                         upsert: true,
                         new: true 
                     }
-                );              
+                ); 
                 return res;
         } catch (err) {
             console.error(err);
@@ -113,7 +87,6 @@ module.exports = {
                 // ACL: 'public-read'
             };
             const response = await s3.upload(params).promise();
-            console.log("response s3: ", response);
             return  response.Location // S3 file URL
 
         }catch(error){

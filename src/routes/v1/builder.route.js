@@ -29,8 +29,6 @@ router.post('/visitor/delete',auth, builderController.deleteVisitors);
 router.get('/getPreviewApp/:appId', auth,builderController.getPreviewApp);
 router.post('/brand_guide',auth, builderController.getBrandGuide);
 router.post('/upload_file_aws',auth,upload.single("image"),builderController.uploadFile);
-router.get('/get_company',auth, builderController.getCompanyByUserId);
-router.get('/get_user_custom_brand',auth, builderController.getUserCustomBrand);
-router.put('/update_brand_guide',auth, builderController.updateBrandGuide);
+router.patch('/update_brand_guide',auth, builderController.updateBrandGuide);
 
 module.exports = router;
