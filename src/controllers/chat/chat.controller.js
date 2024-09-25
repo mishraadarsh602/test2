@@ -179,6 +179,179 @@ const addImageToThread = async (threadId, imageUrl) => {
   }
 };
 
+async function searchInternet({ query, numResults = 5 }) {
+  try {
+    const apiKey = process.env.SEARCHAPI_API_KEY;
+    const response = await axios.get("https://api.searchengine.com/v1/search", {
+      params: {
+        q: query,
+        num: numResults,
+        engine: "google_news",
+        api_key: apiKey,
+      },
+    });
+
+    const results = response.data.results;
+    return results.map((result) => ({
+      title: result.title,
+      link: result.link,
+      snippet: result.snippet,
+    }));
+  } catch (error) {
+    console.error("Error during search:", error);
+    throw new Error("Search failed");
+  }
+}
+
+async function chartGenerator({ userInput }) {
+  try {
+    let prompt = `
+      You are a tool that generates graph data for Chart.js. Based on the input provided, return a structured JSON output.
+      The output should contain:
+      1. Chart type (e.g., line, bar, pie).
+      2. Labels (X-axis or categories).
+      3. Data for Y-axis or series.
+      4. Background colors.
+
+      Here is the user input: "${userInput}"`;
+
+    const response = await axios.post(
+      "https://api.anthropic.com/v1/messages",
+      {
+        model: "claude-3-5-sonnet-20240620", // Using Claude model
+        max_tokens: 8000,
+        messages: [
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+      },
+      {
+        headers: {
+          "content-type": "application/json",
+          "x-api-key": process.env["ANTHROPIC_API_KEY"],
+          "anthropic-version": "2023-06-01",
+        },
+      }
+    );
+
+    const chartData = response.data;
+    return chartData;
+  } catch (error) {
+    console.error("Error generating chart data:", error);
+    throw new Error("Chart generation failed");
+  }
+}
+
+// const handleRequiresAction = async (run) => {
+//   if (
+//     run.required_action &&
+//     run.required_action.submit_tool_outputs &&
+//     run.required_action.submit_tool_outputs.tool_calls
+//   ) {
+//     const toolOutputs = run.required_action.submit_tool_outputs.tool_calls.map(
+//       async (tool) => {
+//         if (tool.function.name === "searchInternet") {
+//           const { query, numResults } = JSON.parse(tool.function.arguments);
+//           const searchResults = await searchInternet({ query, numResults });
+//           return {
+//             tool_call_id: tool.id,
+//             output: JSON.stringify(searchResults),
+//           };
+//         } else if (tool.function.name === "chartGenerator") {
+//           const { userInput } = JSON.parse(tool.function.arguments);
+//           const chartData = await chartGenerator({ userInput });
+//           return {
+//             tool_call_id: tool.id,
+//             output: JSON.stringify(chartData),
+//           };
+//         }
+//       }
+//     );
+
+//     // Submit all tool outputs
+//     if (toolOutputs.length > 0) {
+//       run = await client.beta.threads.runs.submitToolOutputsAndPoll(
+//         thread.id,
+//         run.id,
+//         { tool_outputs: toolOutputs },
+//       );
+//       console.log("Tool outputs submitted successfully.");
+//     } else {
+//       console.log("No tool outputs to submit.");
+//     }
+
+//     // Check status after submitting tool outputs
+//     return handleRunStatus(run);
+//   }
+// };
+
+// const handleRunStatus = async (run) => {
+//   // Check if the run is completed
+//   if (run.status === "completed") {
+//     let messages = await client.beta.threads.messages.list(thread.id);
+//     console.log(messages.data);
+//     return messages.data;
+//   } else if (run.status === "requires_action") {
+//     console.log(run.status);
+//     return await handleRequiresAction(run);
+//   } else {
+//     console.error("Run did not complete:", run);
+//   }
+// };
+
+// Stream handler
+const onEvent = async (event) => {
+  try {
+    console.log(event);
+    if (event.event === "thread.run.requires_action") {
+      await handleRequiresAction(event.data, event.data.id, event.data.thread_id);
+    }
+  } catch (error) {
+    console.error("Error handling event:", error);
+  }
+};
+
+const handleRequiresAction = async (data, runId, threadId) => {
+  try {
+    const toolOutputs = await Promise.all(data.required_action.submit_tool_outputs.tool_calls.map(async (toolCall) => {
+      if (toolCall.function.name === "searchInternet") {
+        const { query, numResults } = JSON.parse(toolCall.function.arguments);
+        const results = await searchInternet({ query, numResults });
+        return {
+          tool_call_id: toolCall.id,
+          output: JSON.stringify(results),
+        };
+      } else if (toolCall.function.name === "chartGenerator") {
+        const { userInput } = JSON.parse(toolCall.function.arguments);
+        const chartData = await chartGenerator({ userInput });
+        return {
+          tool_call_id: toolCall.id,
+          output: JSON.stringify(chartData),
+        };
+      }
+    }));
+
+    // Filter out any undefined outputs
+    const filteredOutputs = toolOutputs.filter(output => output !== undefined);
+    // Submit all the tool outputs at the same time
+    await submitToolOutputs(filteredOutputs, runId, threadId);
+  } catch (error) {
+    console.error("Error processing required action:", error);
+  }
+};
+
+const submitToolOutputs = async (toolOutputs, runId, threadId) => {
+  try {
+    const stream = openai.beta.threads.runs.submitToolOutputsStream(threadId, runId, { tool_outputs: toolOutputs });
+    for await (const event of stream) {
+      onEvent(event);
+    }
+  } catch (error) {
+    console.error("Error submitting tool outputs:", error);
+  }
+};
 
 const aiAssistantChatStart = async (userId, userMessage, appId, imageUrl = null, isStartChat, onPartialResponse) => {
   const app = await App.findOne({
@@ -291,6 +464,10 @@ const aiAssistantChatStart = async (userId, userMessage, appId, imageUrl = null,
         });
       });
 
+    // for await (const event of run) {
+    //   onEvent(event);
+    // }
+
     const finalFunctionCall = await run.finalMessages();
     console.log("Run end:", finalFunctionCall, chatResponse);
 
@@ -312,8 +489,12 @@ const aiAssistantChatStart = async (userId, userMessage, appId, imageUrl = null,
     });
 
     if (isStartChat) {
-      console.log("new chat loaded.---------------------------------------------")
-      startChatSession(userId, appId, userMessage, [imageUrl === null ? '' : imageUrl]);
+      console.log(
+        "new chat loaded.---------------------------------------------"
+      );
+      await startChatSession(userId, appId, userMessage, [
+        imageUrl === null ? "" : imageUrl,
+      ]);
     }
 
     if (obj.code) {
