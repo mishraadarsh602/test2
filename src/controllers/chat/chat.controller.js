@@ -478,10 +478,78 @@ const handleRequiresAction = async (data, runId, threadId, onPartialResponse) =>
 
 const submitToolOutputs = async (toolOutputs, runId, threadId, onPartialResponse) => {
   try {
-    const stream = openai.beta.threads.runs.submitToolOutputsStream(threadId, runId, { tool_outputs: toolOutputs });
-    for await (const event of stream) {
-      onEvent(event, onPartialResponse);
+    const obj = { message: "", code: "", streaming: false };
+    let chatResponse = "";
+    let isInsideCodeBlock = false;
+    let codeBlockBuffer = "";
+    const stream = openai.beta.threads.runs.submitToolOutputsStream(threadId, runId, { tool_outputs: toolOutputs })
+    .on('textDelta', (textDelta) => {  
+      chatResponse += textDelta.value;
+      const parts = textDelta.value.split('```');
+      parts.forEach((part, index) => {
+        if (isInsideCodeBlock) {
+          // Call the callback to stream partial responses
+          onPartialResponse({
+            message: chatResponse,
+            fullChatResponse: chatResponse,
+            streaming: true,
+            code: obj.code,
+            codeFound: true,
+          });
+          if (index % 2 !== 0) {
+            codeBlockBuffer += part;
+          }
+        } else {
+          if (index % 2 === 0) {
+            obj.message += part;
+            obj.streaming = true;
+            // Call the callback to stream partial responses
+            onPartialResponse({
+              message: textDelta.value,
+              fullChatResponse: chatResponse,
+              streaming: true,
+              code: "",
+            });
+          } else {
+            codeBlockBuffer = part;
+            isInsideCodeBlock = true;
+            // Call the callback to stream partial responses
+            onPartialResponse({
+              message: chatResponse,
+              fullChatResponse: chatResponse,
+              streaming: true,
+              code: obj.code,
+              codeFound: true,
+            });
+          }
+        }
+      });
+    });
+
+    const finalFunctionCall = await stream.finalMessages();
+    console.log("Run end:", finalFunctionCall, chatResponse);
+
+    const codeBlockRegex = /```(?:\w+)?\n([\s\S]*?)\n```/g;
+    let match;
+    if ((match = codeBlockRegex.exec(chatResponse)) !== null) {
+      const extractedCode = match[1];
+      obj.code += extractedCode.replace(/tsx/g, "");
+      process.stdout.write(obj.code);
     }
+
+    // Call the callback to stream partial responses
+    onPartialResponse({
+      message: chatResponse,
+      fullChatResponse: chatResponse,
+      streaming: false,
+      code: obj.code,
+      codeFound: false,
+    });
+
+      // ;
+    // for await (const event of stream) {
+    //   onEvent(event, onPartialResponse);
+    // }
   } catch (error) {
     console.error("Error submitting tool outputs:", error);
   }
@@ -554,55 +622,66 @@ const aiAssistantChatStart = async (userId, userMessage, appId, imageUrl = null,
     // Start streaming from OpenAI or another source
     const run = await openai.beta.threads.runs
     .stream(thread_id, assistantObj)
-    // .on('textDelta', (textDelta) => {
-    //   chatResponse += textDelta.value;
+    .on('textDelta', (textDelta) => {
+      chatResponse += textDelta.value;
       
-    //   const parts = textDelta.value.split('```');
-    //   parts.forEach((part, index) => {
-    //     if (isInsideCodeBlock) {
-    //       // Call the callback to stream partial responses
-    //       onPartialResponse({
-    //         message: chatResponse,
-    //         fullChatResponse: chatResponse,
-    //         streaming: true,
-    //         code: obj.code,
-    //         codeFound: true,
-    //       });
-    //       if (index % 2 !== 0) {
-    //         codeBlockBuffer += part;
-    //       }
-    //     } else {
-    //       if (index % 2 === 0) {
-    //         obj.message += part;
-    //         obj.streaming = true;
-    //         // Call the callback to stream partial responses
-    //         onPartialResponse({
-    //           message: textDelta.value,
-    //           fullChatResponse: chatResponse,
-    //           streaming: true,
-    //           code: "",
-    //         });
-    //       } else {
-    //         codeBlockBuffer = part;
-    //         isInsideCodeBlock = true;
-    //         // Call the callback to stream partial responses
-    //         onPartialResponse({
-    //           message: chatResponse,
-    //           fullChatResponse: chatResponse,
-    //           streaming: true,
-    //           code: obj.code,
-    //           codeFound: true,
-    //         });
-    //       }
-    //     }
-    //   });
-    // });
+      const parts = textDelta.value.split('```');
+      parts.forEach((part, index) => {
+        if (isInsideCodeBlock) {
+          // Call the callback to stream partial responses
+          onPartialResponse({
+            message: chatResponse,
+            fullChatResponse: chatResponse,
+            streaming: true,
+            code: obj.code,
+            codeFound: true,
+          });
+          if (index % 2 !== 0) {
+            codeBlockBuffer += part;
+          }
+        } else {
+          if (index % 2 === 0) {
+            obj.message += part;
+            obj.streaming = true;
+            // Call the callback to stream partial responses
+            onPartialResponse({
+              message: textDelta.value,
+              fullChatResponse: chatResponse,
+              streaming: true,
+              code: "",
+            });
+          } else {
+            codeBlockBuffer = part;
+            isInsideCodeBlock = true;
+            // Call the callback to stream partial responses
+            onPartialResponse({
+              message: chatResponse,
+              fullChatResponse: chatResponse,
+              streaming: true,
+              code: obj.code,
+              codeFound: true,
+            });
+          }
+        }
+      });
+    });
 
-    for await (const event of run) {
-      onEvent(event, onPartialResponse);
+    console.log()
+    if(chatResponse.trim() === ''){
+      for await (const event of run) {
+        // onEvent(event, onPartialResponse);
+        if (event.event === "thread.run.requires_action") {
+          await handleRequiresAction(
+            event.data,
+            event.data.id,
+            event.data.thread_id,
+            onPartialResponse
+          );
+        }
+    
+      }
     }
 
-    if (chatResponse.trim() !== "") {
       const finalFunctionCall = await run.finalMessages();
       console.log("Run end:", finalFunctionCall, chatResponse);
 
@@ -622,7 +701,6 @@ const aiAssistantChatStart = async (userId, userMessage, appId, imageUrl = null,
         code: obj.code,
         codeFound: false,
       });
-    }
 
     if (isStartChat) {
       console.log(
