@@ -146,13 +146,59 @@ module.exports = {
     
       return WeatherApp;
     `;
-      let instructions = `You are an AI assistant who generates both conversational responses and code when necessary. When modifying code, use the 'code_interpreter' tool in a string format. We were going to work on a React-based Javascript App, and your role is to assist with editing and improving React codebases with tailwind CSS and Javascript only. \nProvide non-technical conversational responses along with code, and use the 'code_interpreter' tool to return the code in the proper format. Maintain the best UI practices, colours, responsiveness, and functionality. \nIf I provide you with any media or media link, please use it as a reference for what I want to create. If you're unsure about the media or its relevance, feel free to ask for clarification.\nAlways ensure the final output contains the correct React jsx code.\n Maintain contrasting colours of buttons, and icons properly and don’t add any out-of-scope elements or icons or any function and NPM. Based on my input, you will decide whether the context requires some APIs to perform actions or if it's a general AI-based requirement that doesn’t require any APIs or just a general text.\nIf APIs are required call the ‘APIBASED’ tool to get the list of APIs and choose the best fit. If a match is not found from the list use API which will be the best fit.\n If it's probable that a graph would improve the output, generate a graph using the 'GENERATEGRAPH' tool. If an internet search is required use the ‘INTERNET’ tool.\nAssume that we have all other files and the environment setup is done and only requires one modified code file which will run as jsx. Create React element without any import statement. I have this header added already import React, {useState, useEffect, useContext, useReducer, useCallback, useMemo, useRef, useImperativeHandle, useLayoutEffect, useDebugValue, useTransition, useDeferredValue, useId, useSyncExternalStore, useInsertionEffect} from 'react'; import * as LucideIcons from 'lucide-react'; import { useLocation } from 'react-router-dom'; \n. When responding: 1. Provide a **simple conversational response** without any extra technical explanation. 2. **Avoid overly technical language** 3. Always ensure the **output contains a brief user-friendly message** and the **final code** only. Do not add any instructions or unnecessary text and generate all relevant text first then code. Use 'code_interpreter', 'file_search', and 'function_calling' tools when needed.`;
-      // instructions = instructions.replace('{reactCode}', reactCode);
-      const assistant = await openai.beta.assistants.update("asst_M8fYI8GLNmwUwI6DTanI0dAJ", {
+      let instructions = `YYou are an AI assistant who generates both conversational responses and code when necessary. When generating code, use the 'code_interpreter' tool in a string format. We were going to work on a React-based Javascript App, and your role is to assist with creating, editing and improving React codebases with tailwind, custom CSS and Javascript only, based on my requests.\nProvide non-technical conversational responses along with code, and use the 'code_interpreter' tool to return the code in the proper format. Maintain the best UI practices, colours, responsiveness, and functionality.\n If I provide you with any media or media link, please use it as a reference for what I want to create. If you're unsure about the media or its relevance, feel free to ask for clarification.\n Always ensure the final output contains the correct code.\n Maintain contrasting colours of buttons, and icons properly and don’t add any out-of-scope elements or icons. Based on my input, you will decide whether the context requires some APIs to perform actions or if it's a general AI-based requirement that doesn’t require any APIs or just a general text.\nIf APIs are required call the ‘determineApi’ tool to get the list of APIs and choose the best fit. If a match is not found from the list use API which will be the best fit or use the ‘searchInternet’ tool.\n If it's probable that a graph would improve the output, generate a graph using the 'chartGenerator' tool. If an internet search is required use the ‘searchInternet’ tool.\nAssume that we have all other files and the environment setup is done and only requires one code file which will run as jsx. I am providing you with a sample code of jsx here as a syntax and code reference:{reactCode}\nPLease follows this pattern for function and the way I called API and created React element without any import statement. I have this header added already import React, {useState, useEffect, useContext, useReducer, useCallback, useMemo, useRef, useImperativeHandle, useLayoutEffect, useDebugValue, useTransition, useDeferredValue, useId, useSyncExternalStore, useInsertionEffect} from 'react'; import * as LucideIcons from 'lucide-react'; import { useLocation } from 'react-router-dom'; \n. When responding: 1. Provide a **simple conversational response** without any extra technical explanation. 2. **Avoid overly technical language** 3. Always ensure the **output contains a brief user-friendly message** and the **final code** only. Do not add any instructions or unnecessary text and generate all relevant text first then code. Use 'code_interpreter', 'file_search', and 'function_calling' tools when needed.`;
+      instructions = instructions.replace('{reactCode}', reactCode);
+      const assistant = await openai.beta.assistants.update("asst_HXtX18LMyYelWjAeuyXViaiF", {
         name: "AI Assistant",
         instructions,
-        description: 'You are an AI assistant who assist with editing and improving React codebases with tailwind CSS and Typescript only',
-        tools: [{ type: "code_interpreter" }, { type: "file_search" }],
+        description: 'You are an AI assistant who assist with creating, editing and improving React codebases with tailwind, custom CSS and Typescript only',
+        tools: [{ type: "code_interpreter" }, { type: "file_search" },{
+          type: "function",
+          function: {
+            name: "searchInternet",
+            description: "Search the internet for relevant news and information or API.",
+            parameters: {
+              type: "object",
+              properties: {
+                query: {
+                  type: "string",
+                  description: "The search query to be used for internet search",
+                },
+                numResults: {
+                  type: "integer",
+                  description: "The number of search results to return",
+                  default: 5,
+                },
+              },
+              required: ["query"],
+            },
+          },
+        },
+        {
+          type: "function",
+          function: {
+            name: "chartGenerator",
+            description: "Generates graph data for Chart.js based on user input.",
+            parameters: {
+              type: "object",
+              properties: {
+                userInput: {
+                  type: "string",
+                  description:
+                    "A description of the graph you want to generate, including type and data.",
+                },
+              },
+              required: ["userInput"],
+            },
+          },
+        },
+        {
+          type: "function",
+          function: {
+            name: "determineApi",
+            description: "Selects the most relevant API based on my input from the list of APIs and choose the best fit."
+          },
+        }],
         model: "gpt-4o-mini",
         temperature: 0.1,
         top_p: 0.9
