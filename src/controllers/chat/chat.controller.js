@@ -1,5 +1,6 @@
 const chatSession = require('./../../models/chat/chatSession.model');
 const userSession = require('./../../models/chat/globalSession.model');
+const Api = require('./../../models/api.model');
 const { v4: uuidv4 } = require('uuid');
 const App = require('../../models/app');
 const { default: axios } = require('axios');
@@ -181,17 +182,19 @@ const addImageToThread = async (threadId, imageUrl) => {
 
 async function searchInternet({ query, numResults = 5 }) {
   try {
-    const apiKey = process.env.SEARCHAPI_API_KEY;
-    const response = await axios.get("https://api.searchengine.com/v1/search", {
+    console.log("Called Internet.......")
+    const apiKey = process.env.SERPAPI_API_KEY; // Use SerpAPI key
+    const response = await axios.get("https://serpapi.com/search.json", {
       params: {
-        q: query,
-        num: numResults,
-        engine: "google_news",
-        api_key: apiKey,
+        q: query,                      // Search query
+        num: numResults,               // Number of results
+        google_domain: "google.com",    // Google domain
+        api_key: '82c9a514bf856c3104747d3117c65ffae63156134332cb35265088a7a8c43f52',               // Your SerpAPI key
       },
     });
-
-    const results = response.data.results;
+    console.log("Called.......", response)
+    // Parse the response based on SerpAPI's format
+    const results = response.data.organic_results;
     return results.map((result) => ({
       title: result.title,
       link: result.link,
@@ -204,6 +207,7 @@ async function searchInternet({ query, numResults = 5 }) {
 }
 
 async function chartGenerator({ userInput }) {
+  console.log("Chart Generator calling.......................")
   try {
     let prompt = `
       You are a tool that generates graph data for Chart.js. Based on the input provided, return a structured JSON output.
@@ -242,6 +246,54 @@ async function chartGenerator({ userInput }) {
     console.error("Error generating chart data:", error);
     throw new Error("Chart generation failed");
   }
+}
+
+// The actual implementation of the `determineApi` function using OpenAI function calling
+async function determineApi() {
+  console.log("determine Api calling.......................")
+  const apis_array = await Api.find({});
+  const tools = apis_array.map(api => ({
+    name: api.key,
+    api: api.api,
+    description: api.purpose, // Keep the description concise
+  }));
+
+  // try {
+  //   // Create a prompt for the model to decide the best API
+  //   let prompt = `You are a decision-maker. Based on my input return the most relevant API only, without any extra content: 
+  //   Here is my input = ${userPrompt}`;
+
+  //   const response = await axios.post('https://api.anthropic.com/v1/messages', {
+  //     model: "claude-3-5-sonnet-20240620",  // Use the appropriate model
+  //     max_tokens: 8000,
+  //     tools,
+  //     messages: [
+  //       {
+  //         role: "user",
+  //         content: prompt,
+  //       }
+  //     ],
+  //   }, {
+  //     headers: {
+  //       "content-type": "application/json",
+  //       "x-api-key": process.env['ANTHROPIC_API_KEY'],
+  //       "anthropic-version": "2023-06-01",
+  //     }
+  //   });
+  //   console.log(response);
+
+  //   if (response.data.content[1].type === 'tool_use') {
+  //     return response.data.content[1].name; // Return the selected API
+  //   } else {
+  //     console.log('No API found');
+  //     return null;
+  //   }
+  // } catch (error) {
+  //   console.error("Error making determineApi call via OpenAI:", error.response ? error.response.data : error.message);
+  //   throw error;
+  // }
+
+  return tools;
 }
 
 // const handleRequiresAction = async (run) => {
@@ -302,18 +354,94 @@ async function chartGenerator({ userInput }) {
 // };
 
 // Stream handler
-const onEvent = async (event) => {
+const onEvent = async (event, onPartialResponse) => {
   try {
-    console.log(event);
+    console.log(event.event);
     if (event.event === "thread.run.requires_action") {
-      await handleRequiresAction(event.data, event.data.id, event.data.thread_id);
+      await handleRequiresAction(
+        event.data,
+        event.data.id,
+        event.data.thread_id,
+        onPartialResponse
+      );
+    }
+
+     // Handle message streaming during the run
+     if (event.event === "thread.message.delta") {
+      let output = event.data.delta.content[0].text.value; // Handle the delta response
+
+      let chatResponse = '';
+      chatResponse += output;
+
+      console.log("Received delta message:", chatResponse);
+
+      let obj = { message: "", code: "", streaming: false };
+
+      const parts = output.split('```'); // Split the response by code blocks
+      parts.forEach((part, index) => {
+        // Check if we are inside a code block or outside of one
+        if (index % 2 === 0) {
+          // Outside the code block (plain text)
+          obj.message += part;
+          obj.streaming = true;
+  
+          // Call the callback to stream the message (without code)
+          onPartialResponse({
+            message: obj.message, // Stream only the message part
+            fullChatResponse: '',
+            streaming: true,
+            code: "", // No code is streamed
+            codeFound: false,
+          });
+        } else {
+          // Outside the code block (plain text)
+          obj.code += part;
+          obj.streaming = true;
+  
+          // Call the callback to stream the message (without code)
+          onPartialResponse({
+            message: obj.message, // Stream only the message part
+            fullChatResponse: '',
+            streaming: true,
+            code: obj.code, // No code is streamed
+            codeFound: true,
+          });
+        }
+      });
+  
+      console.log("running................................")
+      const codeBlockRegex = /```(?:\w+)?\n([\s\S]*?)\n```/g;
+      let match;
+      if ((match = codeBlockRegex.exec(chatResponse)) !== null) {
+        const extractedCode = match[1];
+        obj.code += extractedCode.replace(/tsx/g, "");
+        process.stdout.write(obj.code);
+      }
+
+      onPartialResponse({
+        message: chatResponse,
+        fullChatResponse: chatResponse,
+        streaming: false,
+        code: obj.code,
+        codeFound: false,
+      });
+
+      return obj; // You can use this if needed for final processing
+    }
+
+    if (event.event === "thread.run.completed") {
+      console.log("Run completed. Preparing to print results...");
+      const messages = await openai.beta.threads.messages.list(
+        event.data.thread_id
+      );
+      console.log("Final Results:", messages.data);
     }
   } catch (error) {
     console.error("Error handling event:", error);
   }
 };
 
-const handleRequiresAction = async (data, runId, threadId) => {
+const handleRequiresAction = async (data, runId, threadId, onPartialResponse) => {
   try {
     const toolOutputs = await Promise.all(data.required_action.submit_tool_outputs.tool_calls.map(async (toolCall) => {
       if (toolCall.function.name === "searchInternet") {
@@ -330,23 +458,29 @@ const handleRequiresAction = async (data, runId, threadId) => {
           tool_call_id: toolCall.id,
           output: JSON.stringify(chartData),
         };
+      } else if (toolCall.function.name === "determineApi") {
+        const data = await determineApi();
+        return {
+          tool_call_id: toolCall.id,
+          output: JSON.stringify(data),
+        };
       }
     }));
 
     // Filter out any undefined outputs
     const filteredOutputs = toolOutputs.filter(output => output !== undefined);
     // Submit all the tool outputs at the same time
-    await submitToolOutputs(filteredOutputs, runId, threadId);
+    await submitToolOutputs(filteredOutputs, runId, threadId, onPartialResponse);
   } catch (error) {
     console.error("Error processing required action:", error);
   }
 };
 
-const submitToolOutputs = async (toolOutputs, runId, threadId) => {
+const submitToolOutputs = async (toolOutputs, runId, threadId, onPartialResponse) => {
   try {
     const stream = openai.beta.threads.runs.submitToolOutputsStream(threadId, runId, { tool_outputs: toolOutputs });
     for await (const event of stream) {
-      onEvent(event);
+      onEvent(event, onPartialResponse);
     }
   } catch (error) {
     console.error("Error submitting tool outputs:", error);
@@ -419,74 +553,76 @@ const aiAssistantChatStart = async (userId, userMessage, appId, imageUrl = null,
 
     // Start streaming from OpenAI or another source
     const run = await openai.beta.threads.runs
-      .stream(thread_id, assistantObj)
-      .on("textDelta", (textDelta) => {
-        chatResponse += textDelta.value;
+    .stream(thread_id, assistantObj)
+    // .on('textDelta', (textDelta) => {
+    //   chatResponse += textDelta.value;
+      
+    //   const parts = textDelta.value.split('```');
+    //   parts.forEach((part, index) => {
+    //     if (isInsideCodeBlock) {
+    //       // Call the callback to stream partial responses
+    //       onPartialResponse({
+    //         message: chatResponse,
+    //         fullChatResponse: chatResponse,
+    //         streaming: true,
+    //         code: obj.code,
+    //         codeFound: true,
+    //       });
+    //       if (index % 2 !== 0) {
+    //         codeBlockBuffer += part;
+    //       }
+    //     } else {
+    //       if (index % 2 === 0) {
+    //         obj.message += part;
+    //         obj.streaming = true;
+    //         // Call the callback to stream partial responses
+    //         onPartialResponse({
+    //           message: textDelta.value,
+    //           fullChatResponse: chatResponse,
+    //           streaming: true,
+    //           code: "",
+    //         });
+    //       } else {
+    //         codeBlockBuffer = part;
+    //         isInsideCodeBlock = true;
+    //         // Call the callback to stream partial responses
+    //         onPartialResponse({
+    //           message: chatResponse,
+    //           fullChatResponse: chatResponse,
+    //           streaming: true,
+    //           code: obj.code,
+    //           codeFound: true,
+    //         });
+    //       }
+    //     }
+    //   });
+    // });
 
-        const parts = textDelta.value.split("```");
-        parts.forEach((part, index) => {
-          if (isInsideCodeBlock) {
-            // Call the callback to stream partial responses
-            onPartialResponse({
-              message: chatResponse,
-              fullChatResponse: chatResponse,
-              streaming: true,
-              code: obj.code,
-              codeFound: true,
-            });
-            if (index % 2 !== 0) {
-              codeBlockBuffer += part;
-            }
-          } else {
-            if (index % 2 === 0) {
-              obj.message += part;
-              obj.streaming = true;
-              // Call the callback to stream partial responses
-              onPartialResponse({
-                message: textDelta.value,
-                fullChatResponse: chatResponse,
-                streaming: true,
-                code: "",
-              });
-            } else {
-              codeBlockBuffer = part;
-              isInsideCodeBlock = true;
-              // Call the callback to stream partial responses
-              onPartialResponse({
-                message: chatResponse,
-                fullChatResponse: chatResponse,
-                streaming: true,
-                code: obj.code,
-                codeFound: true,
-              });
-            }
-          }
-        });
-      });
-
-    // for await (const event of run) {
-    //   onEvent(event);
-    // }
-
-    const finalFunctionCall = await run.finalMessages();
-    console.log("Run end:", finalFunctionCall, chatResponse);
-
-    const codeBlockRegex = /```(?:\w+)?\n([\s\S]*?)\n```/g;
-    let match;
-    if ((match = codeBlockRegex.exec(chatResponse)) !== null) {
-      const extractedCode = match[1];
-      obj.code += extractedCode.replace(/tsx/g, "");
-      process.stdout.write(obj.code);
+    for await (const event of run) {
+      onEvent(event, onPartialResponse);
     }
 
-    // Call the callback to stream partial responses
-    onPartialResponse({
-      message: chatResponse,
-      fullChatResponse: chatResponse,
-      streaming: false,
-      code: obj.code,
-      codeFound: false,
-    });
+    if (chatResponse.trim() !== "") {
+      const finalFunctionCall = await run.finalMessages();
+      console.log("Run end:", finalFunctionCall, chatResponse);
+
+      const codeBlockRegex = /```(?:\w+)?\n([\s\S]*?)\n```/g;
+      let match;
+      if ((match = codeBlockRegex.exec(chatResponse)) !== null) {
+        const extractedCode = match[1];
+        obj.code += extractedCode.replace(/tsx/g, "");
+        process.stdout.write(obj.code);
+      }
+
+      // Call the callback to stream partial responses
+      onPartialResponse({
+        message: chatResponse,
+        fullChatResponse: chatResponse,
+        streaming: false,
+        code: obj.code,
+        codeFound: false,
+      });
+    }
 
     if (isStartChat) {
       console.log(
