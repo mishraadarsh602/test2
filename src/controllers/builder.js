@@ -215,7 +215,33 @@ module.exports = {
     fetchVisitors:async (req,res)=>{
         try {
             const userId = req.user ? req.user.userId : null;
-           const allVisitors=await appVisitorsModel.find({liveUrl: (req.params.liveUrl),user:userId,deleted:false},{browser:1,updatedAt:1,createdAt:1,device:1,})      
+            const liveNameAggregation=[
+                {$match: {
+                  name:req.params.appName,
+                }},
+                {
+                  $lookup: {
+                    from: 'apps',
+                    localField: '_id',
+                    foreignField: 'parentApp',
+                    as: 'result'
+                  }
+                },
+                {
+                  $match: {
+                    status:'live'
+                  }
+                },
+                {
+                  $project: {
+                    name:1,
+                    _id:0
+                  }
+                },
+                
+              ];
+            const liveAppName=await App.aggregate(liveNameAggregation);
+           const allVisitors=await appVisitorsModel.find({name: (liveAppName[0]?.name),user:userId,deleted:false},{browser:1,updatedAt:1,createdAt:1,device:1,})      
            res.status(201).json({
                 message: "fetch visitors successfully",
                 data: allVisitors,
