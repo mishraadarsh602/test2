@@ -125,7 +125,7 @@ module.exports = {
     },
     updateApp: async (req, res) => {
         try {
-            let appId = req.params.appId;
+            let appName = req.params.appName;
             // let { name } = req.body;
             let updateData = req.body;
 
@@ -137,7 +137,7 @@ module.exports = {
             //     updateData.name = name;
             // }
 
-            let updatedApp = await App.findByIdAndUpdate(appId, updateData, { new: true }).lean();
+            let updatedApp = await App.findOneAndUpdate({name:appName,status:'dev'}, updateData, { new: true }).lean();
             if (!updatedApp) {
                 return res.status(404).json({ error: 'App not found' });
             }
