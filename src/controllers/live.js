@@ -12,17 +12,17 @@ const featureListModel=require('../models/featureList');
 //     }
 // }
 const redisClient=require('../utils/redisClient');
-async function updateAppVisitor(liveUrl, visitorCount) {
+async function updateAppVisitor(name, visitorCount) {
     try {
-        await appModel.updateOne({ liveUrl, status: 'dev' }, { $set: { visitorCount } });
+        await appModel.updateOne({ name, status: 'dev' }, { $set: { visitorCount } });
     } catch (error) {
     }
 }
 
-async function updateFeatureListCount(liveUrl, agentType) {
+async function updateFeatureListCount(name) {
     try {
-        const liveApp = await App.findOne({ liveUrl }, { type: 1, _id: 0 });
-        await featureListModel.updateOne({ type: liveApp.type }, { $inc: { visitorCount: 1 } });
+        const liveApp = await App.findOne({ name }, { agent_type: 1, _id: 0 });        
+        await featureListModel.updateOne({ type: liveApp.agent_type }, { $inc: { visitorCount: 1 } });
     } catch (error) {
 
     }
@@ -34,16 +34,16 @@ module.exports = {
             if (!userId) {
                 return res.status(400).json({ error: 'User ID is required' });
             }
-            const liveUrl = req.body.name;
+            const name = req.body.name;
             const visitorCreated = new appVisitorModel({
-                liveUrl: liveUrl,
+                name,
                 user: userId,
                 ...req.body
             });
             await visitorCreated.save();
-            const visitorCount = await appVisitorModel.count({ liveUrl });
-            updateAppVisitor(liveUrl, visitorCount);
-            updateFeatureListCount(liveUrl);
+            const visitorCount = await appVisitorModel.count({ name });
+            updateAppVisitor(name, visitorCount);
+            updateFeatureListCount(name);
             return res.status(200).json({
                 message: 'Visits updated successfully',
             });
@@ -52,21 +52,21 @@ module.exports = {
     }, 
     getLivePreview:async (req,res)=>{
         try {
-            const liveUrl=req.body.name;
+            const name=req.params.appName;
             let response;
             await redisClient.connect();
-            let componentCode=await redisClient.get(`componentCode-${liveUrl}`);
+            let componentCode=await redisClient.get(`componentCode-${name}`);
             if(!componentCode){
-            response=await App.findOne({liveUrl},{componentCode:1,_id:0});            
-            await redisClient.set(`componentCode-${liveUrl}`,response.componentCode);
+            response=await App.findOne({name:name,status:'live'});            
+            await redisClient.set(`componentCode-${name}`,JSON.stringify(response));
             }
             await  redisClient.quit();
             res.status(201).json({
                 message: "fetch live preview successfully",
-                data: componentCode?{componentCode}:response,
+                data: componentCode?JSON.parse(componentCode):response,
               });
         } catch (error) {
-                    
+
         }   
                 
         }

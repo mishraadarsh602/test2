@@ -84,18 +84,19 @@ module.exports = {
             }
         },
 
-    getAppById: async (req, res) => {     
+    getAppByName: async (req, res) => {     
         try {
             // let app = await App.findById(req.params.appId).populate('user').lean();
-             let app = await App.findById(req.params.appId);
-            const isLive=await App.findOne({parentApp:req.params.appId});      
+             let app = await App.findOne({name:req.params.appName});
+            const isLive=await App.findOne({parentApp:app._id},{name:1});      
             if (!app) {
                 return res.status(404).json({ error: 'App not found' });
             }
             res.status(200).json({
                 message: "App fetched successfully",
                 data: app,
-                isLive:isLive?true:false
+                isLive:isLive?true:false,
+                liveUrl:isLive?isLive.name:app.name
               });
         } catch (error) {
             createLog({userId:req.user.userId,error:error.message,appId:req.params.appId})
@@ -180,7 +181,8 @@ module.exports = {
     },
     liveApp:async (req,res)=>{
         try {
-            let previousLiveApp=await App.findOne({parentApp:req.body.appId,status:'live'});
+            let app=await App.findOne({name:req.params.appName},{_id:1});
+            let previousLiveApp=await App.findOne({parentApp:app._id,status:'live'});
             if(previousLiveApp){
                 await redisClient.connect();
                 await redisClient.del(`componentCode-${previousLiveApp.liveUrl}`);
@@ -196,16 +198,14 @@ module.exports = {
             appData['appUUID'] = uuidv4();
             appData['parentApp']=req.body.appId;
             appData['status']='live';
-            appData.parentApp= new mongoose.Types.ObjectId (req.body.appId);
+            appData.parentApp= new mongoose.Types.ObjectId (app._id);
             delete appData['_id'];
             let newApp = new App(appData);           
             let savedApp = await newApp.save();
             res.status(201).json({
                 message: "App live successfully",
-                data: savedApp,
               });
         } catch (error) {            
-            console.log('error is -----> ',error);
           
             createLog({userId:req.user.userId.toString(),error:error.message,appId:req.body.appId})
             res.status(500).json({ error: error.message });
@@ -215,7 +215,58 @@ module.exports = {
     fetchVisitors:async (req,res)=>{
         try {
             const userId = req.user ? req.user.userId : null;
-           const allVisitors=await appVisitorsModel.find({liveUrl: (req.params.liveUrl),user:userId,deleted:false},{browser:1,updatedAt:1,createdAt:1,device:1,})      
+            const liveNameAggregation=[
+                {$match: {
+                  name:req.params.appName,
+                }},
+                {
+                  $lookup: {
+                    from: 'apps',
+                    localField: '_id',
+                    foreignField: 'parentApp',
+                    as: 'result'
+                  }
+                },
+                {
+                  $match: {
+                    status:'live'
+                  }
+                },
+                {
+                  $project: {
+                    name:1,
+                    _id:0
+                  }
+                },
+                
+              ];
+            const liveAppName=await App.aggregate(liveNameAggregation);
+            
+        const allVisitors=await appVisitorsModel.aggregate([
+            {
+              $match: {
+                name:liveAppName[0]?.name
+              }
+            },
+            {
+              $addFields: {
+                date:{
+                 $dateToString: {
+                    format: "%d %b %Y %H:%M:%S",  
+                    date: "$createdAt", 
+                  }
+                }
+              }
+            },
+            {
+             $project: {
+               date:1,
+              createdAt:0,
+               updatedAt:0,
+               browser:1,updatedAt:1,createdAt:1,device:1
+             }
+            }
+          ])
            res.status(201).json({
                 message: "fetch visitors successfully",
                 data: allVisitors,

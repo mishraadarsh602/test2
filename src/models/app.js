@@ -8,10 +8,6 @@ const appSchema = new mongoose.Schema({
         required: true,
         // unique: true
     },
-    type: {
-        type: String,
-        default: 'weather'
-    },
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
@@ -165,10 +161,6 @@ const appSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
-    liveUrl: {
-        type: String,
-        required:true,
-    }
 }, { timestamps: true });
 
 const App = mongoose.model('App', appSchema);

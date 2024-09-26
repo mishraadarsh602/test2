@@ -55,7 +55,6 @@ module.exports = {
         appData["componentCode"] = feature.componentCode;
       }
 
-      appData['liveUrl']= appData.name;
       let newApp = new App(appData);
       let savedApp = await newApp.save();
 

@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const appVisitorSchema = new mongoose.Schema(
     {
-        liveUrl:{
+        name:{
             type:String,
             required:true
         },
