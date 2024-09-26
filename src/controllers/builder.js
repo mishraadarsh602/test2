@@ -241,7 +241,32 @@ module.exports = {
                 
               ];
             const liveAppName=await App.aggregate(liveNameAggregation);
-           const allVisitors=await appVisitorsModel.find({name: (liveAppName[0]?.name),user:userId,deleted:false},{browser:1,updatedAt:1,createdAt:1,device:1,})      
+            
+        const allVisitors=await appVisitorsModel.aggregate([
+            {
+              $match: {
+                name:liveAppName[0]?.name
+              }
+            },
+            {
+              $addFields: {
+                date:{
+                 $dateToString: {
+                    format: "%d %b %Y %H:%M:%S",  
+                    date: "$createdAt", 
+                  }
+                }
+              }
+            },
+            {
+             $project: {
+               date:1,
+              createdAt:0,
+               updatedAt:0,
+               browser:1,updatedAt:1,createdAt:1,device:1
+             }
+            }
+          ])
            res.status(201).json({
                 message: "fetch visitors successfully",
                 data: allVisitors,
