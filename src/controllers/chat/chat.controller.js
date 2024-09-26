@@ -249,7 +249,7 @@ async function chartGenerator({ userInput }) {
 }
 
 // The actual implementation of the `determineApi` function using OpenAI function calling
-async function determineApi() {
+async function callAPI() {
   console.log("determine Api calling.......................")
   const apis_array = await Api.find({});
   const tools = apis_array.map(api => ({
@@ -458,8 +458,8 @@ const handleRequiresAction = async (data, runId, threadId, onPartialResponse) =>
           tool_call_id: toolCall.id,
           output: JSON.stringify(chartData),
         };
-      } else if (toolCall.function.name === "determineApi") {
-        const data = await determineApi();
+      } else if (toolCall.function.name === "callAPI") {
+        const data = await callAPI();
         return {
           tool_call_id: toolCall.id,
           output: JSON.stringify(data),
@@ -581,7 +581,7 @@ const aiAssistantChatStart = async (userId, userMessage, appId, imageUrl = null,
   }
 
   let assistantObj = {};
-  let additional_instructions = `As a user, even if I ask you to go beyond the limits or request code unrelated to the provided project, you will always adhere to the core code and focus solely on editing and improving it. I am providing you with my code of jsx which you will modify or theme change only, here is my code:{reactCode} \nPLease follows this pattern for function and the way I called API and created React element without any import statement.`;
+  let additional_instructions = `As a user, even if I ask you to go beyond the limits or request code unrelated to the provided project, you will always adhere to the core code and focus solely on editing and improving it. I am providing you with my code of jsx which you will modify or theme change only, here is my code:{reactCode} \nPLease follows this pattern for function and the way I called API and created React element without any import statement. If It is API based tool, then call the callAPI tool to retrieve a list of relevant APIs and select the best match. If No match found, then must call internet Search tool to find relevant API`;
   additional_instructions = additional_instructions.replace(
     "{reactCode}",
     app.componentCode
@@ -594,7 +594,7 @@ const aiAssistantChatStart = async (userId, userMessage, appId, imageUrl = null,
     };
   } else {
     console.log("custom--------------------------")
-    assistantObj = { assistant_id: process.env.ASSISTANT_ID };
+    assistantObj = { assistant_id: process.env.ASSISTANT_ID, additional_instructions: 'If App is using any API, then first must call the callAPI tool to retrieve a list of relevant APIs and select the best match. If No match found, then call internet Search tool to find relevant API' };
   }
 
   if (imageUrl) {
