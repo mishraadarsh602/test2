@@ -31,6 +31,7 @@ module.exports = {
                                 $set: {
                                     'brandDetails.brandInfo': brandExist.brandDetails.brandInfo,
                                     'domain': url,
+                                    'brandDetails.enabled':true
                                 }
                             },
                             { 
@@ -63,6 +64,7 @@ module.exports = {
                         $set: {
                             'brandDetails.brandInfo': brandGuideResult,
                             'domain': url,
+                            'brandDetails.enabled':true
                         }
                     },
                     { 
@@ -72,9 +74,6 @@ module.exports = {
                 ); 
                 return res;
         } catch (err) {
-            console.error(err);
-            return null;
-            // Handle the error appropriately
         }
     },
     uploadToAWS: async (file) => {
