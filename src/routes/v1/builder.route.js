@@ -17,12 +17,12 @@ router.get('/create_assistant', aiController.createAssistant);
 router.get('/get_assistant_conversatation', aiController.runAssistantConversation);
 router.get('/generate_graph', aiController.tryGraphMaking);
 router.get('/returnCode',aiController.returnCode);
-router.get('/get_app/:appId',auth, builderController.getAppById);
+router.get('/get_app/:appName',auth, builderController.getAppByName);
 router.post('/update_app/:appId',auth, builderController.updateApp);
 router.delete('/delete_app/:appId', builderController.deleteApp);
 router.get('/get_all_apps',auth, builderController.getAllAppsOfUser);
 router.get('/check_unique_app_name/:name/:appId', builderController.checkUniqueApp);
-router.post('/liveApp',auth, builderController.liveApp);
+router.post('/liveApp/:appName',auth, builderController.liveApp);
 router.get('/visitor/:liveUrl',auth, builderController.fetchVisitors);
 router.get('/getOverView/:appId',auth,builderController.getOverViewDetails)
 router.post('/visitor/delete',auth, builderController.deleteVisitors);

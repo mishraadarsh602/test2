@@ -165,10 +165,6 @@ const appSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
-    liveUrl: {
-        type: String,
-        required:true,
-    }
 }, { timestamps: true });
 
 const App = mongoose.model('App', appSchema);
