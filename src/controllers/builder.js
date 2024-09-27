@@ -36,11 +36,14 @@ module.exports = {
             if (userExist) {
                 const token = await userExist.generateToken();
                 res.cookie('token', token, {
-                    httpOnly: true, // Set to true for production to prevent access via JavaScript
-                    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-                    sameSite: 'none', // 'lax' or 'strict' for local testing and prodcution
-                    secure: true // Set to true for production (requires HTTPS)
-                });
+                    httpOnly: true, 
+                    maxAge: 24 * 60 * 60 * 1000, 
+                    sameSite: 'none', 
+                    secure: true 
+                });               
+                userExist.ogSubscriptionId=planId;
+                await userExist.save();
+
                 return res.status(201).json({
                     message: 'User already exists',
                     data: {
@@ -52,10 +55,10 @@ module.exports = {
             const token = await userCreated.generateToken();
     
             res.cookie('token', token, {
-                httpOnly: true, // Set to true for production to prevent access via JavaScript
-                maxAge: 24 * 60 * 60 * 1000, // 24 hours
-                sameSite: 'none', // 'lax' or 'strict' for local testing and prodcution
-                secure: true // Set to true for production (requires HTTPS)
+                httpOnly: true,
+                maxAge: 24 * 60 * 60 * 1000, 
+                sameSite: 'none', 
+                secure: true 
             });
     
             res.status(201).json({
