@@ -8,4 +8,5 @@ router.get("/", async (req, res) => {
 
 router.post('/gen_visitor', auth,liveController.generateVisitor);
 router.get('/:appName', auth,liveController.getLivePreview);
+router.post('/saveLead/:appId', auth,liveController.saveLead);
 module.exports = router;

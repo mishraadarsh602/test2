@@ -12,6 +12,7 @@ const featureListModel=require('../models/featureList');
 //     }
 // }
 const redisClient=require('../utils/redisClient');
+const appLeadsModel=require('../models/appLeads');
 const  mongoose = require('mongoose');
 async function updateAppVisitor(name, visitorCount) {
     try {
@@ -57,11 +58,12 @@ module.exports = {
       let response;
       
       // Check if Redis client is already connected
-      if (!redisClient.isOpen) {
-        await redisClient.connect();
-      }
+      // if (!redisClient.isOpen) {
+      //   await redisClient.connect();
+      // }
 
-      let componentCode = await redisClient.get(`componentCode-${parameter}`);
+      // let componentCode = await redisClient.get(`componentCode-${parameter}`);
+      let componentCode=null;
       if (!componentCode) {
         response = await App.findOne({ name: parameter, status: "live" });
   
@@ -77,7 +79,7 @@ module.exports = {
           return res.status(404).json({ error: "Page Not Found" });
         }
   
-        await redisClient.set(`componentCode-${parameter}`, JSON.stringify(response));
+        // await redisClient.set(`componentCode-${parameter}`, JSON.stringify(response));
       }
 
       res.status(201).json({
@@ -87,6 +89,25 @@ module.exports = {
     } catch (error) {
       res.status(500).json({ error: "Internal Server Error" });
     }
+  },
+  saveLead:async (req,res)=>{
+    try {
+      const userId = req.user ? req.user.userId : null;
+      if (!userId) {
+                return res.status(400).json({ error: 'User ID is required' });
+      }
+
+      let body={...req.body,user:userId,parentApp: new mongoose.Types.ObjectId(req.params.appId)}
+      const data=await appLeadsModel(body);
+      await data.save();
+      return res.status(200).json({
+        message: 'lead save successfully',
+});
+    } catch (error) {
+
+    }
+   
   }
+
 };
 
