@@ -89,17 +89,61 @@ module.exports = {
 
     getAppByName: async (req, res) => {     
         try {
-            // let app = await App.findById(req.params.appId).populate('user').lean();
-             let app = await App.findOne({name:req.params.appName});
-            const isLive=await App.findOne({parentApp:app._id},{name:1});      
+             let app = await App.findOne({name:req.params.appName},{_id:1});
+             let aggregation=[
+                {
+                  $facet: {
+                    dev: [
+                      {
+                        $match: { _id:new mongoose.Types.ObjectId(app._id) }
+                      }
+                    ],
+                    live: [
+                      {
+                        $match: {
+                          parentApp: new mongoose.Types.ObjectId(app._id),
+                          status:'live'
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  $project: {
+                    dev: { $arrayElemAt: ["$dev", 0] },
+                    live: 1,                             
+                    isLive: { $gt: [{ $size: "$live" }, 0] },
+                    liveUrl: {
+                      $cond: {
+                        if: { $gt: [{ $size: "$live" }, 0] }, 
+                        then: { $arrayElemAt: ["$live.name", 0] }, 
+                        else: { $arrayElemAt: ["$dev.name", 0] }
+                      }
+                    }
+                  }
+                },
+                {
+                  $replaceRoot: {
+                    newRoot: {
+                      $mergeObjects: [
+                        "$dev", 
+                        { 
+                          isLive: "$isLive", 
+                          liveUrl: "$liveUrl" 
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+
+              let result=await App.aggregate(aggregation);    
             if (!app) {
                 return res.status(404).json({ error: 'App not found' });
             }
             res.status(200).json({
                 message: "App fetched successfully",
-                data: app,
-                isLive:isLive?true:false,
-                liveUrl:isLive?isLive.name:app.name
+                data: result[0],
               });
         } catch (error) {
             createLog({userId:req.user.userId,error:error.message,appId:req.params.appId})
@@ -174,37 +218,33 @@ module.exports = {
             let appId = req.params.appId;
             let existingApp = await App.findOne({ name, _id: { $ne: appId }}).lean();
             if (existingApp) {
-                return res.status(200).json({ exists: true });
-            } else {
-                return res.status(200).json({ exists: false });
-            }
+                return res.status(409 ).json({ error: 'Name already exists' });
+            } 
+            await App.updateOne({_id:appId},{$set:{name,changed:true}})
+            return res.status(200).json({message:'name updated successfully'})
         } catch (error) {
             res.status(500).json({ error: error.message });
         }
     },
     liveApp:async (req,res)=>{
         try {
-            let app=await App.findOne({name:req.params.appName},{_id:1});
-            let previousLiveApp=await App.findOne({parentApp:app._id,status:'live'});
+            let id=req.params._id;
+            let previousLiveApp=await App.findOne({parentApp:req.params.appId,status:'live'});
             if(previousLiveApp){
-                await redisClient.connect();
-                await redisClient.del(`componentCode-${previousLiveApp.liveUrl}`);
-                await redisClient.quit();
                 previousLiveApp.status='old';
                 await previousLiveApp.save();
                 // changing status of parentApp
-                const parentApp=await App.findOne({_id:req.body.appId});
+                const parentApp=await App.findOne({_id:req.params.appId});
                 parentApp.changed=false;
                 await parentApp.save();
             }
             let appData = {...req.body.data};
             appData['appUUID'] = uuidv4();
-            appData['parentApp']=req.body.appId;
+            appData['parentApp']=req.params.appId;
             appData['status']='live';
-            appData.parentApp= new mongoose.Types.ObjectId (app._id);
             delete appData['_id'];
-            let newApp = new App(appData);           
-            let savedApp = await newApp.save();
+            let newApp = new App(appData);  
+            await newApp.save();         
             res.status(201).json({
                 message: "App live successfully",
               });
