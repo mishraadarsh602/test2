@@ -162,21 +162,45 @@ const addMessageToThread = async (threadId, messageText) => {
   }
 };
 
-const addImageToThread = async (threadId, imageUrl) => {
+const addImageToThread = async (threadId, content, image) => {
   try {
-
+    console.log("Calling new image...........................")
+    // A user wants to attach a file to a specific message, let's upload it.
+    // const imageInVectorStore = await openai.files.create({
+    //   file: fs.createReadStream(image),
+    //   purpose: "vision",
+    // });
     // Upload the image file and add it to the conversation
-    const response = await openai.beta.threads.messages.create(
-      threadId,
-      {
-        role: "user",
-        content: imageUrl
-      }
-    );
-    console.log('Image Added:', response);
+    console.log(image);
+    const response = await openai.beta.threads.messages.create(threadId, {
+      role: "user",
+      content: [
+        {
+          type: "text",
+          text: content,
+        },
+        {
+          type: "image_url",
+          image_url: {
+            url: image,
+            detail: "auto",
+          },
+        },
+        // {
+        //   type: "image_file",
+        //   image_file: {
+        //     file_name: "string",
+        //   },
+        // },
+      ],
+      // attachments: [
+      //   { file_id: imageInVectorStore.id, tools: [{ type: "file_search" }] },
+      // ],
+    });
+    console.log("Image Added:", response);
     return response;
   } catch (error) {
-    console.error('Error adding image to thread:', error);
+    console.error("Error adding image to thread:", error);
   }
 };
 
@@ -555,15 +579,15 @@ const submitToolOutputs = async (toolOutputs, runId, threadId, onPartialResponse
   }
 };
 
-const aiAssistantChatStart = async (userId, userMessage, appName, imageUrl = null, isStartChat, onPartialResponse) => {
-  const app = await App.findOne({
-    name: appName,
-    user: new mongoose.Types.ObjectId(userId),
-  });
+const aiAssistantChatStart = async (userId, userMessage, app, image = null, isStartChat, onPartialResponse) => {
+  // const app = await App.findOne({
+  //   name: appName,
+  //   user: new mongoose.Types.ObjectId(userId),
+  // });
 
-  if (!app) {
-    throw new Error("App or user not found");
-  }
+  // if (!app) {
+  //   throw new Error("App or user not found");
+  // }
 
   const thread_id = app.thread_id;
 
@@ -597,20 +621,43 @@ const aiAssistantChatStart = async (userId, userMessage, appName, imageUrl = nul
     assistantObj = { assistant_id: process.env.ASSISTANT_ID, additional_instructions: 'If App is using any API, then first must call the callAPI tool to retrieve a list of relevant APIs and select the best match. If No match found, then call internet Search tool to find relevant API' };
   }
 
-  if (imageUrl) {
+  if (image) {
     try {
-      const imageResponse = await addImageToThread(thread_id, imageUrl);
+      // Decode base64 image data
+      // const base64Data = image.replace(/^data:image\/\w+;base64,/, "");
+      // const buffer = Buffer.from(base64Data, "base64");
+
+      // // Define a file path for saving the image
+      // let fileName = `uploads/image-${Date.now()}.png`;
+
+      // // // // Write the file to the uploads directory
+      // await fs.writeFile(fileName, buffer, async (err) => {
+      //   if (err) {
+      //     console.error("Error saving the image:", err);
+      //   } else {
+      //     console.log("Image saved successfully at:", fileName);
+      //   }
+      // });
+      // const uploadsPath = path.resolve(__dirname, '..', '..', '..', 'uploads'); // Adjust based on your folder structure
+
+      // // To get the path for a specific uploaded file
+      // const filePath = path.join(uploadsPath, fileName.split('/')[1]);
+      // const imageBuffer = fs.readFileSync(filePath);
+      // console.log(filePath)
+      // const img_str = `data:image/png;base64,${imageBuffer.toString('base64')}`;
+      const imageResponse = await addImageToThread(thread_id, userMessage, image);
       console.log("Image sent successfully", imageResponse);
     } catch (error) {
       console.error("Error uploading image", error);
     }
+  }else{
+    // Add user message to thread
+    const messageResponse = await addMessageToThread(thread_id, userMessage);
+    if (messageResponse) {
+      console.log("Message sent successfully");
+    }
   }
 
-  // Add user message to thread
-  const messageResponse = await addMessageToThread(thread_id, userMessage);
-  if (messageResponse) {
-    console.log("Message sent successfully");
-  }
 
   const obj = { message: "", code: "", streaming: false };
 
@@ -707,7 +754,7 @@ const aiAssistantChatStart = async (userId, userMessage, appName, imageUrl = nul
         "new chat loaded.---------------------------------------------"
       );
       await startChatSession(userId, app._id, userMessage, [
-        imageUrl === null ? "" : imageUrl,
+        image === null ? "" : image,
       ]);
     }
 

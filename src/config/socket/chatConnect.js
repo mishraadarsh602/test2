@@ -45,8 +45,8 @@ module.exports = (server) => {
       const returnedOutput = await aiAssistantChatStart(
         data.userId,
         data.message,
-        appId,
-        data.image,
+        app,
+        data.image[0],
         true,
         (partialResponse) => {
           // Emit each partial response as it's received
@@ -99,6 +99,7 @@ module.exports = (server) => {
           } else if (messages[i].role === 'user') {
             msg.push({
               text: messages[i].content,
+              image: messages[i].image,
               // code: messages[i].code,
               sender: "user",
             });
@@ -141,7 +142,7 @@ module.exports = (server) => {
         data.userId,
         appId,
         data.message,
-        [data.image]
+        [data.image[0]]
       );
 
       msg.push(["human", data.message]);
@@ -150,8 +151,8 @@ module.exports = (server) => {
       const returnedOutput = await aiAssistantChatStart(
         data.userId,
         data.message,
-        appId,
-        data.image,
+        app,
+        data.image[0],
         false,
         (partialResponse) => {
           // Emit each partial response as it's received
