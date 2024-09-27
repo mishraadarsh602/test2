@@ -5,6 +5,8 @@ const {
   updateHumanMessageToChatSession,
   aiAssistantChatStart
 } = require("../../controllers/chat/chat.controller");
+const App = require("../../models/app");
+const { default: mongoose } = require("mongoose");
 
 module.exports = (server) => {
   // console.log("Server Connecting");
@@ -28,11 +30,22 @@ module.exports = (server) => {
 
     // Listen for the 'startChat' event from the client
     socket.on("startChat", async (data) => {
+      console.log(data);
+      const app = await App.findOne({
+        name: data.appName,
+        user: new mongoose.Types.ObjectId(data.userId),
+      });
+    
+      if (!app) {
+        throw new Error("App or user not found");
+      }
+    
+      const appId = app._id;
 
       const returnedOutput = await aiAssistantChatStart(
         data.userId,
         data.message,
-        data.agentId,
+        appId,
         data.image,
         true,
         (partialResponse) => {
@@ -49,7 +62,7 @@ module.exports = (server) => {
 
       await updateAIMessageToChatSession(
         data.userId,
-        data.agentId,
+        appId,
         returnedOutput.code,
         returnedOutput.message
       );
@@ -62,8 +75,21 @@ module.exports = (server) => {
     });
 
     socket.on("fetchPreviousChat", async (data) => {
+      console.log(data);
+
+      const app = await App.findOne({
+        name: data.appName,
+        user: new mongoose.Types.ObjectId(data.userId),
+      });
+    
+      if (!app) {
+        throw new Error("App or user not found");
+      }
+    
+      const appId = app._id;
+
       // console.log("Chat fetched:", data);
-      const messages = await fetchPreviousChat(data.userId, data.agentId);
+      const messages = await fetchPreviousChat(data.userId, appId);
       // console.log(messages);
       let msg = [];
       if (messages.length > 0) {
@@ -85,8 +111,20 @@ module.exports = (server) => {
 
     socket.on("continueChat", async (data) => {
       // console.log("Chat Continued by user:", data);
+      console.log(data);
 
-      const messages = await fetchPreviousChat(data.userId, data.agentId);
+      const app = await App.findOne({
+        name: data.appName,
+        user: new mongoose.Types.ObjectId(data.userId),
+      });
+    
+      if (!app) {
+        throw new Error("App or user not found");
+      }
+    
+      const appId = app._id;
+
+      const messages = await fetchPreviousChat(data.userId, appId);
       let msg = [];
 
       for (let i = 0; i < messages.length; i++) {
@@ -101,18 +139,18 @@ module.exports = (server) => {
 
       await updateHumanMessageToChatSession(
         data.userId,
-        data.agentId,
+        appId,
         data.message,
         [data.image]
       );
 
       msg.push(["human", data.message]);
 
-      // const returnedOutput = await continueChatSessionMessages(data.userId, data.message, data.agentId);
+      // const returnedOutput = await continueChatSessionMessages(data.userId, data.message, appId);
       const returnedOutput = await aiAssistantChatStart(
         data.userId,
         data.message,
-        data.agentId,
+        appId,
         data.image,
         false,
         (partialResponse) => {
@@ -129,7 +167,7 @@ module.exports = (server) => {
 
       await updateAIMessageToChatSession(
         data.userId,
-        data.agentId,
+        appId,
         returnedOutput.code,
         returnedOutput.message
       );

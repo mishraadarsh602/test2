@@ -555,9 +555,9 @@ const submitToolOutputs = async (toolOutputs, runId, threadId, onPartialResponse
   }
 };
 
-const aiAssistantChatStart = async (userId, userMessage, appId, imageUrl = null, isStartChat, onPartialResponse) => {
+const aiAssistantChatStart = async (userId, userMessage, appName, imageUrl = null, isStartChat, onPartialResponse) => {
   const app = await App.findOne({
-    _id: new mongoose.Types.ObjectId(appId),
+    name: appName,
     user: new mongoose.Types.ObjectId(userId),
   });
 
@@ -570,7 +570,7 @@ const aiAssistantChatStart = async (userId, userMessage, appId, imageUrl = null,
   // Find the existing chat session
   const oldChatSession = await chatSession
     .findOne({
-      agentId: new mongoose.Types.ObjectId(appId),
+      agentId: new mongoose.Types.ObjectId(app._id),
       userId: new mongoose.Types.ObjectId(userId),
     })
     .lean();
@@ -706,13 +706,13 @@ const aiAssistantChatStart = async (userId, userMessage, appId, imageUrl = null,
       console.log(
         "new chat loaded.---------------------------------------------"
       );
-      await startChatSession(userId, appId, userMessage, [
+      await startChatSession(userId, app._id, userMessage, [
         imageUrl === null ? "" : imageUrl,
       ]);
     }
 
     if (obj.code) {
-      const app = await App.findOne({ _id: appId });
+      const app = await App.findOne({ _id: app._id });
       app.componentCode = obj.code;
       await app.save();
     }
