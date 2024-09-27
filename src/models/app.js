@@ -61,6 +61,10 @@ const appSchema = new mongoose.Schema({
             type: Boolean,
             default: false
         },
+        skip:{
+            type:Boolean,
+            default:false
+        },
         fields: [fieldsSchema],
         thankYouMessage: {
             type: String,

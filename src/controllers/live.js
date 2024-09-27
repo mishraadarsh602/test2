@@ -12,6 +12,7 @@ const featureListModel=require('../models/featureList');
 //     }
 // }
 const redisClient=require('../utils/redisClient');
+const  mongoose = require('mongoose');
 async function updateAppVisitor(name, visitorCount) {
     try {
         await appModel.updateOne({ name, status: 'dev' }, { $set: { visitorCount } });
@@ -29,46 +30,63 @@ async function updateFeatureListCount(name) {
 }
 module.exports = {
     generateVisitor:async (req,res)=>{
-        try {
-            const userId = req.user ? req.user.userId : null;
-            if (!userId) {
+    try {
+      const userId = req.user ? req.user.userId : null;
+      if (!userId) {
                 return res.status(400).json({ error: 'User ID is required' });
-            }
-            const name = req.body.name;
-            const visitorCreated = new appVisitorModel({
-                name,
-                user: userId,
+      }
+      const name = req.body.name;
+      const visitorCreated = new appVisitorModel({
+        name,
+        user: userId,
                 ...req.body
-            });
-            await visitorCreated.save();
-            const visitorCount = await appVisitorModel.count({ name });
-            updateAppVisitor(name, visitorCount);
-            updateFeatureListCount(name);
-            return res.status(200).json({
+      });
+      await visitorCreated.save();
+      const visitorCount = await appVisitorModel.count({ name });
+      updateAppVisitor(name, visitorCount);
+      updateFeatureListCount(name);
+      return res.status(200).json({
                 message: 'Visits updated successfully',
-            });
+      });
         } catch (error) {
         }
-    }, 
+  },
     getLivePreview:async (req,res)=>{
-        try {
-            const name=req.params.appName;
-            let response;
-            await redisClient.connect();
-            let componentCode=await redisClient.get(`componentCode-${name}`);
-            if(!componentCode){
-            response=await App.findOne({name:name,status:'live'});            
-            await redisClient.set(`componentCode-${name}`,JSON.stringify(response));
-            }
-            await  redisClient.quit();
-            res.status(201).json({
-                message: "fetch live preview successfully",
-                data: componentCode?JSON.parse(componentCode):response,
-              });
-        } catch (error) {
+    try {
+      const parameter = req.params.appName;
+      let response;
+      
+      // Check if Redis client is already connected
+      if (!redisClient.isOpen) {
+        await redisClient.connect();
+      }
 
-        }   
-                
+      let componentCode = await redisClient.get(`componentCode-${parameter}`);
+      if (!componentCode) {
+        response = await App.findOne({ name: parameter, status: "live" });
+  
+        // If response not found, try to fetch by _id
+        if (!response && mongoose.Types.ObjectId.isValid(parameter)) {
+          response = await App.findOne({
+            _id: new mongoose.Types.ObjectId(parameter),
+            status: "live",
+          });
         }
-}
+
+        if (!response) {
+          return res.status(404).json({ error: "Page Not Found" });
+        }
+  
+        await redisClient.set(`componentCode-${parameter}`, JSON.stringify(response));
+      }
+
+      res.status(201).json({
+        message: "Fetched live preview successfully",
+        data: componentCode ? JSON.parse(componentCode) : response,
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+};
 
