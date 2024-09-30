@@ -608,7 +608,7 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
     theme += `add this logo as header ${app.header.logo.url} at ${app.header.logo.alignment}`
   }
   if (app.theme) {
-    theme += `use this color while generating code for primary ${app.theme.primaryColor}, for secondary ${app.theme.primaryColor}, for secondaryColor ${app.theme.backgroundColor}`
+    theme += `use this color while generating code for primary ${app.theme.primaryColor}, for secondary ${app.theme.secondaryColor}, for background color ${app.theme.backgroundColor} using inline style`
   }
 
 
@@ -630,6 +630,7 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
     console.log("custom--------------------------")
     assistantObj = { assistant_id: process.env.ASSISTANT_ID, additional_instructions: `If App is using any API, then first must call the callAPI tool to retrieve a list of relevant APIs and select the best match. If No match found, then call internet Search tool to find relevant API. ${theme}` };
   }
+  console.log("additional_instructions",additional_instructions)
 
   if (image) {
     try {

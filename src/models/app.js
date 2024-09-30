@@ -71,15 +71,15 @@ const appSchema = new mongoose.Schema({
     theme: {
         primaryColor: {
             type: String,
-            default: '#6366F1'
+            default: '#dc6067'
         },
         backgroundColor: {
             type: String,
-            default: '#1F2937'
+            default: '#fbfbfb'
         },
         secondaryColor: {
             type: String,
-            default: '#FFFFFF'
+            default: '#d9b5b9'
         }
     },
     leadForm: {
