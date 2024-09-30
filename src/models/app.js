@@ -17,7 +17,7 @@ const appSchema = new mongoose.Schema({
         logo: {
             alignment: {
                 type: String,
-                default: 'default'
+                default: 'left'
             },
             size: {
                 type: String,
