@@ -15,6 +15,10 @@ const appSchema = new mongoose.Schema({
     },
     header: {
         logo: {
+            enabled: {
+                type: Boolean,
+                default: true
+            },
             alignment: {
                 type: String,
                 default: 'left'

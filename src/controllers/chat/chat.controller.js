@@ -604,7 +604,7 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
     isStartChat = true;
   }
   let theme = ``;
-  if (app.header.logo && app.header.logo.url) {
+  if (app.header.logo.enabled && app.header.logo.url) {
     theme += `add this logo as header ${app.header.logo.url} at ${app.header.logo.alignment}`
   }
   if (app.theme) {
