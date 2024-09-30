@@ -25,7 +25,7 @@ const appSchema = new mongoose.Schema({
             },
             logoUrl: {
                 type: String,
-                default: ''
+                default: 'https://dlvkyia8i4zmz.cloudfront.net/X2lN5NGWQEeRUUjujnvj_logo.svg'
             },
             altText: {
                 type: String,
