@@ -89,61 +89,14 @@ module.exports = {
 
     getAppByName: async (req, res) => {     
         try {
-             let app = await App.findOne({name:req.params.appName},{_id:1});
-             let aggregation=[
-                {
-                  $facet: {
-                    dev: [
-                      {
-                        $match: { _id:new mongoose.Types.ObjectId(app._id) }
-                      }
-                    ],
-                    live: [
-                      {
-                        $match: {
-                          parentApp: new mongoose.Types.ObjectId(app._id),
-                          status:'live'
-                        }
-                      }
-                    ]
-                  }
-                },
-                {
-                  $project: {
-                    dev: { $arrayElemAt: ["$dev", 0] },
-                    live: 1,                             
-                    isLive: { $gt: [{ $size: "$live" }, 0] },
-                    liveUrl: {
-                      $cond: {
-                        if: { $gt: [{ $size: "$live" }, 0] }, 
-                        then: { $arrayElemAt: ["$live.name", 0] }, 
-                        else: { $arrayElemAt: ["$dev.name", 0] }
-                      }
-                    }
-                  }
-                },
-                {
-                  $replaceRoot: {
-                    newRoot: {
-                      $mergeObjects: [
-                        "$dev", 
-                        { 
-                          isLive: "$isLive", 
-                          liveUrl: "$liveUrl" 
-                        }
-                      ]
-                    }
-                  }
-                }
-              ]
-
-              let result=await App.aggregate(aggregation);    
-            if (!app) {
+             let app = await App.findOne({name:req.params.appName},).lean();
+             if (!app) {
                 return res.status(404).json({ error: 'App not found' });
             }
+            let liveApp=await App.findOne({parentApp:app._id},{name:1,_id:0});
             res.status(200).json({
                 message: "App fetched successfully",
-                data: result[0],
+                data:{...app,isLive: !!liveApp,liveUrl:liveApp?liveApp.name:app.name},
               });
         } catch (error) {
             createLog({userId:req.user.userId,error:error.message,appId:req.params.appId})
