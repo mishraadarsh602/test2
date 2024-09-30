@@ -2,9 +2,15 @@ const mongoose = require('mongoose');
 
 const appVisitorSchema = new mongoose.Schema(
     {
-        name:{
-            type:String,
-            required:true
+        app: {
+              type: mongoose.Schema.ObjectId,
+              ref: 'App',
+            required: true
+        },
+        live_app: {
+            type: mongoose.Schema.ObjectId,
+            ref: 'App',
+            required: true
         },
         user:{
             type: mongoose.Schema.ObjectId,

@@ -208,70 +208,7 @@ module.exports = {
         }
     },
 
-    fetchVisitors:async (req,res)=>{
-        try {
-            const userId = req.user ? req.user.userId : null;
-            const liveNameAggregation=[
-                {$match: {
-                  name:req.params.appName,
-                }},
-                {
-                  $lookup: {
-                    from: 'apps',
-                    localField: '_id',
-                    foreignField: 'parentApp',
-                    as: 'result'
-                  }
-                },
-                {
-                  $match: {
-                    status:'live'
-                  }
-                },
-                {
-                  $project: {
-                    name:1,
-                    _id:0
-                  }
-                },
-                
-              ];
-            const liveAppName=await App.aggregate(liveNameAggregation);
-            
-        const allVisitors=await appVisitorsModel.aggregate([
-            {
-              $match: {
-                name:liveAppName[0]?.name
-              }
-            },
-            {
-              $addFields: {
-                date:{
-                 $dateToString: {
-                    format: "%d %b %Y %H:%M:%S",  
-                    date: "$createdAt", 
-                  }
-                }
-              }
-            },
-            {
-             $project: {
-               date:1,
-              createdAt:0,
-               updatedAt:0,
-               browser:1,updatedAt:1,createdAt:1,device:1
-             }
-            }
-          ])
-           res.status(201).json({
-                message: "fetch visitors successfully",
-                data: allVisitors,
-              });
-        } catch (error) {
-            createLog({userId:req.user.userId.toString(),error:error.message,appId:req.body.appId})
-            res.status(500).json({ error: error.message });
-        }
-    },
+  
     getBrandGuide:async (req,res)=>{
         try {
          let {domain,brand_type} = req.body;
