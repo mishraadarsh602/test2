@@ -25,10 +25,12 @@ const appSchema = new mongoose.Schema({
         type: mongoose.Schema.ObjectId,
         ref: 'App'
     },
-    api: {
-        type: String,
-        default: ''
-    },
+    apis: [{
+        api: {
+            type: String,
+            default: ''
+        }
+    }],
     componentCode: {
         type: String,
         default: ''
