@@ -46,7 +46,7 @@ module.exports = (server) => {
         data.userId,
         data.message,
         app,
-        data.image[0],
+        data.image ? data.image[0]: '',
         true,
         (partialResponse) => {
           // Emit each partial response as it's received
