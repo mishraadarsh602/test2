@@ -16,5 +16,12 @@ module.exports = class UserService {
             console.error(error.message);
         }
     };
-
+    async getUserById(userId) {
+        try {
+            return await User.findById(userId);
+        }
+        catch (error) {
+            console.log(`Error finding user by id: ${userId}`, error);
+        }
+    }
 };

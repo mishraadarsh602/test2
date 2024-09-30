@@ -44,9 +44,7 @@ module.exports = {
         return res.status(400).json({ error: 'User ID is required' });
       }
       appData['user'] = new mongoose.Types.ObjectId(userId); // Use new keyword
-
       appData['thread_id'] = await createThread();
-
       if (appData.agent_type !== "AI_Tool") {
         let feature = await featureListModel.findOne(
           { type: appData["agent_type"] },
@@ -54,7 +52,15 @@ module.exports = {
         );
         appData["componentCode"] = feature.componentCode;
       }
-
+      const user = await userService.getUserById(userId);
+      if (user) {
+        if(user.brandDetails && user.brandDetails.enabled){
+        appData['header']['logo']['logoUrl'] = user.brandDetails.customBrand.logo;
+        appData['theme']['primaryColor'] = user.brandDetails.customBrand.primaryColor;
+        appData['theme']['secondaryColor'] = user.brandDetails.customBrand.secondaryColor;
+        appData['theme']['backgroundColor'] = user.brandDetails.customBrand.backgroundColor;
+        }
+      }
       let newApp = new App(appData);
       let savedApp = await newApp.save();
 

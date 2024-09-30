@@ -13,6 +13,26 @@ const appSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     },
+    header: {
+        logo: {
+            alignment: {
+                type: String,
+                default: 'default'
+            },
+            size: {
+                type: String,
+                default: ''
+            },
+            logoUrl: {
+                type: String,
+                default: ''
+            },
+            altText: {
+                type: String,
+                default: 'logo'
+            }
+        }
+    },
     appUUID: {
         type: String,
         default: ''
@@ -53,7 +73,7 @@ const appSchema = new mongoose.Schema({
             type: String,
             default: '#1F2937'
         },
-        secondryColor: {
+        secondaryColor: {
             type: String,
             default: '#FFFFFF'
         }
