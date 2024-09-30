@@ -17,13 +17,13 @@ const appSchema = new mongoose.Schema({
         logo: {
             alignment: {
                 type: String,
-                default: 'default'
+                default: 'left'
             },
             size: {
                 type: String,
                 default: ''
             },
-            logoUrl: {
+            url: {
                 type: String,
                 default: 'https://dlvkyia8i4zmz.cloudfront.net/X2lN5NGWQEeRUUjujnvj_logo.svg'
             },
