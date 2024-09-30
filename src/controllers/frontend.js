@@ -53,13 +53,12 @@ module.exports = {
         appData["componentCode"] = feature.componentCode;
       }
       const user = await userService.getUserById(userId);
-      if (user) {
-        if(user.brandDetails && user.brandDetails.enabled){
-        appData['header']['logo']['logoUrl'] = user.brandDetails.customBrand.logo;
-        appData['theme']['primaryColor'] = user.brandDetails.customBrand.primaryColor;
-        appData['theme']['secondaryColor'] = user.brandDetails.customBrand.secondaryColor;
-        appData['theme']['backgroundColor'] = user.brandDetails.customBrand.backgroundColor;
-        }
+      if (user?.brandDetails?.enabled && user?.brandDetails?.customBrand) {
+        const { logo, primaryColor, secondaryColor, backgroundColor } = user.brandDetails.customBrand;
+        appData.header.logo.url = logo || appData.header.logo.url;
+        appData.theme.primaryColor = primaryColor || appData.theme.primaryColor;
+        appData.theme.secondaryColor = secondaryColor || appData.theme.secondaryColor;
+        appData.theme.backgroundColor = backgroundColor || appData.theme.backgroundColor;
       }
       let newApp = new App(appData);
       let savedApp = await newApp.save();
