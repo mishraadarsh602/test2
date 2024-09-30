@@ -577,7 +577,11 @@ const submitToolOutputs = async (toolOutputs, runId, threadId, onPartialResponse
       const urlRegex =
         /https:\/\/[a-zA-Z0-9\-.]+(?:\.[a-zA-Z]{2,})(?:\/[^\s]*)?(?:\?[^\s#]*)?(?:#[^\s]*)?/g;
 
+        const originalApis = []; // Array to store original API objects
+
         obj.code = obj.code.replace(urlRegex, (matchedUrl) => {
+
+          originalApis.push({ api: matchedUrl.slice(0, -2) }); // Add matched URL as an object to the array
           // Create a new URL object to extract parts
           const url = new URL(matchedUrl);
           
@@ -602,6 +606,7 @@ const submitToolOutputs = async (toolOutputs, runId, threadId, onPartialResponse
         });
 
       // Update app componentCode and save
+      appDetails.apis = originalApis;
       appDetails.componentCode = obj.code;
       await appDetails.save();
     }
@@ -811,7 +816,11 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
       const urlRegex =
         /https:\/\/[a-zA-Z0-9\-.]+(?:\.[a-zA-Z]{2,})(?:\/[^\s]*)?(?:\?[^\s#]*)?(?:#[^\s]*)?/g;
 
+        const originalApis = []; // Array to store original API objects
+
         obj.code = obj.code.replace(urlRegex, (matchedUrl) => {
+
+          originalApis.push({ api: matchedUrl.slice(0, -2) }); // Add matched URL as an object to the array
           // Create a new URL object to extract parts
           const url = new URL(matchedUrl);
           
@@ -836,10 +845,10 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
         });
 
       // Update app componentCode and save
+      appDetails.apis = originalApis;
       appDetails.componentCode = obj.code;
       await appDetails.save();
     }
-
     // Final return after the streaming is done
     return obj;
   } catch (error) {
