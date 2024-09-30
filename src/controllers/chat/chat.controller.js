@@ -465,7 +465,7 @@ const onEvent = async (event, onPartialResponse) => {
   }
 };
 
-const handleRequiresAction = async (data, runId, threadId, onPartialResponse) => {
+const handleRequiresAction = async (data, runId, threadId, onPartialResponse, app) => {
   try {
     const toolOutputs = await Promise.all(data.required_action.submit_tool_outputs.tool_calls.map(async (toolCall) => {
       if (toolCall.function.name === "searchInternet") {
@@ -494,13 +494,13 @@ const handleRequiresAction = async (data, runId, threadId, onPartialResponse) =>
     // Filter out any undefined outputs
     const filteredOutputs = toolOutputs.filter(output => output !== undefined);
     // Submit all the tool outputs at the same time
-    await submitToolOutputs(filteredOutputs, runId, threadId, onPartialResponse);
+    await submitToolOutputs(filteredOutputs, runId, threadId, onPartialResponse, app);
   } catch (error) {
     console.error("Error processing required action:", error);
   }
 };
 
-const submitToolOutputs = async (toolOutputs, runId, threadId, onPartialResponse) => {
+const submitToolOutputs = async (toolOutputs, runId, threadId, onPartialResponse, app) => {
   try {
     const obj = { message: "", code: "", streaming: false };
     let chatResponse = "";
@@ -569,6 +569,42 @@ const submitToolOutputs = async (toolOutputs, runId, threadId, onPartialResponse
       code: obj.code,
       codeFound: false,
     });
+
+    
+    if (obj.code) {
+      const appDetails = await App.findOne({ _id: app._id });
+
+      const urlRegex =
+        /https:\/\/[a-zA-Z0-9\-.]+(?:\.[a-zA-Z]{2,})(?:\/[^\s]*)?(?:\?[^\s#]*)?(?:#[^\s]*)?/g;
+
+        obj.code = obj.code.replace(urlRegex, (matchedUrl) => {
+          // Create a new URL object to extract parts
+          const url = new URL(matchedUrl);
+          
+          // Extract existing query parameters
+          const existingParams = new URLSearchParams(url.search);
+      
+          // Manually build the new query string
+          const paramsArray = [];
+          paramsArray.push(`appId=${app._id}`); // Ensure to append appId
+          for (const [key, value] of existingParams.entries()) {
+            // Preserve existing parameters, including `${city}`
+            paramsArray.push(`${key}=${value}`); // Push parameters to array
+          }
+      
+          // Add the appId parameter
+      
+          // Join parameters with '&' without adding an extra '&' at the end
+          const newQueryString = paramsArray.join('&');
+      
+          // Construct the new URL
+          return `http://localhost:4000/api/v1/builder/callAPI?${newQueryString}`;
+        });
+
+      // Update app componentCode and save
+      appDetails.componentCode = obj.code;
+      await appDetails.save();
+    }
 
       // ;
     // for await (const event of stream) {
@@ -679,38 +715,13 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
 
     // Start streaming from OpenAI or another source
     const run = await openai.beta.threads.runs
-    .stream(thread_id, assistantObj)
-    .on('textDelta', (textDelta) => {
-      chatResponse += textDelta.value;
-      
-      const parts = textDelta.value.split('```');
-      parts.forEach((part, index) => {
-        if (isInsideCodeBlock) {
-          // Call the callback to stream partial responses
-          onPartialResponse({
-            message: chatResponse,
-            fullChatResponse: chatResponse,
-            streaming: true,
-            code: obj.code,
-            codeFound: true,
-          });
-          if (index % 2 !== 0) {
-            codeBlockBuffer += part;
-          }
-        } else {
-          if (index % 2 === 0) {
-            obj.message += part;
-            obj.streaming = true;
-            // Call the callback to stream partial responses
-            onPartialResponse({
-              message: textDelta.value,
-              fullChatResponse: chatResponse,
-              streaming: true,
-              code: "",
-            });
-          } else {
-            codeBlockBuffer = part;
-            isInsideCodeBlock = true;
+      .stream(thread_id, assistantObj)
+      .on("textDelta", (textDelta) => {
+        chatResponse += textDelta.value;
+
+        const parts = textDelta.value.split("```");
+        parts.forEach((part, index) => {
+          if (isInsideCodeBlock) {
             // Call the callback to stream partial responses
             onPartialResponse({
               message: chatResponse,
@@ -719,13 +730,38 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
               code: obj.code,
               codeFound: true,
             });
+            if (index % 2 !== 0) {
+              codeBlockBuffer += part;
+            }
+          } else {
+            if (index % 2 === 0) {
+              obj.message += part;
+              obj.streaming = true;
+              // Call the callback to stream partial responses
+              onPartialResponse({
+                message: textDelta.value,
+                fullChatResponse: chatResponse,
+                streaming: true,
+                code: "",
+              });
+            } else {
+              codeBlockBuffer = part;
+              isInsideCodeBlock = true;
+              // Call the callback to stream partial responses
+              onPartialResponse({
+                message: chatResponse,
+                fullChatResponse: chatResponse,
+                streaming: true,
+                code: obj.code,
+                codeFound: true,
+              });
+            }
           }
-        }
+        });
       });
-    });
 
-    console.log()
-    if(chatResponse.trim() === ''){
+    console.log();
+    if (chatResponse.trim() === "") {
       for await (const event of run) {
         // onEvent(event, onPartialResponse);
         if (event.event === "thread.run.requires_action") {
@@ -733,32 +769,32 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
             event.data,
             event.data.id,
             event.data.thread_id,
-            onPartialResponse
+            onPartialResponse,
+            app
           );
         }
-    
       }
     }
 
-      const finalFunctionCall = await run.finalMessages();
-      console.log("Run end:", finalFunctionCall, chatResponse);
+    const finalFunctionCall = await run.finalMessages();
+    console.log("Run end:", finalFunctionCall, chatResponse);
 
-      const codeBlockRegex = /```(?:\w+)?\n([\s\S]*?)\n```/g;
-      let match;
-      if ((match = codeBlockRegex.exec(chatResponse)) !== null) {
-        const extractedCode = match[1];
-        obj.code += extractedCode.replace(/tsx/g, "");
-        process.stdout.write(obj.code);
-      }
+    const codeBlockRegex = /```(?:\w+)?\n([\s\S]*?)\n```/g;
+    let match;
+    if ((match = codeBlockRegex.exec(chatResponse)) !== null) {
+      const extractedCode = match[1];
+      obj.code += extractedCode.replace(/tsx/g, "");
+      process.stdout.write(obj.code);
+    }
 
-      // Call the callback to stream partial responses
-      onPartialResponse({
-        message: chatResponse,
-        fullChatResponse: chatResponse,
-        streaming: false,
-        code: obj.code,
-        codeFound: false,
-      });
+    // Call the callback to stream partial responses
+    onPartialResponse({
+      message: chatResponse,
+      fullChatResponse: chatResponse,
+      streaming: false,
+      code: obj.code,
+      codeFound: false,
+    });
 
     if (isStartChat) {
       console.log(
@@ -770,9 +806,38 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
     }
 
     if (obj.code) {
-      const app = await App.findOne({ _id: app._id });
-      app.componentCode = obj.code;
-      await app.save();
+      const appDetails = await App.findOne({ _id: app._id });
+
+      const urlRegex =
+        /https:\/\/[a-zA-Z0-9\-.]+(?:\.[a-zA-Z]{2,})(?:\/[^\s]*)?(?:\?[^\s#]*)?(?:#[^\s]*)?/g;
+
+        obj.code = obj.code.replace(urlRegex, (matchedUrl) => {
+          // Create a new URL object to extract parts
+          const url = new URL(matchedUrl);
+          
+          // Extract existing query parameters
+          const existingParams = new URLSearchParams(url.search);
+      
+          // Manually build the new query string
+          const paramsArray = [];
+          paramsArray.push(`appId=${app._id}`); // Ensure to append appId
+          for (const [key, value] of existingParams.entries()) {
+            // Preserve existing parameters, including `${city}`
+            paramsArray.push(`${key}=${value}`); // Push parameters to array
+          }
+      
+          // Add the appId parameter
+      
+          // Join parameters with '&' without adding an extra '&' at the end
+          const newQueryString = paramsArray.join('&');
+      
+          // Construct the new URL
+          return `http://localhost:4000/api/v1/builder/callAPI?${newQueryString}`;
+        });
+
+      // Update app componentCode and save
+      appDetails.componentCode = obj.code;
+      await appDetails.save();
     }
 
     // Final return after the streaming is done

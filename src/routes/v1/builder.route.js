@@ -27,6 +27,7 @@ router.get('/visitor/:appName',auth, builderController.fetchVisitors);
 router.get('/getOverView/:appId',auth,builderController.getOverViewDetails)
 router.post('/visitor/delete',auth, builderController.deleteVisitors);
 router.get('/getPreviewApp/:appId', auth,builderController.getPreviewApp);
+router.get('/callAPI', auth, builderController.callAPI);
 router.post('/brand_guide',auth, builderController.getBrandGuide);
 router.post('/upload_file_aws',auth,upload.single("image"),builderController.uploadFile);
 router.patch('/update_brand_guide',auth, builderController.updateBrandGuide);

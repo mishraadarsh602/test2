@@ -46,7 +46,7 @@ module.exports = (server) => {
         data.userId,
         data.message,
         app,
-        data.image ? data.image[0]: '',
+        data.image ? data.image[0] : null,
         true,
         (partialResponse) => {
           // Emit each partial response as it's received
@@ -142,7 +142,7 @@ module.exports = (server) => {
         data.userId,
         appId,
         data.message,
-        [data.image[0]]
+        data.image ? [data.image[0]] : null,
       );
 
       msg.push(["human", data.message]);
@@ -152,7 +152,7 @@ module.exports = (server) => {
         data.userId,
         data.message,
         app,
-        data.image[0],
+        data.image ? data.image[0] : null,
         false,
         (partialResponse) => {
           // Emit each partial response as it's received
