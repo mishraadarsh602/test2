@@ -93,7 +93,7 @@ module.exports = {
              if (!app) {
                 return res.status(404).json({ error: 'App not found' });
             }
-            let liveApp=await App.findOne({parentApp:app._id},{url:1,_id:0});            
+            let liveApp=await App.findOne({parentApp:app._id,status:'live'},{url:1,_id:0});            
             res.status(200).json({
                 message: "App fetched successfully",
                 data:{...app,isLive: !!liveApp,url:liveApp?liveApp.url:app.url},
