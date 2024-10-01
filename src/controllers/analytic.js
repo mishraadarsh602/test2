@@ -27,7 +27,8 @@ module.exports={
             let data = await appVisitorModel.aggregate([
                 {
                     $match: {
-                        app: new mongoose.Types.ObjectId(app)
+                        app: new mongoose.Types.ObjectId(app),
+                        status:'live'
                     }
                 },
                 {
