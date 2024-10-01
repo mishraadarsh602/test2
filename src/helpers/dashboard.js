@@ -8,7 +8,13 @@ AWS.config.update({
 });
 
 const s3 = new AWS.S3();
-
+let BASE_S3_URL = 'https://dlvkyia8i4zmz.cloudfront.net/';
+if (process.env.NODE_ENV === 'production') {
+  BASE_S3_URL = 'https://dzvexx2x036l1.cloudfront.net/';
+}
+const sanitizeFileName = (fileName) => {
+    return fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
+  };
 module.exports = {
     runBrandGuide: async (url,brandType,email) => {
         try {
@@ -78,15 +84,17 @@ module.exports = {
     },
     uploadToAWS: async (file) => {
         try{
+            const sanitizedFileName = sanitizeFileName(file.originalname);
             const params = {
                 Bucket: process.env.AWS_BUCKET,
-                Key: `tool_builder/${Date.now()}_${file.originalname}`, // File path in S3
+                Key: `tool_builder/${Date.now()}_${sanitizedFileName}`, // File path in S3
                 Body: file.buffer,
                 ContentType: file.mimetype,
-                // ACL: 'public-read'
+                ACL: 'public-read'
             };
-            const response = await s3.upload(params).promise();
-            return  response.Location // S3 file URL
+            const s3_url = await s3.upload(params).promise();
+            const cloudFrontUrl = BASE_S3_URL + s3_url.key;
+            return cloudFrontUrl; 
 
         }catch(error){
             console.log("Error during uploading to AWS:", error.message);
