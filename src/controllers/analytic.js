@@ -82,7 +82,7 @@ module.exports={
                 ...req.body
             });
             await visitorCreated.save();
-            const visitorCount = await appVisitorModel.count({ _id: req.body.app });
+            const visitorCount = await appVisitorModel.count({ app: req.body.app }); // req.body.app is parentapp id which  refers to dev app
             updateAppVisitor(req.body.app, visitorCount);
             updateFeatureListCount(req.body.app,);
 
@@ -120,7 +120,12 @@ module.exports={
                date:1,
               createdAt:0,
                updatedAt:0,
-               browser:1,updatedAt:1,createdAt:1,device:1
+               browser:1,updatedAt:1,createdAt:1,device:1,
+               utm_source:1,
+               utm_medium:1,
+               utm_campaign:1,
+               utm_term:1,
+               utm_content:1,
              }
             }
           ])

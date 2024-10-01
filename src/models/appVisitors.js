@@ -32,7 +32,32 @@ const appVisitorSchema = new mongoose.Schema(
         deleted:{
             type:Boolean,
             default:false
-        }
+        },
+        utm_source: {
+            type: String,
+            trim: true,
+            default: ''
+        },
+        utm_medium: {
+            type: String,
+            trim: true,
+            default: ''
+        },
+        utm_campaign: {
+            type: String,
+            trim: true,
+            default: ''
+        },
+        utm_term: {
+            type: String,
+            trim: true,
+            default: ''
+        },
+        utm_content: {
+            type: String,
+            trim: true,
+            default: ''
+        },
     },
     {
         timestamps: true,
