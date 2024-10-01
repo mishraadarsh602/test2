@@ -78,7 +78,7 @@ module.exports = (server) => {
       console.log(data);
 
       const app = await App.findOne({
-        name: data.appName,
+        url: data.appName,
         user: new mongoose.Types.ObjectId(data.userId),
       });
     
