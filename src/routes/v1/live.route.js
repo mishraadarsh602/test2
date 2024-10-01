@@ -6,6 +6,6 @@ router.get("/", async (req, res) => {
   return res.status(200).json({ success: true, message: "live#index" });
 });
 
-router.get('/:appName', auth,liveController.getLivePreview);
+router.get('/:url', auth,liveController.getLivePreview);
 router.post('/saveLead/:appId', auth,liveController.saveLead);
 module.exports = router;

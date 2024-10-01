@@ -17,7 +17,7 @@ const  mongoose = require('mongoose');
 module.exports = {
     getLivePreview:async (req,res)=>{
     try {
-      const parameter = req.params.appName;
+      const parameter = req.params.url;
       let response;
       
       // Check if Redis client is already connected
@@ -28,7 +28,7 @@ module.exports = {
       // let componentCode = await redisClient.get(`componentCode-${parameter}`);
       let componentCode=null;
       if (!componentCode) {
-        response = await App.findOne({ name: parameter, status: "live" });
+        response = await App.findOne({ url: parameter, status: "live" });
   
         // If response not found, try to fetch by _id
         if (!response && mongoose.Types.ObjectId.isValid(parameter)) {
