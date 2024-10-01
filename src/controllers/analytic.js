@@ -28,7 +28,6 @@ module.exports={
                 {
                     $match: {
                         app: new mongoose.Types.ObjectId(app),
-                        status:'live'
                     }
                 },
                 {
@@ -96,14 +95,10 @@ module.exports={
     },
     fetchVisitors:async (req,res)=>{
         try {
-        const liveApp=await App.findOne({parentApp:req.body.appId,status:'live'},{_id:1});
-        if(!liveApp){
-            return res.status(200).json({data:[]});
-        }
         const allVisitors=await appVisitorsModel.aggregate([
             {
               $match: {
-                live_app: new mongoose.Types.ObjectId( liveApp._id)
+                app: new mongoose.Types.ObjectId(req.body.appId),
               }
             },
             {
@@ -135,7 +130,7 @@ module.exports={
                 data: allVisitors,
               });
         } catch (error) {
-            createLog({userId:req.user.userId.toString(),error:error.message,appId:req.body.appId})
+            // createLog({userId:req.user.userId.toString(),error:error.message,appId:req.body.appId})
             res.status(500).json({ error: error.message });
         }
     },
