@@ -127,7 +127,7 @@ module.exports = {
                   },
                   {
                     $sort:{
-                        createdAt:-1
+                        updatedAt:-1
                     }
                   },
                   {
