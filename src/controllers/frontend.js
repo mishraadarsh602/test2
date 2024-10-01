@@ -39,6 +39,7 @@ module.exports = {
       let appData = req.body;
       appData['appUUID'] = uuidv4();
       appData.name = appData.agent_type + '-' + appData['appUUID'].substring(0, 7);
+      appData.url=appData.name;
       const userId = req.user ? req.user.userId : null;
       if (!userId) {
         return res.status(400).json({ error: 'User ID is required' });
@@ -132,6 +133,7 @@ module.exports = {
                   {
                     $project: {
                       name: 1,
+                      url:1,
                       status: 1,
                       visitorCount:1,
                       type:1

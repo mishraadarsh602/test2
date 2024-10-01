@@ -87,18 +87,18 @@ module.exports = {
             }
         },
 
-    getAppByName: async (req, res) => {     
+    getAppByUrl: async (req, res) => {     
         try {
-             let app = await App.findOne({name:req.params.appName},).lean();
+             let app = await App.findOne({url:req.params.url},).lean();
              if (!app) {
                 return res.status(404).json({ error: 'App not found' });
             }
             let liveApp=await App.findOne({parentApp:app._id},{name:1,_id:0});
             res.status(200).json({
                 message: "App fetched successfully",
-                data:{...app,isLive: !!liveApp,liveUrl:liveApp?liveApp.name:app.name},
+                data:{...app,isLive: !!liveApp,url:liveApp?liveApp.url:app.url},
               });
-        } catch (error) {
+        } catch (error) {   
             createLog({userId:req.user.userId,error:error.message,appId:req.params.appId})
             res.status(500).json({ error: error.message });
         }
@@ -167,15 +167,15 @@ module.exports = {
 
     checkUniqueApp: async (req, res) => {
         try {
-            let name = decodeURIComponent(req.params.name);
-            let appId = req.params.appId;
+            let name = decodeURIComponent(req.body.name);
+            let appId = req.body.appId;
             let existingApp = await App.findOne({ name, _id: { $ne: appId }}).lean();
             if (existingApp) {
                 return res.status(409 ).json({ error: 'Name already exists' });
             } 
             await App.updateOne({_id:appId},{$set:{name,changed:true}})
             return res.status(200).json({message:'name updated successfully'})
-        } catch (error) {
+        } catch (error) {   
             res.status(500).json({ error: error.message });
         }
     },
@@ -440,4 +440,17 @@ module.exports = {
       console.log("erorr is ----> ");
     }
   },
+  checkUniqueUrl:async(req,res)=>{
+    try {
+        const url=req.body.url;
+        const appId=req.body.appId;
+        let existingApp = await App.findOne({ url, _id: { $ne: appId }}).lean();
+        if (existingApp) {
+            return res.status(409 ).json({ error: 'url already exists' });
+        } 
+        await App.updateOne({_id:appId},{$set:{url,changed:true}})
+        return res.status(200).json({message:'url updated successfully'})
+    } catch (error) {    
+    }   
+  }
 }
