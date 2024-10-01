@@ -95,7 +95,7 @@ module.exports={
     },
     fetchVisitors:async (req,res)=>{
         try {
-        const liveApp=await App.findOne({parentApp:req.body.appId},{_id:1});
+        const liveApp=await App.findOne({parentApp:req.body.appId,status:'live'},{_id:1});
         if(!liveApp){
             return res.status(200).json({data:[]});
         }
