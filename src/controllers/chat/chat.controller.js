@@ -6,6 +6,7 @@ const App = require('../../models/app');
 const { default: axios } = require('axios');
 const { OpenAI } = require("openai");
 const { default: mongoose } = require('mongoose');
+const { URL, URLSearchParams } = require('url');
 
 const generateSessionId = () => {
   return uuidv4();  // Generates a unique UUID
@@ -378,92 +379,6 @@ async function callAPI() {
 // };
 
 // Stream handler
-const onEvent = async (event, onPartialResponse) => {
-  try {
-    console.log(event.event);
-    if (event.event === "thread.run.requires_action") {
-      await handleRequiresAction(
-        event.data,
-        event.data.id,
-        event.data.thread_id,
-        onPartialResponse
-      );
-    }
-
-     // Handle message streaming during the run
-     if (event.event === "thread.message.delta") {
-      let output = event.data.delta.content[0].text.value; // Handle the delta response
-
-      let chatResponse = '';
-      chatResponse += output;
-
-      console.log("Received delta message:", chatResponse);
-
-      let obj = { message: "", code: "", streaming: false };
-
-      const parts = output.split('```'); // Split the response by code blocks
-      parts.forEach((part, index) => {
-        // Check if we are inside a code block or outside of one
-        if (index % 2 === 0) {
-          // Outside the code block (plain text)
-          obj.message += part;
-          obj.streaming = true;
-  
-          // Call the callback to stream the message (without code)
-          onPartialResponse({
-            message: obj.message, // Stream only the message part
-            fullChatResponse: '',
-            streaming: true,
-            code: "", // No code is streamed
-            codeFound: false,
-          });
-        } else {
-          // Outside the code block (plain text)
-          obj.code += part;
-          obj.streaming = true;
-  
-          // Call the callback to stream the message (without code)
-          onPartialResponse({
-            message: obj.message, // Stream only the message part
-            fullChatResponse: '',
-            streaming: true,
-            code: obj.code, // No code is streamed
-            codeFound: true,
-          });
-        }
-      });
-  
-      console.log("running................................")
-      const codeBlockRegex = /```(?:\w+)?\n([\s\S]*?)\n```/g;
-      let match;
-      if ((match = codeBlockRegex.exec(chatResponse)) !== null) {
-        const extractedCode = match[1];
-        obj.code += extractedCode.replace(/tsx/g, "");
-        process.stdout.write(obj.code);
-      }
-
-      onPartialResponse({
-        message: chatResponse,
-        fullChatResponse: chatResponse,
-        streaming: false,
-        code: obj.code,
-        codeFound: false,
-      });
-
-      return obj; // You can use this if needed for final processing
-    }
-
-    if (event.event === "thread.run.completed") {
-      console.log("Run completed. Preparing to print results...");
-      const messages = await openai.beta.threads.messages.list(
-        event.data.thread_id
-      );
-      console.log("Final Results:", messages.data);
-    }
-  } catch (error) {
-    console.error("Error handling event:", error);
-  }
-};
 
 const handleRequiresAction = async (data, runId, threadId, onPartialResponse, app) => {
   try {
@@ -675,7 +590,7 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
 
   if (image) {
     try {
-      // Decode base64 image data
+       // Decode base64 image data
       // const base64Data = image.replace(/^data:image\/\w+;base64,/, "");
       // const buffer = Buffer.from(base64Data, "base64");
 
@@ -810,45 +725,53 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
       ]);
     }
 
+    const appDetails = await App.findOne({ _id: app._id });
     if (obj.code) {
-      const appDetails = await App.findOne({ _id: app._id });
 
-      const urlRegex =
-        /https:\/\/[a-zA-Z0-9\-.]+(?:\.[a-zA-Z]{2,})(?:\/[^\s]*)?(?:\?[^\s#]*)?(?:#[^\s]*)?/g;
-
-        const originalApis = []; // Array to store original API objects
-
-        obj.code = obj.code.replace(urlRegex, (matchedUrl) => {
-
-          originalApis.push({ api: matchedUrl.slice(0, -2) }); // Add matched URL as an object to the array
-          // Create a new URL object to extract parts
-          const url = new URL(matchedUrl);
-          
-          // Extract existing query parameters
-          const existingParams = new URLSearchParams(url.search);
+      const urlRegex = /fetch\(`([^`]+)`\)/;
+      const originalApis = []; // Array to store original API objects
       
-          // Manually build the new query string
-          const paramsArray = [];
-          paramsArray.push(`appId=${app._id}`); // Ensure to append appId
-          for (const [key, value] of existingParams.entries()) {
-            // Preserve existing parameters, including `${city}`
-            paramsArray.push(`${key}=${value}`); // Push parameters to array
+      // Replace URLs in the code while extracting them
+      obj.code = obj.code.replace(urlRegex, (matchedUrl) => {
+          
+          // Extract the full URL from the matched string
+          const fullUrl = matchedUrl.match(/`([^`]+)`/)[1];
+          // Store the matched URL as an object in the array
+          originalApis.push({ api: fullUrl });
+      
+      
+          // Use a regex to extract existing query parameters
+          const existingParams = {};
+          const paramRegex = /[?&]([^=]+)=([^&]*)/g;
+          let match;
+      
+          // Find and store existing parameters
+          while ((match = paramRegex.exec(fullUrl)) !== null) {
+              existingParams[match[1]] = match[2];
           }
       
-          // Add the appId parameter
+          // Build a new query string with existing and new parameters
+          const paramsArray = [];
+          paramsArray.push(`appId=${app._id}`); // Ensure to append appId
       
-          // Join parameters with '&' without adding an extra '&' at the end
+          // Preserve existing parameters, including `${city}`
+          for (const [key, value] of Object.entries(existingParams)) {
+              paramsArray.push(`${key}=${value}`);
+          }
+      
+          // Join parameters with '&' to form the new query string
           const newQueryString = paramsArray.join('&');
       
-          // Construct the new URL
-          return `http://localhost:4000/api/v1/builder/callAPI?${newQueryString}`;
-        });
+          // Construct the new URL with the updated query string
+          return `fetch(\`http://localhost:4000/api/v1/builder/callAPI?${newQueryString}\`)`;
+      });
 
       // Update app componentCode and save
       appDetails.apis = originalApis;
       appDetails.componentCode = obj.code;
       await appDetails.save();
     }
+    obj.code = appDetails.componentCode;
     // Final return after the streaming is done
     return obj;
   } catch (error) {

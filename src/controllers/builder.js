@@ -10,6 +10,7 @@ const userService = new UserService();
 const dashboardHelper = require('../helpers/dashboard');
 const { OpenAI } = require("openai");
 const redisClient = require('../utils/redisClient');
+const { default: axios } = require('axios');
 
 async function createLog(data) {
     try {
