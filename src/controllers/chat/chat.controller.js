@@ -486,39 +486,46 @@ const submitToolOutputs = async (toolOutputs, runId, threadId, onPartialResponse
     });
 
     
+    const appDetails = await App.findOne({ _id: app._id });
     if (obj.code) {
-      const appDetails = await App.findOne({ _id: app._id });
 
-      const urlRegex =
-        /https:\/\/[a-zA-Z0-9\-.]+(?:\.[a-zA-Z]{2,})(?:\/[^\s]*)?(?:\?[^\s#]*)?(?:#[^\s]*)?/g;
-
-        const originalApis = []; // Array to store original API objects
-
-        obj.code = obj.code.replace(urlRegex, (matchedUrl) => {
-
-          originalApis.push({ api: matchedUrl.slice(0, -2) }); // Add matched URL as an object to the array
-          // Create a new URL object to extract parts
-          const url = new URL(matchedUrl);
-          
-          // Extract existing query parameters
-          const existingParams = new URLSearchParams(url.search);
+      const urlRegex = /fetch\(`([^`]+)`\)/;
+      const originalApis = []; // Array to store original API objects
       
-          // Manually build the new query string
-          const paramsArray = [];
-          paramsArray.push(`appId=${app._id}`); // Ensure to append appId
-          for (const [key, value] of existingParams.entries()) {
-            // Preserve existing parameters, including `${city}`
-            paramsArray.push(`${key}=${value}`); // Push parameters to array
+      // Replace URLs in the code while extracting them
+      obj.code = obj.code.replace(urlRegex, (matchedUrl) => {
+          
+          // Extract the full URL from the matched string
+          const fullUrl = matchedUrl.match(/`([^`]+)`/)[1];
+          // Store the matched URL as an object in the array
+          originalApis.push({ api: fullUrl });
+      
+      
+          // Use a regex to extract existing query parameters
+          const existingParams = {};
+          const paramRegex = /[?&]([^=]+)=([^&]*)/g;
+          let match;
+      
+          // Find and store existing parameters
+          while ((match = paramRegex.exec(fullUrl)) !== null) {
+              existingParams[match[1]] = match[2];
           }
       
-          // Add the appId parameter
+          // Build a new query string with existing and new parameters
+          const paramsArray = [];
+          paramsArray.push(`appId=${app._id}`); // Ensure to append appId
       
-          // Join parameters with '&' without adding an extra '&' at the end
+          // Preserve existing parameters, including `${city}`
+          for (const [key, value] of Object.entries(existingParams)) {
+              paramsArray.push(`${key}=${value}`);
+          }
+      
+          // Join parameters with '&' to form the new query string
           const newQueryString = paramsArray.join('&');
       
-          // Construct the new URL
-          return `http://localhost:4000/api/v1/builder/callAPI?${newQueryString}`;
-        });
+          // Construct the new URL with the updated query string
+          return `fetch(\`http://localhost:4000/api/v1/builder/callAPI?${newQueryString}\`)`;
+      });
 
       // Update app componentCode and save
       appDetails.apis = originalApis;
