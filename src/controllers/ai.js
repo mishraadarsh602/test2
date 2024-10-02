@@ -83,8 +83,7 @@ module.exports = {
 
   createAssistant: async (req, res) => {
     try {
-      let reactCode = `
-      function SolarEnergyApp() {
+      let reactCode = `function SolarEnergyApp() {
         const [latitude, setLatitude] = React.useState('');
         const [longitude, setLongitude] = React.useState('');
         const [startDate, setStartDate] = React.useState('');
@@ -92,7 +91,7 @@ module.exports = {
         const [solarData, setSolarData] = React.useState(null);
         const [loading, setLoading] = React.useState(false);
         const [error, setError] = React.useState(null);
-  
+      
         const fetchSolarData = async () => {
           setLoading(true);
           setError(null);
@@ -109,66 +108,74 @@ module.exports = {
             setLoading(false);
           }
         };
-  
-        return React.createElement('div', { className: 'bg-gradient-to-r from-green-400 to-blue-500 min-h-screen p-4' },
-          React.createElement('header', { className: 'flex justify-between items-center p-4 bg-white shadow-md rounded-lg' },
-            React.createElement('h1', { className: 'text-xl font-bold' }, 'Solar Energy Data'),
-            React.createElement(Sun, { className: 'w-6 h-6 text-yellow-500' })
-          ),
-          React.createElement('div', { className: 'flex justify-center items-center h-[80vh] flex-col' },
-            React.createElement('div', { className: 'bg-white rounded-lg shadow-xl p-6 max-w-md w-full' },
-              React.createElement('label', { className: 'block mb-2' },
-                'Latitude:',
+      
+        return React.createElement('div', { className: 'min-h-screen bg-gradient-to-br from-green-400 to-blue-500 flex flex-col items-center justify-center p-4' },
+          React.createElement('div', { className: 'bg-white rounded-lg shadow-2xl p-8 w-full max-w-md' },
+            React.createElement('header', { className: 'flex items-center justify-between mb-6' },
+              React.createElement('h1', { className: 'text-3xl font-bold text-gray-800' }, 'Solar Energy Data'),
+              React.createElement(LucideIcons.Sun, { className: 'w-10 h-10 text-yellow-500' })
+            ),
+            React.createElement('div', { className: 'space-y-4' },
+              React.createElement('div', { className: 'relative' },
+                React.createElement(LucideIcons.MapPin, { className: 'absolute top-3 left-3 text-gray-400' }),
                 React.createElement('input', {
                   type: 'text',
                   value: latitude,
                   onChange: (e) => setLatitude(e.target.value),
-                  className: 'border rounded p-2 w-full'
+                  placeholder: 'Latitude',
+                  className: 'w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
                 })
               ),
-              React.createElement('label', { className: 'block mb-2' },
-                'Longitude:',
+              React.createElement('div', { className: 'relative' },
+                React.createElement(LucideIcons.MapPin, { className: 'absolute top-3 left-3 text-gray-400' }),
                 React.createElement('input', {
                   type: 'text',
                   value: longitude,
                   onChange: (e) => setLongitude(e.target.value),
-                  className: 'border rounded p-2 w-full'
+                  placeholder: 'Longitude',
+                  className: 'w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
                 })
               ),
-              React.createElement('label', { className: 'block mb-2' },
-                'Start Date:',
+              React.createElement('div', { className: 'relative' },
+                React.createElement(LucideIcons.Calendar, { className: 'absolute top-3 left-3 text-gray-400' }),
                 React.createElement('input', {
                   type: 'date',
                   value: startDate,
                   onChange: (e) => setStartDate(e.target.value),
-                  className: 'border rounded p-2 w-full'
+                  className: 'w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
                 })
               ),
-              React.createElement('label', { className: 'block mb-2' },
-                'End Date:',
+              React.createElement('div', { className: 'relative' },
+                React.createElement(LucideIcons.Calendar, { className: 'absolute top-3 left-3 text-gray-400' }),
                 React.createElement('input', {
                   type: 'date',
                   value: endDate,
                   onChange: (e) => setEndDate(e.target.value),
-                  className: 'border rounded p-2 w-full'
+                  className: 'w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
                 })
               ),
               React.createElement('button', {
                 onClick: fetchSolarData,
-                className: 'bg-blue-500 text-white rounded p-2 mt-4 w-full hover:bg-blue-600 transition duration-200'
+                className: 'w-full bg-blue-500 text-white rounded-md py-3 font-semibold hover:bg-blue-600 transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50'
               }, 'Get Solar Data')
             )
           ),
-          solarData && React.createElement('div', { className: 'bg-white rounded-lg shadow-xl p-6 mt-4 max-w-md mx-auto' },
-            React.createElement('h2', { className: 'text-lg font-bold' }, 'Solar Energy Output'),
-            React.createElement('pre', { className: 'whitespace-pre-wrap' }, JSON.stringify(solarData, null, 2))
+          solarData && React.createElement('div', { className: 'mt-8 bg-white rounded-lg shadow-2xl p-6 w-full max-w-md' },
+            React.createElement('h2', { className: 'text-2xl font-bold mb-4 text-gray-800' }, 'Solar Energy Output'),
+            React.createElement('pre', { className: 'bg-gray-100 p-4 rounded-md overflow-auto max-h-60 text-sm' },
+              JSON.stringify(solarData, null, 2)
+            )
           ),
-          error && React.createElement('div', { className: 'text-red-500 text-center mt-4' }, error),
-          loading && React.createElement('div', { className: 'text-center mt-4' }, 'Loading...')
+          error && React.createElement('div', { className: 'mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative', role: 'alert' },
+            React.createElement('strong', { className: 'font-bold' }, 'Error: '),
+            React.createElement('span', { className: 'block sm:inline' }, error)
+          ),
+          loading && React.createElement('div', { className: 'mt-4 flex items-center justify-center' },
+            React.createElement('div', { className: 'animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500' })
+          )
         );
       }
-      return SolarEnergyApp
-    `;
+      return SolarEnergyApp;`;
       let instructions = `You are an AI assistant who generates both conversational responses and code when necessary. When modifying code, use the 'code_interpreter' tool in a string format. We were going to work on a React-based Javascript App, and your role is to assist with editing and improving React codebases with tailwind, custom CSS and Javascript only. \nOur app relies heavily on API integration. When the context involves fetching, updating, or sending data to an external source, use the callAPI tool.\nIf an API is not explicitly provided or cannot be matched, use the searchInternet tool to find one.\nProvide non-technical conversational responses along with code, and use the 'code_interpreter' tool to return the code in the proper format. Maintain the best UI practices, colours, responsiveness, and functionality. \nIf I provide you with any media or media link, please use it as a reference for what I want to create. If you're unsure about the media or its relevance, feel free to ask for clarification.\nAlways ensure the final output contains the correct React jsx code.\n Maintain contrasting colours of buttons, and icons properly and don’t add any out-of-scope elements or icons or any function and NPM. \nAssume that we have all other files and the environment setup is done and only requires one modified code file which will run as jsx. Create React element without any import statement. I have this header added already import React, {useState, useEffect, useContext, useReducer, useCallback, useMemo, useRef, useImperativeHandle, useLayoutEffect, useDebugValue, useTransition, useDeferredValue, useId, useSyncExternalStore, useInsertionEffect} from 'react'; import * as LucideIcons from 'lucide-react'; import { useLocation } from 'react-router-dom'; \n. When responding: 1. Provide a **simple conversational response** without any extra technical explanation. 2. **Avoid overly technical language** 3. Always ensure the **output contains a brief user-friendly message** and the **final code** only. 4. Determine if the task requires an API call, and if so, use the callAPI tool.\nIf a graph would improve the output, generate a graph using the chartGenerator tool.\nDo not add any instructions or unnecessary text and generate all relevant text first then code. Use 'code_interpreter', 'file_search', and function_calling tools like 'callAPI', 'searchInternet', and 'searchInternet'  when needed.`;
       // instructions = instructions.replace('{reactCode}', reactCode);
       const assistant = await openai.beta.assistants.update('asst_oKSXnCcGg54HQQGdemeekb4O',{
@@ -237,69 +244,99 @@ module.exports = {
 
   runAssistantConversation: async () => {
     try {
-      let reactCode = `
-      function WeatherApp() {
-        const [weather, setWeather] = React.useState(null);
-        const [loading, setLoading] = React.useState(true);
+      let reactCode = `function SolarEnergyApp() {
+        const [latitude, setLatitude] = React.useState('');
+        const [longitude, setLongitude] = React.useState('');
+        const [startDate, setStartDate] = React.useState('');
+        const [endDate, setEndDate] = React.useState('');
+        const [solarData, setSolarData] = React.useState(null);
+        const [loading, setLoading] = React.useState(false);
         const [error, setError] = React.useState(null);
-    
-        React.useEffect(() => {
-          navigator.geolocation.getCurrentPosition(
-            (position) => {
-              const { latitude, longitude } = position.coords;
-              fetch(\`https://api.weatherapi.com/v1/current.json?key=323e6c0135f941f7a0b95629242808&q=\${latitude},\${longitude}\`)
-                .then(response => response.json())
-                .then(data => {
-                  setWeather(data);
-                  setLoading(false);
-                })
-                .catch(err => {
-                  setError('Failed to fetch weather data');
-                  setLoading(false);
-                });
-            },
-            () => {
-              setError('Unable to retrieve your location');
-              setLoading(false);
+      
+        const fetchSolarData = async () => {
+          setLoading(true);
+          setError(null);
+          try {
+            const response = await fetch(\`https://api.solcast.com.au/world_solar_radiation/estimated_actuals?latitude=\${latitude}&longitude=\${longitude}&start=\${startDate}&end=\${endDate}&api_key=YOUR_API_KEY\`);
+            if (!response.ok) {
+              throw new Error('Failed to fetch solar energy data');
             }
-          );
-        }, []);
-    
-        if (loading) return React.createElement('div', { className: 'flex justify-center items-center h-screen' }, 'Loading...');
-        if (error) return React.createElement('div', { className: 'text-red-500 text-center' }, error);
-    
-        return React.createElement('div', { className: 'flex flex-col items-center justify-center min-h-screen bg-gradient-to-r from-blue-400 to-blue-600 p-4' },
-          React.createElement('div', { className: 'bg-white rounded-lg shadow-xl p-6 max-w-sm w-full' },
-            React.createElement('h1', { className: 'text-2xl font-bold mb-4 text-center' }, weather.location.name),
-            React.createElement('div', { className: 'flex items-center justify-center mb-4' },
-              React.createElement('img', { src: weather.current.condition.icon, alt: weather.current.condition.text, className: 'w-16 h-16 mr-4' }),
-              React.createElement('span', { className: 'text-5xl font-bold' }, \`\${weather.current.temp_c}°C\`)
+            const data = await response.json();
+            setSolarData(data);
+          } catch (err) {
+            setError('Failed to fetch solar energy data');
+          } finally {
+            setLoading(false);
+          }
+        };
+      
+        return React.createElement('div', { className: 'min-h-screen bg-gradient-to-br from-green-400 to-blue-500 flex flex-col items-center justify-center p-4' },
+          React.createElement('div', { className: 'bg-white rounded-lg shadow-2xl p-8 w-full max-w-md' },
+            React.createElement('header', { className: 'flex items-center justify-between mb-6' },
+              React.createElement('h1', { className: 'text-3xl font-bold text-gray-800' }, 'Solar Energy Data'),
+              React.createElement(LucideIcons.Sun, { className: 'w-10 h-10 text-yellow-500' })
             ),
-            React.createElement('p', { className: 'text-center text-gray-700 mb-4' }, weather.current.condition.text),
-            React.createElement('div', { className: 'grid grid-cols-2 gap-4 text-sm' },
-              React.createElement('div', { className: 'flex items-center' },
-                React.createElement(Wind, { className: 'w-4 h-4 mr-2' }),
-                \`\${weather.current.wind_kph} km/h\`
+            React.createElement('div', { className: 'space-y-4' },
+              React.createElement('div', { className: 'relative' },
+                React.createElement(LucideIcons.MapPin, { className: 'absolute top-3 left-3 text-gray-400' }),
+                React.createElement('input', {
+                  type: 'text',
+                  value: latitude,
+                  onChange: (e) => setLatitude(e.target.value),
+                  placeholder: 'Latitude',
+                  className: 'w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+                })
               ),
-              React.createElement('div', { className: 'flex items-center' },
-                React.createElement(Droplets, { className: 'w-4 h-4 mr-2' }),
-                \`\${weather.current.humidity}%\`
+              React.createElement('div', { className: 'relative' },
+                React.createElement(LucideIcons.MapPin, { className: 'absolute top-3 left-3 text-gray-400' }),
+                React.createElement('input', {
+                  type: 'text',
+                  value: longitude,
+                  onChange: (e) => setLongitude(e.target.value),
+                  placeholder: 'Longitude',
+                  className: 'w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+                })
               ),
-              React.createElement('div', { className: 'flex items-center' },
-                React.createElement(Thermometer, { className: 'w-4 h-4 mr-2' }),
-                \`Feels like \${weather.current.feelslike_c}°C\`
+              React.createElement('div', { className: 'relative' },
+                React.createElement(LucideIcons.Calendar, { className: 'absolute top-3 left-3 text-gray-400' }),
+                React.createElement('input', {
+                  type: 'date',
+                  value: startDate,
+                  onChange: (e) => setStartDate(e.target.value),
+                  className: 'w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+                })
               ),
-              React.createElement('div', { className: 'flex items-center' },
-                React.createElement(Sun, { className: 'w-4 h-4 mr-2' }),
-                \`UV \${weather.current.uv}\`
-              )
+              React.createElement('div', { className: 'relative' },
+                React.createElement(LucideIcons.Calendar, { className: 'absolute top-3 left-3 text-gray-400' }),
+                React.createElement('input', {
+                  type: 'date',
+                  value: endDate,
+                  onChange: (e) => setEndDate(e.target.value),
+                  className: 'w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+                })
+              ),
+              React.createElement('button', {
+                onClick: fetchSolarData,
+                className: 'w-full bg-blue-500 text-white rounded-md py-3 font-semibold hover:bg-blue-600 transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50'
+              }, 'Get Solar Data')
             )
+          ),
+          solarData && React.createElement('div', { className: 'mt-8 bg-white rounded-lg shadow-2xl p-6 w-full max-w-md' },
+            React.createElement('h2', { className: 'text-2xl font-bold mb-4 text-gray-800' }, 'Solar Energy Output'),
+            React.createElement('pre', { className: 'bg-gray-100 p-4 rounded-md overflow-auto max-h-60 text-sm' },
+              JSON.stringify(solarData, null, 2)
+            )
+          ),
+          error && React.createElement('div', { className: 'mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative', role: 'alert' },
+            React.createElement('strong', { className: 'font-bold' }, 'Error: '),
+            React.createElement('span', { className: 'block sm:inline' }, error)
+          ),
+          loading && React.createElement('div', { className: 'mt-4 flex items-center justify-center' },
+            React.createElement('div', { className: 'animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500' })
           )
         );
       }
-    
-      return WeatherApp;
-    `;
+      return SolarEnergyApp;`;
       const threadId = "thread_60jcKkCJjeJ0ZpMrGrD8Bha9";
       // const userMessage = 'Here is my React code, which we will be working on for my request. Dont modify now, just have a look at my code. Are you ready for my next request? Code:'+ reactCode;
       const userMessage = 'create counter app'
@@ -486,8 +523,7 @@ const runAssistantOnThread = async (threadId) => {
 async function CALLAI(parentResponse, prompts, aiData) {
   if (parentResponse && parentResponse.ToolTYPE === 'AIBASED') {
     let childPrompt = prompts?.childPrompt?.aibased;
-    let reactCode = `
-    function SolarEnergyApp() {
+    let reactCode = `function SolarEnergyApp() {
       const [latitude, setLatitude] = React.useState('');
       const [longitude, setLongitude] = React.useState('');
       const [startDate, setStartDate] = React.useState('');
@@ -495,7 +531,7 @@ async function CALLAI(parentResponse, prompts, aiData) {
       const [solarData, setSolarData] = React.useState(null);
       const [loading, setLoading] = React.useState(false);
       const [error, setError] = React.useState(null);
-
+    
       const fetchSolarData = async () => {
         setLoading(true);
         setError(null);
@@ -512,66 +548,74 @@ async function CALLAI(parentResponse, prompts, aiData) {
           setLoading(false);
         }
       };
-
-      return React.createElement('div', { className: 'bg-gradient-to-r from-green-400 to-blue-500 min-h-screen p-4' },
-        React.createElement('header', { className: 'flex justify-between items-center p-4 bg-white shadow-md rounded-lg' },
-          React.createElement('h1', { className: 'text-xl font-bold' }, 'Solar Energy Data'),
-          React.createElement(Sun, { className: 'w-6 h-6 text-yellow-500' })
-        ),
-        React.createElement('div', { className: 'flex justify-center items-center h-[80vh] flex-col' },
-          React.createElement('div', { className: 'bg-white rounded-lg shadow-xl p-6 max-w-md w-full' },
-            React.createElement('label', { className: 'block mb-2' },
-              'Latitude:',
+    
+      return React.createElement('div', { className: 'min-h-screen bg-gradient-to-br from-green-400 to-blue-500 flex flex-col items-center justify-center p-4' },
+        React.createElement('div', { className: 'bg-white rounded-lg shadow-2xl p-8 w-full max-w-md' },
+          React.createElement('header', { className: 'flex items-center justify-between mb-6' },
+            React.createElement('h1', { className: 'text-3xl font-bold text-gray-800' }, 'Solar Energy Data'),
+            React.createElement(LucideIcons.Sun, { className: 'w-10 h-10 text-yellow-500' })
+          ),
+          React.createElement('div', { className: 'space-y-4' },
+            React.createElement('div', { className: 'relative' },
+              React.createElement(LucideIcons.MapPin, { className: 'absolute top-3 left-3 text-gray-400' }),
               React.createElement('input', {
                 type: 'text',
                 value: latitude,
                 onChange: (e) => setLatitude(e.target.value),
-                className: 'border rounded p-2 w-full'
+                placeholder: 'Latitude',
+                className: 'w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
               })
             ),
-            React.createElement('label', { className: 'block mb-2' },
-              'Longitude:',
+            React.createElement('div', { className: 'relative' },
+              React.createElement(LucideIcons.MapPin, { className: 'absolute top-3 left-3 text-gray-400' }),
               React.createElement('input', {
                 type: 'text',
                 value: longitude,
                 onChange: (e) => setLongitude(e.target.value),
-                className: 'border rounded p-2 w-full'
+                placeholder: 'Longitude',
+                className: 'w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
               })
             ),
-            React.createElement('label', { className: 'block mb-2' },
-              'Start Date:',
+            React.createElement('div', { className: 'relative' },
+              React.createElement(LucideIcons.Calendar, { className: 'absolute top-3 left-3 text-gray-400' }),
               React.createElement('input', {
                 type: 'date',
                 value: startDate,
                 onChange: (e) => setStartDate(e.target.value),
-                className: 'border rounded p-2 w-full'
+                className: 'w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
               })
             ),
-            React.createElement('label', { className: 'block mb-2' },
-              'End Date:',
+            React.createElement('div', { className: 'relative' },
+              React.createElement(LucideIcons.Calendar, { className: 'absolute top-3 left-3 text-gray-400' }),
               React.createElement('input', {
                 type: 'date',
                 value: endDate,
                 onChange: (e) => setEndDate(e.target.value),
-                className: 'border rounded p-2 w-full'
+                className: 'w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
               })
             ),
             React.createElement('button', {
               onClick: fetchSolarData,
-              className: 'bg-blue-500 text-white rounded p-2 mt-4 w-full hover:bg-blue-600 transition duration-200'
+              className: 'w-full bg-blue-500 text-white rounded-md py-3 font-semibold hover:bg-blue-600 transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50'
             }, 'Get Solar Data')
           )
         ),
-        solarData && React.createElement('div', { className: 'bg-white rounded-lg shadow-xl p-6 mt-4 max-w-md mx-auto' },
-          React.createElement('h2', { className: 'text-lg font-bold' }, 'Solar Energy Output'),
-          React.createElement('pre', { className: 'whitespace-pre-wrap' }, JSON.stringify(solarData, null, 2))
+        solarData && React.createElement('div', { className: 'mt-8 bg-white rounded-lg shadow-2xl p-6 w-full max-w-md' },
+          React.createElement('h2', { className: 'text-2xl font-bold mb-4 text-gray-800' }, 'Solar Energy Output'),
+          React.createElement('pre', { className: 'bg-gray-100 p-4 rounded-md overflow-auto max-h-60 text-sm' },
+            JSON.stringify(solarData, null, 2)
+          )
         ),
-        error && React.createElement('div', { className: 'text-red-500 text-center mt-4' }, error),
-        loading && React.createElement('div', { className: 'text-center mt-4' }, 'Loading...')
+        error && React.createElement('div', { className: 'mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative', role: 'alert' },
+          React.createElement('strong', { className: 'font-bold' }, 'Error: '),
+          React.createElement('span', { className: 'block sm:inline' }, error)
+        ),
+        loading && React.createElement('div', { className: 'mt-4 flex items-center justify-center' },
+          React.createElement('div', { className: 'animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500' })
+        )
       );
     }
-    return SolarEnergyApp
-  `;
+    return SolarEnergyApp;`;
     childPrompt = childPrompt.replace('{userInput}', aiData.customPrompt);
     childPrompt = childPrompt.replace('{reactCode}', reactCode);
     const mesg = await client.messages.create({
