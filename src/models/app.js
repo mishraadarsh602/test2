@@ -96,6 +96,10 @@ const appSchema = new mongoose.Schema({
             default:false
         },
         fields: [fieldsSchema],
+        title:{
+            type:String,
+            default:'How can we get in touch?'
+        },
         thankYouMessage: {
             type: String,
             default: "Thank you for your interest! We'll be in touch soon."
