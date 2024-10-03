@@ -166,12 +166,6 @@ const addMessageToThread = async (threadId, messageText) => {
 const addImageToThread = async (threadId, content, image) => {
   try {
     console.log("Calling new image...........................")
-    // A user wants to attach a file to a specific message, let's upload it.
-    // const imageInVectorStore = await openai.files.create({
-    //   file: fs.createReadStream(image),
-    //   purpose: "vision",
-    // });
-    // Upload the image file and add it to the conversation
     console.log(image);
     const response = await openai.beta.threads.messages.create(threadId, {
       role: "user",
@@ -187,16 +181,7 @@ const addImageToThread = async (threadId, content, image) => {
             detail: "auto",
           },
         },
-        // {
-        //   type: "image_file",
-        //   image_file: {
-        //     file_name: "string",
-        //   },
-        // },
       ],
-      // attachments: [
-      //   { file_id: imageInVectorStore.id, tools: [{ type: "file_search" }] },
-      // ],
     });
     console.log("Image Added:", response);
     return response;
@@ -321,65 +306,6 @@ async function get_api_url() {
 
   return tools;
 }
-
-// const handleRequiresAction = async (run) => {
-//   if (
-//     run.required_action &&
-//     run.required_action.submit_tool_outputs &&
-//     run.required_action.submit_tool_outputs.tool_calls
-//   ) {
-//     const toolOutputs = run.required_action.submit_tool_outputs.tool_calls.map(
-//       async (tool) => {
-//         if (tool.function.name === "search_from_internet") {
-//           const { query, numResults } = JSON.parse(tool.function.arguments);
-//           const searchResults = await search_from_internet({ query, numResults });
-//           return {
-//             tool_call_id: tool.id,
-//             output: JSON.stringify(searchResults),
-//           };
-//         } else if (tool.function.name === "generate_graph") {
-//           const { userInput } = JSON.parse(tool.function.arguments);
-//           const chartData = await generate_graph({ userInput });
-//           return {
-//             tool_call_id: tool.id,
-//             output: JSON.stringify(chartData),
-//           };
-//         }
-//       }
-//     );
-
-//     // Submit all tool outputs
-//     if (toolOutputs.length > 0) {
-//       run = await client.beta.threads.runs.submitToolOutputsAndPoll(
-//         thread.id,
-//         run.id,
-//         { tool_outputs: toolOutputs },
-//       );
-//       console.log("Tool outputs submitted successfully.");
-//     } else {
-//       console.log("No tool outputs to submit.");
-//     }
-
-//     // Check status after submitting tool outputs
-//     return handleRunStatus(run);
-//   }
-// };
-
-// const handleRunStatus = async (run) => {
-//   // Check if the run is completed
-//   if (run.status === "completed") {
-//     let messages = await client.beta.threads.messages.list(thread.id);
-//     console.log(messages.data);
-//     return messages.data;
-//   } else if (run.status === "requires_action") {
-//     console.log(run.status);
-//     return await handleRequiresAction(run);
-//   } else {
-//     console.error("Run did not complete:", run);
-//   }
-// };
-
-// Stream handler
 
 const handleRequiresAction = async (data, runId, threadId, onPartialResponse, app) => {
   try {
@@ -591,28 +517,6 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
 
   if (image) {
     try {
-       // Decode base64 image data
-      // const base64Data = image.replace(/^data:image\/\w+;base64,/, "");
-      // const buffer = Buffer.from(base64Data, "base64");
-
-      // // Define a file path for saving the image
-      // let fileName = `uploads/image-${Date.now()}.png`;
-
-      // // // // Write the file to the uploads directory
-      // await fs.writeFile(fileName, buffer, async (err) => {
-      //   if (err) {
-      //     console.error("Error saving the image:", err);
-      //   } else {
-      //     console.log("Image saved successfully at:", fileName);
-      //   }
-      // });
-      // const uploadsPath = path.resolve(__dirname, '..', '..', '..', 'uploads'); // Adjust based on your folder structure
-
-      // // To get the path for a specific uploaded file
-      // const filePath = path.join(uploadsPath, fileName.split('/')[1]);
-      // const imageBuffer = fs.readFileSync(filePath);
-      // console.log(filePath)
-      // const img_str = `data:image/png;base64,${imageBuffer.toString('base64')}`;
       const imageResponse = await addImageToThread(thread_id, userMessage, image);
       console.log("Image sent successfully", imageResponse);
     } catch (error) {
@@ -708,15 +612,6 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
       process.stdout.write(obj.code);
     }
 
-    // Call the callback to stream partial responses
-    onPartialResponse({
-      message: chatResponse,
-      fullChatResponse: chatResponse,
-      streaming: false,
-      code: obj.code,
-      codeFound: false,
-    });
-
     if (isStartChat) {
       console.log(
         "new chat loaded.---------------------------------------------"
@@ -728,47 +623,79 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
 
     const appDetails = await App.findOne({ _id: app._id });
     if (obj.code) {
-
       const urlRegex = /fetch\(`([^`]+)`\)/;
       const originalApis = []; // Array to store original API objects
-      
+
       // Replace URLs in the code while extracting them
       obj.code = obj.code.replace(urlRegex, (matchedUrl) => {
-          
-          // Extract the full URL from the matched string
-          const fullUrl = matchedUrl.match(/`([^`]+)`/)[1];
-          // Store the matched URL as an object in the array
-          originalApis.push({ api: fullUrl });
-      
-      
-          // Use a regex to extract existing query parameters
-          const existingParams = {};
-          const paramRegex = /[?&]([^=]+)=([^&]*)/g;
-          let match;
-      
-          // Find and store existing parameters
-          while ((match = paramRegex.exec(fullUrl)) !== null) {
-              existingParams[match[1]] = match[2];
-          }
-      
-          // Build a new query string with existing and new parameters
-          const paramsArray = [];
-          paramsArray.push(`appId=${app._id}`); // Ensure to append appId
-      
-          // Preserve existing parameters, including `${city}`
-          for (const [key, value] of Object.entries(existingParams)) {
-              paramsArray.push(`${key}=${value}`);
-          }
-      
-          // Join parameters with '&' to form the new query string
-          const newQueryString = paramsArray.join('&');
-      
-          // Construct the new URL with the updated query string
-          return `fetch(\`http://localhost:4000/api/v1/builder/callAPI?${newQueryString}\`)`;
+        // Extract the full URL from the matched string
+        const fullUrl = matchedUrl.match(/`([^`]+)`/)[1];
+        // Store the matched URL as an object in the array
+        originalApis.push({ api: fullUrl });
+
+        // Use a regex to extract existing query parameters
+        const existingParams = {};
+        const paramRegex = /[?&]([^=]+)=([^&]*)/g;
+        let match;
+
+        // Find and store existing parameters
+        while ((match = paramRegex.exec(fullUrl)) !== null) {
+          existingParams[match[1]] = match[2];
+        }
+
+        // Build a new query string with existing and new parameters
+        const paramsArray = [];
+        paramsArray.push(`appId=${app._id}`); // Ensure to append appId
+
+        // Preserve existing parameters, including `${city}`
+        for (const [key, value] of Object.entries(existingParams)) {
+          paramsArray.push(`${key}=${value}`);
+        }
+
+        // Join parameters with '&' to form the new query string
+        const newQueryString = paramsArray.join("&");
+
+        // Construct the new URL with the updated query string
+        return `fetch(\`http://localhost:4000/api/v1/builder/callAPI?${newQueryString}\`)`;
       });
 
       // Update app componentCode and save
       appDetails.apis = originalApis;
+
+      let prompt = `You are an AI assistant who inhance my code and returns in string \"\" format. We were going to work on a React-based Javascript App. Your purpose is to assist with creating, editing and improving React codebases with tailwind CSS, custom inline CSS and Javascript only. \nCreate the best and most visually appealing UI, working functionality, valid syntax and other properties. My code:${obj.code}\ MY requirement: ${userMessage}\nInhance it to best, and you're free to modify the structure, style, and functionality. Follow the pattern in terms of function usage, API calls, and element creation without any import statements. However, feel free to enhance the code with best practices, improve UI/UX, and optimize functionality as needed. I have this header added already import React, {useState, useEffect, useContext, useReducer, useCallback, useMemo, useRef, useImperativeHandle, useLayoutEffect, useDebugValue, useTransition, useDeferredValue, useId, useSyncExternalStore, useInsertionEffect} from 'react'; import * as LucideIcons from 'lucide-react'; import { useLocation } from 'react-router-dom'; Note: Input is code and output will be only one code file which will run as JSX. You must return code only no extra text allowed. Generate code in renderer format like React.createElement.`;
+
+      const response = await axios.post(
+        "https://api.anthropic.com/v1/messages",
+        {
+          model: "claude-3-5-sonnet-20240620", // Using Claude model
+          max_tokens: 8000,
+          messages: [
+            {
+              role: "user",
+              content: prompt,
+            },
+          ],
+        },
+        {
+          headers: {
+            "content-type": "application/json",
+            "x-api-key": process.env["ANTHROPIC_API_KEY"],
+            "anthropic-version": "2023-06-01",
+          },
+        }
+      );
+
+      obj.code = response.data.content[0].text;
+
+      // Call the callback to stream partial responses
+      onPartialResponse({
+        message: chatResponse,
+        fullChatResponse: chatResponse,
+        streaming: false,
+        code: obj.code,
+        codeFound: false,
+      });
+
       appDetails.componentCode = obj.code;
       await appDetails.save();
     }
