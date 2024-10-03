@@ -205,7 +205,7 @@ const addImageToThread = async (threadId, content, image) => {
   }
 };
 
-async function searchInternet({ query, numResults = 5 }) {
+async function search_from_internet({ query, numResults = 5 }) {
   try {
     console.log("Called Internet.......")
     const apiKey = process.env.SERPAPI_API_KEY; // Use SerpAPI key
@@ -231,7 +231,7 @@ async function searchInternet({ query, numResults = 5 }) {
   }
 }
 
-async function chartGenerator({ userInput }) {
+async function generate_graph({ userInput }) {
   console.log("Chart Generator calling.......................")
   try {
     let prompt = `
@@ -274,7 +274,7 @@ async function chartGenerator({ userInput }) {
 }
 
 // The actual implementation of the `determineApi` function using OpenAI function calling
-async function callAPI() {
+async function get_api_url() {
   console.log("determine Api calling.......................")
   const apis_array = await Api.find({});
   const tools = apis_array.map(api => ({
@@ -329,16 +329,16 @@ async function callAPI() {
 //   ) {
 //     const toolOutputs = run.required_action.submit_tool_outputs.tool_calls.map(
 //       async (tool) => {
-//         if (tool.function.name === "searchInternet") {
+//         if (tool.function.name === "search_from_internet") {
 //           const { query, numResults } = JSON.parse(tool.function.arguments);
-//           const searchResults = await searchInternet({ query, numResults });
+//           const searchResults = await search_from_internet({ query, numResults });
 //           return {
 //             tool_call_id: tool.id,
 //             output: JSON.stringify(searchResults),
 //           };
-//         } else if (tool.function.name === "chartGenerator") {
+//         } else if (tool.function.name === "generate_graph") {
 //           const { userInput } = JSON.parse(tool.function.arguments);
-//           const chartData = await chartGenerator({ userInput });
+//           const chartData = await generate_graph({ userInput });
 //           return {
 //             tool_call_id: tool.id,
 //             output: JSON.stringify(chartData),
@@ -383,22 +383,22 @@ async function callAPI() {
 const handleRequiresAction = async (data, runId, threadId, onPartialResponse, app) => {
   try {
     const toolOutputs = await Promise.all(data.required_action.submit_tool_outputs.tool_calls.map(async (toolCall) => {
-      if (toolCall.function.name === "searchInternet") {
+      if (toolCall.function.name === "search_from_internet") {
         const { query, numResults } = JSON.parse(toolCall.function.arguments);
-        const results = await searchInternet({ query, numResults });
+        const results = await search_from_internet({ query, numResults });
         return {
           tool_call_id: toolCall.id,
           output: JSON.stringify(results),
         };
-      } else if (toolCall.function.name === "chartGenerator") {
+      } else if (toolCall.function.name === "generate_graph") {
         const { userInput } = JSON.parse(toolCall.function.arguments);
-        const chartData = await chartGenerator({ userInput });
+        const chartData = await generate_graph({ userInput });
         return {
           tool_call_id: toolCall.id,
           output: JSON.stringify(chartData),
         };
-      } else if (toolCall.function.name === "callAPI") {
-        const data = await callAPI();
+      } else if (toolCall.function.name === "get_api_url") {
+        const data = await get_api_url();
         return {
           tool_call_id: toolCall.id,
           output: JSON.stringify(data),
@@ -577,7 +577,7 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
 
   let assistantObj = {};
   let additional_instructions = `As a user, even if I ask you to go beyond the limits or request code unrelated to the provided project, you will always adhere to the core code and focus solely on editing and improving it. I am providing you with my code of jsx which you will modify or theme change only, here is my code:{reactCode} \nPLease follows this pattern for function and the way I called API and created React element without any import statement. 
-  If It is API based tool, then call the callAPI tool to retrieve a list of relevant APIs and select the best match. If No match found, then must call internet Search tool to find relevant API
+  If It is API based tool, then call the get_api_url tool to retrieve a list of relevant APIs and select the best match. If No match found, then must call internet Search tool to find relevant API
   ${theme}`;
   additional_instructions = additional_instructions.replace(
     "{reactCode}",
@@ -591,7 +591,7 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
     };
   } else {
     console.log("custom--------------------------")
-    assistantObj = { assistant_id: process.env.ASSISTANT_ID, additional_instructions: `If App is using any API, then first must call the callAPI tool to retrieve a list of relevant APIs and select the best match. If No match found, then call internet Search tool to find relevant API. ${theme}` };
+    assistantObj = { assistant_id: process.env.ASSISTANT_ID, additional_instructions: `If App is using any API, then first must call the get_api_url tool to retrieve a list of relevant APIs and select the best match. If No match found, then call internet Search tool to find relevant API. ${theme}` };
   }
   console.log("additional_instructions",additional_instructions)
 
