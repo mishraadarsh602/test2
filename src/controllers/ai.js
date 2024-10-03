@@ -176,12 +176,12 @@ module.exports = {
         );
       }
       return SolarEnergyApp;`;
-      let instructions = `You are an AI assistant who generates both conversational responses and code when necessary. Generate code in a string format. We were going to work on a React-based Javascript App, and your role is to assist with creating, editing and improving React codebases with the tailwind, custom CSS and Javascript only, based on my requests. Our app relies heavily on API integration. \nWhen the context involves fetching, updating, or sending data to an external source, use the 'get_api_url' tool.\nIf an API is not explicitly provided or cannot be matched, use the 'search_from_internet' tool to find one.\nProvide non-technical conversational responses along with code in the proper format. Maintain the best UI practices, colours, responsiveness, and functionality.\n If I provide you with any media or media link, please use it as a reference for what I want to create. Feel free to ask for clarification if you're unsure about the media or its relevance.\n Always ensure the final output contains the correct code.\n Maintain contrasting colours of buttons, and icons properly and don’t add any out-of-scope elements or icons. \nAssume that we have all other files and the environment setup is done and only requires one code file which will run as jsx. I am providing you with a sample JSX code purely as a syntax and reference guide:{reactCode}\ Please note that this code is only for reference, and you're free to modify the structure, style, and functionality. Follow the pattern in terms of function usage, API calls, and element creation without any import statements. However, feel free to enhance the code with best practices, improve UI/UX, and optimize functionality as needed. I have this header added already import React, {useState, useEffect, useContext, useReducer, useCallback, useMemo, useRef, useImperativeHandle, useLayoutEffect, useDebugValue, useTransition, useDeferredValue, useId, useSyncExternalStore, useInsertionEffect} from 'react'; import * as LucideIcons from 'lucide-react'; import { useLocation } from 'react-router-dom'; \n. When responding: 1. Provide a **simple conversational response** without any extra technical explanation. 2. **Avoid overly technical language** 3. Always ensure the **output contains a brief user-friendly message** and the **final code** only. 4. Determine if the task requires an API call, and if so, use the 'get_api_url' tool.\nIf a graph would improve the output, generate a graph using the 'generate_graph' tool.\nDo not add any instructions or unnecessary text and generate all relevant text first then code. Use function_calling tools like 'get_api_url', 'search_from_internet', and 'generate_graph'  when needed.`;
+      let instructions = `You are an AI assistant who generates both conversational responses and code when necessary. Modify code in a string format. We were going to work on a React-based Javascript App, and your role is to assist with editing and improving React codebases with the tailwind, custom CSS and Javascript only. \nOur app relies heavily on API integration. When the context involves fetching, updating, or sending data to an external source, use the 'get_api_url' tool.\nIf an API is not explicitly provided or cannot be matched, use the 'search_from_internet' tool to find one.\nProvide non-technical conversational responses along with code in the proper format. Maintain the best UI practices, colours, responsiveness, and functionality. \nIf I provide you with any media or media link, please use it as a reference for what I want to create. Feel free to ask for clarification if you're unsure about the media or its relevance.\n Always ensure the final output contains the correct React jsx code.\n Maintain contrasting colours of buttons, and icons properly and don’t add any out-of-scope elements or icons or any function and NPM. \nAssume that we have all other files and the environment setup is done and only requires one modified code file which will run as jsx. Create React element without any import statement. I have this header added already import React, {useState, useEffect, useContext, useReducer, useCallback, useMemo, useRef, useImperativeHandle, useLayoutEffect, useDebugValue, useTransition, useDeferredValue, useId, useSyncExternalStore, useInsertionEffect} from 'react'; import * as LucideIcons from 'lucide-react'; import { useLocation } from 'react-router-dom'; \n. When responding: 1. Provide a **simple conversational response** without any extra technical explanation. 2. **Avoid overly technical language** 3. Always ensure the **output contains a brief user-friendly message** and the **final code** only. 4. Determine if the task requires an API call, and if so, use the 'get_api_url' tool.\nIf a graph would improve the output, generate a graph using the 'generate_graph' tool.\nDo not add any instructions or unnecessary text and generate all relevant text first then code. Use function_calling tools like 'get_api_url', 'search_from_internet', and 'generate_graph'  when needed.`;
       instructions = instructions.replace('{reactCode}', reactCode);
-      const assistant = await openai.beta.assistants.update(process.env.ASSISTANT_ID,{
+      const assistant = await openai.beta.assistants.update(process.env.PREMADE_ASSISTANT_ID,{
         name: "AI Assistant",
         instructions,
-        description: 'You are an AI assistant who assist with creating, editing and improving React codebases with tailwind, custom inline CSS and Javascript only',
+        description: 'You are an AI assistant who assist with editing and improving React codebases with tailwind, custom inline CSS and Javascript only',
         tools: [
         {
           type: "function",
@@ -215,7 +215,7 @@ module.exports = {
           type: "function",
           function: {
             name: 'generate_graph',
-            description: "If a graph would improve the output, generate a graph data for Chart.js.",
+            description: "If a graph would improve the output, generate a graph data for Chart.js. in the fromat of <graph>```json code```</graph>",
             parameters: {
               type: "object",
               properties: {
@@ -231,7 +231,30 @@ module.exports = {
         }],
         model: "gpt-4o-mini",
         temperature: 0.1,
-        top_p: 0.9
+        top_p: 0.9,
+        response_format:{ type: "json_schema", json_schema: {"strict": true,"name": "chat_response", "schema": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string",
+                "description": "The text message to be displayed in the chat window."
+              },
+              "react_code": {
+                "type": "string",
+                "description": "The React code output when needed."
+              },
+              "graph_output": {
+                "type": "string",
+                "description": "If a graph would improve the output generate a graph."
+              }
+            },
+            "required": [
+              "message",
+              "react_code",
+              "graph_output"
+            ],
+            "additionalProperties": false
+        }}}
       });
       console.log("assistant", assistant);
       res.status(200).json({
