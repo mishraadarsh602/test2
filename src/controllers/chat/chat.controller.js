@@ -535,24 +535,12 @@ const submitToolOutputs = async (toolOutputs, runId, threadId, onPartialResponse
       await appDetails.save();
     }
 
-      // ;
-    // for await (const event of stream) {
-    //   onEvent(event, onPartialResponse);
-    // }
   } catch (error) {
     console.error("Error submitting tool outputs:", error);
   }
 };
 
 const aiAssistantChatStart = async (userId, userMessage, app, image = null, isStartChat, onPartialResponse) => {
-  // const app = await App.findOne({
-  //   name: appName,
-  //   user: new mongoose.Types.ObjectId(userId),
-  // });
-
-  // if (!app) {
-  //   throw new Error("App or user not found");
-  // }
 
   const thread_id = app.thread_id;
 
@@ -579,7 +567,6 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
 
   let assistantObj = {};
   let additional_instructions = `As a user, even if I ask you to go beyond the limits or request code unrelated to the provided project, you will always adhere to the core code and focus solely on editing and improving it. I am providing you with my code of jsx which you will modify or theme change only, here is my code:{reactCode} \nPLease follows this pattern for function and the way I called API and created React element without any import statement. 
-  If It is API based tool, then call the get_api_url tool to retrieve a list of relevant APIs and select the best match. If No match found, then must call internet Search tool to find relevant API
   ${theme}`;
   additional_instructions = additional_instructions.replace(
     "{reactCode}",
@@ -589,11 +576,16 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
     console.log("pre-made--------------------------")
     assistantObj = {
       assistant_id: process.env.PREMADE_ASSISTANT_ID,
-      additional_instructions: additional_instructions,
     };
+    if(isStartChat){
+      assistantObj.additional_instructions = additional_instructions;
+    }
   } else {
     console.log("custom--------------------------")
-    assistantObj = { assistant_id: process.env.ASSISTANT_ID, additional_instructions: `If App is using any API, then first must call the get_api_url tool to retrieve a list of relevant APIs and select the best match. If No match found, then call internet Search tool to find relevant API. ${theme}` };
+    assistantObj = { assistant_id: process.env.ASSISTANT_ID };
+    if(isStartChat){
+      assistantObj.additional_instructions = `${theme}`;
+    }
   }
   console.log("additional_instructions",additional_instructions)
 
