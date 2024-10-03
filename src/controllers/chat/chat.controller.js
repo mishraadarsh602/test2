@@ -73,7 +73,7 @@ const fetchPreviousChat = async (userId, agentId) => {
   }
 };
 
-const updateAIMessageToChatSession = async (userId, agentId, code, message) => {
+const updateAIMessageToChatSession = async (userId, agentId, code, message, graph) => {
   try {
     // Find the existing chat session
     const oldChatSession = await chatSession
@@ -95,7 +95,8 @@ const updateAIMessageToChatSession = async (userId, agentId, code, message) => {
             sno: oldChatSession.messages.length + 1,
             role: 'assistant',
             content: message,
-            code: code
+            code: code,
+            graph: JSON.stringify(graph)
           },
         },
       },
@@ -409,7 +410,8 @@ const handleRequiresAction = async (data, runId, threadId, onPartialResponse, ap
     // Filter out any undefined outputs
     const filteredOutputs = toolOutputs.filter(output => output !== undefined);
     // Submit all the tool outputs at the same time
-    await submitToolOutputs(filteredOutputs, runId, threadId, onPartialResponse, app);
+    const obj = await submitToolOutputs(filteredOutputs, runId, threadId, onPartialResponse, app);
+    return obj;
   } catch (error) {
     console.error("Error processing required action:", error);
   }
@@ -417,140 +419,84 @@ const handleRequiresAction = async (data, runId, threadId, onPartialResponse, ap
 
 const submitToolOutputs = async (toolOutputs, runId, threadId, onPartialResponse, app) => {
   try {
-    const obj = { message: "", code: "", streaming: false };
-    let chatResponse = "";
-    let isInsideCodeBlock = false;
-    let codeBlockBuffer = "";
-    const stream = openai.beta.threads.runs.submitToolOutputsStream(threadId, runId, { tool_outputs: toolOutputs })
-    .on('textDelta', (textDelta) => {  
-      chatResponse += textDelta.value;
-      const parts = textDelta.value.split('```');
-      parts.forEach((part, index) => {
-        if (isInsideCodeBlock) {
-          // Call the callback to stream partial responses
-          onPartialResponse({
-            message: chatResponse,
-            fullChatResponse: chatResponse,
-            streaming: true,
-            code: obj.code,
-            codeFound: true,
-          });
-          if (index % 2 !== 0) {
-            codeBlockBuffer += part;
-          }
-        } else {
-          if (index % 2 === 0) {
-            obj.message += part;
-            obj.streaming = true;
-            // Call the callback to stream partial responses
-            onPartialResponse({
-              message: textDelta.value,
-              fullChatResponse: chatResponse,
-              streaming: true,
-              code: "",
-            });
-          } else {
-            codeBlockBuffer = part;
-            isInsideCodeBlock = true;
-            // Call the callback to stream partial responses
-            onPartialResponse({
-              message: chatResponse,
-              fullChatResponse: chatResponse,
-              streaming: true,
-              code: obj.code,
-              codeFound: true,
-            });
+    const obj = { message: "", code: "", graph: '[]', streaming: false };
+    let messageContent = "";  // Separate variable to store message key's value
+    let chatResponse = "";  // Separate variable to store message key's value
+    let isStreamingMessage = false;
+    let isMessageStarted = false;
+    const stream = openai.beta.threads.runs
+      .submitToolOutputsStream(threadId, runId, { tool_outputs: toolOutputs })
+      .on("textDelta", (textDelta) => {
+        const delta = textDelta.value;
+        chatResponse += textDelta.value;
+        // Check if we should start streaming the message content
+        if (!isStreamingMessage && delta.includes("message")) {
+          // The message part has begun, set flag to start streaming
+          isStreamingMessage = true;
+          isMessageStarted = true;
+        }
+        // Continue streaming message if it has already started
+        else if (isStreamingMessage) {
+          if (isMessageStarted) {
+            if (textDelta.value === '":"') {
+              return;
+            }
+            const endOfMessage = delta.indexOf('",');
+            if (endOfMessage !== -1) {
+              // Message ends, stop streaming
+              const finalMessagePart = delta.substring(0, endOfMessage);
+              messageContent += finalMessagePart; // Ensure we store only the complete message
+              isStreamingMessage = false; // Stop the message part
+
+              // Send final streamed message response
+              onPartialResponse({
+                message: textDelta.value, // Send the captured message content
+                fullChatResponse: messageContent,
+                streaming: false, // Message streaming is done
+                code: "", // No code yet
+              });
+            } else {
+              // Continue appending the message until the end
+              messageContent += delta;
+              console.log(delta);
+              // Send partial response as the message streams in
+              onPartialResponse({
+                message: textDelta.value, // Send the captured message content
+                fullChatResponse: messageContent,
+                streaming: true, // Streaming is ongoing
+                code: "", // No code yet
+              });
+            }
           }
         }
+      })
+      .on("end", () => {
+        if (messageContent.trim() !== "") {
+          // When streaming is done, send the react_code and graph_output
+          const reactCode = JSON.parse(chatResponse).react_code;
+          const graphOutput = JSON.parse(chatResponse).graph_output;
+
+          console.log(reactCode, graphOutput);
+
+          obj.code = reactCode;
+          obj.message = messageContent;
+          obj.graph = graphOutput;
+        }
       });
-    });
+    
+
 
     const finalFunctionCall = await stream.finalMessages();
     console.log("Run end:", finalFunctionCall, chatResponse);
 
-    const codeBlockRegex = /```(?:\w+)?\n([\s\S]*?)\n```/g;
-    let match;
-    if ((match = codeBlockRegex.exec(chatResponse)) !== null) {
-      const extractedCode = match[1];
-      obj.code += extractedCode.replace(/tsx/g, "");
-      process.stdout.write(obj.code);
-    }
-
-    // Call the callback to stream partial responses
-    onPartialResponse({
-      message: chatResponse,
-      fullChatResponse: chatResponse,
-      streaming: false,
-      code: obj.code,
-      codeFound: false,
-    });
-
-    
-    const appDetails = await App.findOne({ _id: app._id });
-    if (obj.code) {
-
-      const urlRegex = /fetch\(`([^`]+)`\)/;
-      const originalApis = []; // Array to store original API objects
-      
-      // Replace URLs in the code while extracting them
-      obj.code = obj.code.replace(urlRegex, (matchedUrl) => {
-          
-          // Extract the full URL from the matched string
-          const fullUrl = matchedUrl.match(/`([^`]+)`/)[1];
-          // Store the matched URL as an object in the array
-          originalApis.push({ api: fullUrl });
-      
-      
-          // Use a regex to extract existing query parameters
-          const existingParams = {};
-          const paramRegex = /[?&]([^=]+)=([^&]*)/g;
-          let match;
-      
-          // Find and store existing parameters
-          while ((match = paramRegex.exec(fullUrl)) !== null) {
-              existingParams[match[1]] = match[2];
-          }
-      
-          // Build a new query string with existing and new parameters
-          const paramsArray = [];
-          paramsArray.push(`appId=${app._id}`); // Ensure to append appId
-      
-          // Preserve existing parameters, including `${city}`
-          for (const [key, value] of Object.entries(existingParams)) {
-              paramsArray.push(`${key}=${value}`);
-          }
-      
-          // Join parameters with '&' to form the new query string
-          const newQueryString = paramsArray.join('&');
-      
-          // Construct the new URL with the updated query string
-          return `fetch(\`http://localhost:4000/api/v1/builder/callAPI?${newQueryString}\`)`;
-      });
-
-      // Update app componentCode and save
-      appDetails.apis = originalApis;
-      appDetails.componentCode = obj.code;
-      await appDetails.save();
-    }
-
-      // ;
-    // for await (const event of stream) {
-    //   onEvent(event, onPartialResponse);
-    // }
+    console.log("RUN LAST 2.................................");
+    return obj;
   } catch (error) {
     console.error("Error submitting tool outputs:", error);
   }
 };
 
 const aiAssistantChatStart = async (userId, userMessage, app, image = null, isStartChat, onPartialResponse) => {
-  // const app = await App.findOne({
-  //   name: appName,
-  //   user: new mongoose.Types.ObjectId(userId),
-  // });
-
-  // if (!app) {
-  //   throw new Error("App or user not found");
-  // }
 
   const thread_id = app.thread_id;
 
@@ -565,6 +511,14 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
   // Ensure oldChatSession exists before proceeding
   if (!oldChatSession) {
     isStartChat = true;
+    if (isStartChat) {
+      console.log(
+        "new chat loaded.---------------------------------------------"
+      );
+      await startChatSession(userId, app._id, userMessage, [
+        image === null ? "" : image,
+      ]);
+    }
   }
   let theme = ``;
   if (app.header.logo.enabled && app.header.logo.url) {
@@ -591,34 +545,12 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
     };
   } else {
     console.log("custom--------------------------")
-    assistantObj = { assistant_id: process.env.ASSISTANT_ID, additional_instructions: `If App is using any API, then first must call the get_api_url tool to retrieve a list of relevant APIs and select the best match. If No match found, then call internet Search tool to find relevant API. ${theme}` };
+    assistantObj = { assistant_id: process.env.ASSISTANT_ID };
   }
   console.log("additional_instructions",additional_instructions)
 
   if (image) {
     try {
-       // Decode base64 image data
-      // const base64Data = image.replace(/^data:image\/\w+;base64,/, "");
-      // const buffer = Buffer.from(base64Data, "base64");
-
-      // // Define a file path for saving the image
-      // let fileName = `uploads/image-${Date.now()}.png`;
-
-      // // // // Write the file to the uploads directory
-      // await fs.writeFile(fileName, buffer, async (err) => {
-      //   if (err) {
-      //     console.error("Error saving the image:", err);
-      //   } else {
-      //     console.log("Image saved successfully at:", fileName);
-      //   }
-      // });
-      // const uploadsPath = path.resolve(__dirname, '..', '..', '..', 'uploads'); // Adjust based on your folder structure
-
-      // // To get the path for a specific uploaded file
-      // const filePath = path.join(uploadsPath, fileName.split('/')[1]);
-      // const imageBuffer = fs.readFileSync(filePath);
-      // console.log(filePath)
-      // const img_str = `data:image/png;base64,${imageBuffer.toString('base64')}`;
       const imageResponse = await addImageToThread(thread_id, userMessage, image);
       console.log("Image sent successfully", imageResponse);
     } catch (error) {
@@ -633,104 +565,100 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
   }
 
 
-  const obj = { message: "", code: "", streaming: false };
+  let obj = { message: "", code: "", graph: '[]', streaming: false };
 
   try {
-    let chatResponse = "";
-    let isInsideCodeBlock = false;
-    let codeBlockBuffer = "";
-
+    let messageContent = "";  // Separate variable to store message key's value
+    let chatResponse = "";  // Separate variable to store message key's value
+    let isStreamingMessage = false;
+    let isMessageStarted = false;
+    
     // Start streaming from OpenAI or another source
     const run = await openai.beta.threads.runs
       .stream(thread_id, assistantObj)
       .on("textDelta", (textDelta) => {
+        const delta = textDelta.value;
         chatResponse += textDelta.value;
-
-        const parts = textDelta.value.split("```");
-        parts.forEach((part, index) => {
-          if (isInsideCodeBlock) {
-            // Call the callback to stream partial responses
-            onPartialResponse({
-              message: chatResponse,
-              fullChatResponse: chatResponse,
-              streaming: true,
-              code: obj.code,
-              codeFound: true,
-            });
-            if (index % 2 !== 0) {
-              codeBlockBuffer += part;
+        // Check if we should start streaming the message content
+        if (!isStreamingMessage && delta.includes("message")) {
+          // The message part has begun, set flag to start streaming
+          isStreamingMessage = true;
+          isMessageStarted = true;
+        }
+        // Continue streaming message if it has already started
+        else if (isStreamingMessage) {
+          if (isMessageStarted) {
+            if(textDelta.value === '":"'){
+              return;
             }
-          } else {
-            if (index % 2 === 0) {
-              obj.message += part;
-              obj.streaming = true;
-              // Call the callback to stream partial responses
+            const endOfMessage = delta.indexOf('",');
+            if (endOfMessage !== -1) {
+              // Message ends, stop streaming
+              const finalMessagePart = delta.substring(0, endOfMessage);
+              messageContent += finalMessagePart; // Ensure we store only the complete message
+              isStreamingMessage = false; // Stop the message part
+
+              // Send final streamed message response
               onPartialResponse({
-                message: textDelta.value,
-                fullChatResponse: chatResponse,
-                streaming: true,
-                code: "",
+                message: textDelta.value, // Send the captured message content
+                fullChatResponse: messageContent,
+                streaming: false, // Message streaming is done
+                code: "", // No code yet
               });
             } else {
-              codeBlockBuffer = part;
-              isInsideCodeBlock = true;
-              // Call the callback to stream partial responses
+              // Continue appending the message until the end
+              messageContent += delta;
+              console.log(delta);
+              // Send partial response as the message streams in
               onPartialResponse({
-                message: chatResponse,
-                fullChatResponse: chatResponse,
-                streaming: true,
-                code: obj.code,
-                codeFound: true,
+                message: textDelta.value, // Send the captured message content
+                fullChatResponse: messageContent,
+                streaming: true, // Streaming is ongoing
+                code: "", // No code yet
               });
             }
           }
-        });
-      });
+        }
+      })
+      .on("end", async () => {
+        console.log(
+          "DONE -------------------------------",
+          assistantObj,
+          messageContent
+        );
+        if (messageContent.trim() !== "") {
+          // When streaming is done, send the react_code and graph_output
+          const reactCode = JSON.parse(chatResponse).react_code;
+          const graphOutput = JSON.parse(chatResponse).graph_output;
 
-    console.log();
-    if (chatResponse.trim() === "") {
+          console.log(reactCode, graphOutput);
+
+          obj.code = reactCode;
+          obj.message = messageContent;
+          obj.graph = graphOutput;
+        }
+      });
+    
+
+    if (messageContent.trim() === "") {
       for await (const event of run) {
         // onEvent(event, onPartialResponse);
         if (event.event === "thread.run.requires_action") {
-          await handleRequiresAction(
+          console.log("Starting tooling......................")
+          obj = await handleRequiresAction(
             event.data,
             event.data.id,
             event.data.thread_id,
             onPartialResponse,
             app
           );
+          console.log("Ending tooling......................")
         }
       }
     }
 
     const finalFunctionCall = await run.finalMessages();
     console.log("Run end:", finalFunctionCall, chatResponse);
-
-    const codeBlockRegex = /```(?:\w+)?\n([\s\S]*?)\n```/g;
-    let match;
-    if ((match = codeBlockRegex.exec(chatResponse)) !== null) {
-      const extractedCode = match[1];
-      obj.code += extractedCode.replace(/tsx/g, "");
-      process.stdout.write(obj.code);
-    }
-
-    // Call the callback to stream partial responses
-    onPartialResponse({
-      message: chatResponse,
-      fullChatResponse: chatResponse,
-      streaming: false,
-      code: obj.code,
-      codeFound: false,
-    });
-
-    if (isStartChat) {
-      console.log(
-        "new chat loaded.---------------------------------------------"
-      );
-      await startChatSession(userId, app._id, userMessage, [
-        image === null ? "" : image,
-      ]);
-    }
 
     const appDetails = await App.findOne({ _id: app._id });
     if (obj.code) {
@@ -779,7 +707,17 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
       await appDetails.save();
     }
     obj.code = appDetails.componentCode;
-    // Final return after the streaming is done
+
+    console.log("RUN LAST.................................");
+       // Send final message with the code and graph after streaming
+       onPartialResponse({
+        message: obj.message, // Send the captured message content
+        fullChatResponse: obj.message,
+        streaming: false, // Streaming complete
+        code: obj.code, // Send the code now
+        codeFound: true,
+        graph: obj.graph, // Send the graph output now
+      });
     return obj;
   } catch (error) {
     console.error("Error running assistant:", error);
