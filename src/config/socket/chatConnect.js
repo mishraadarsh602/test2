@@ -55,17 +55,16 @@ module.exports = (server) => {
             fullChatResponse: partialResponse.fullChatResponse,
             streaming: partialResponse.streaming,
             code: partialResponse.code,
-            codeFound: partialResponse.codeFound,
+            codeFound: partialResponse.codeFound
           });
         }
       );
-
 
       await updateAIMessageToChatSession(
         data.userId,
         appId,
         returnedOutput.code,
-        returnedOutput.message,
+        returnedOutput.message
       );
 
       // Optionally, emit a response to the client
@@ -79,7 +78,7 @@ module.exports = (server) => {
       console.log(data);
 
       const app = await App.findOne({
-        url: data.appName,
+        name: data.appName,
         user: new mongoose.Types.ObjectId(data.userId),
       });
     
@@ -96,7 +95,7 @@ module.exports = (server) => {
       if (messages.length > 0) {
         for (let i = 0; i < messages.length; i++) {
           if (messages[i].role === 'assistant') {
-            msg.push({ text: messages[i].content, code: messages[i].code, sender: "bot"});
+            msg.push({ text: messages[i].content, code: messages[i].code, sender: "bot" });
           } else if (messages[i].role === 'user') {
             msg.push({
               text: messages[i].content,
@@ -162,7 +161,7 @@ module.exports = (server) => {
             fullChatResponse: partialResponse.fullChatResponse,
             streaming: partialResponse.streaming,
             code: partialResponse.code,
-            codeFound: partialResponse.codeFound,
+            codeFound: partialResponse.codeFound
           });
         }
       );
@@ -171,7 +170,7 @@ module.exports = (server) => {
         data.userId,
         appId,
         returnedOutput.code,
-        returnedOutput.message,
+        returnedOutput.message
       );
       
       // Optionally, emit a response to the client
