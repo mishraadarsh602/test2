@@ -55,16 +55,20 @@ module.exports = (server) => {
             fullChatResponse: partialResponse.fullChatResponse,
             streaming: partialResponse.streaming,
             code: partialResponse.code,
-            codeFound: partialResponse.codeFound
+            codeFound: partialResponse.codeFound,
+            graph: partialResponse.graph
           });
         }
       );
+
+      console.log(typeof returnedOutput.graph)
 
       await updateAIMessageToChatSession(
         data.userId,
         appId,
         returnedOutput.code,
-        returnedOutput.message
+        returnedOutput.message,
+        returnedOutput.graph
       );
 
       // Optionally, emit a response to the client
@@ -95,7 +99,7 @@ module.exports = (server) => {
       if (messages.length > 0) {
         for (let i = 0; i < messages.length; i++) {
           if (messages[i].role === 'assistant') {
-            msg.push({ text: messages[i].content, code: messages[i].code, sender: "bot" });
+            msg.push({ text: messages[i].content, code: messages[i].code, sender: "bot" , graph: messages[i].graph});
           } else if (messages[i].role === 'user') {
             msg.push({
               text: messages[i].content,
@@ -161,7 +165,8 @@ module.exports = (server) => {
             fullChatResponse: partialResponse.fullChatResponse,
             streaming: partialResponse.streaming,
             code: partialResponse.code,
-            codeFound: partialResponse.codeFound
+            codeFound: partialResponse.codeFound,
+            graph: partialResponse.graph
           });
         }
       );
@@ -170,7 +175,8 @@ module.exports = (server) => {
         data.userId,
         appId,
         returnedOutput.code,
-        returnedOutput.message
+        returnedOutput.message,
+        returnedOutput.graph
       );
       
       // Optionally, emit a response to the client
