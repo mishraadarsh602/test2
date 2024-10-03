@@ -73,7 +73,7 @@ const fetchPreviousChat = async (userId, agentId) => {
   }
 };
 
-const updateAIMessageToChatSession = async (userId, agentId, code, message, graph) => {
+const updateAIMessageToChatSession = async (userId, agentId, code, message) => {
   try {
     // Find the existing chat session
     const oldChatSession = await chatSession
@@ -96,7 +96,6 @@ const updateAIMessageToChatSession = async (userId, agentId, code, message, grap
             role: 'assistant',
             content: message,
             code: code,
-            graph: JSON.stringify(graph)
           },
         },
       },
@@ -277,9 +276,9 @@ async function generate_graph({ userInput }) {
 // The actual implementation of the `determineApi` function using OpenAI function calling
 async function get_api_url() {
   console.log("determine Api calling.......................")
-  const apis_array = await Api.find({});
+  const apis_array = await Api.find({}).limit(5);
   const tools = apis_array.map(api => ({
-    name: api.key,
+    // name: api.key,
     api: api.api,
     description: api.purpose, // Keep the description concise
   }));
@@ -419,7 +418,8 @@ const handleRequiresAction = async (data, runId, threadId, onPartialResponse, ap
 
 const submitToolOutputs = async (toolOutputs, runId, threadId, onPartialResponse, app) => {
   try {
-    const obj = { message: "", code: "", graph: '[]', streaming: false };
+    console.log(toolOutputs)
+    const obj = { message: "", code: "", streaming: false };
     let messageContent = "";  // Separate variable to store message key's value
     let chatResponse = "";  // Separate variable to store message key's value
     let isStreamingMessage = false;
@@ -429,58 +429,20 @@ const submitToolOutputs = async (toolOutputs, runId, threadId, onPartialResponse
       .on("textDelta", (textDelta) => {
         const delta = textDelta.value;
         chatResponse += textDelta.value;
-        // Check if we should start streaming the message content
-        if (!isStreamingMessage && delta.includes("message")) {
-          // The message part has begun, set flag to start streaming
-          isStreamingMessage = true;
-          isMessageStarted = true;
-        }
-        // Continue streaming message if it has already started
-        else if (isStreamingMessage) {
-          if (isMessageStarted) {
-            if (textDelta.value === '":"') {
-              return;
-            }
-            const endOfMessage = delta.indexOf('",');
-            if (endOfMessage !== -1) {
-              // Message ends, stop streaming
-              const finalMessagePart = delta.substring(0, endOfMessage);
-              messageContent += finalMessagePart; // Ensure we store only the complete message
-              isStreamingMessage = false; // Stop the message part
-
-              // Send final streamed message response
-              onPartialResponse({
-                message: textDelta.value, // Send the captured message content
-                fullChatResponse: messageContent,
-                streaming: false, // Message streaming is done
-                code: "", // No code yet
-              });
-            } else {
-              // Continue appending the message until the end
-              messageContent += delta;
-              console.log(delta);
-              // Send partial response as the message streams in
-              onPartialResponse({
-                message: textDelta.value, // Send the captured message content
-                fullChatResponse: messageContent,
-                streaming: true, // Streaming is ongoing
-                code: "", // No code yet
-              });
-            }
-          }
-        }
+        console.log(delta)
       })
       .on("end", () => {
+        console.log(messageContent, chatResponse)
         if (messageContent.trim() !== "") {
           // When streaming is done, send the react_code and graph_output
           const reactCode = JSON.parse(chatResponse).react_code;
-          const graphOutput = JSON.parse(chatResponse).graph_output;
+          // const graphOutput = JSON.parse(chatResponse).graph_output;
 
-          console.log(reactCode, graphOutput);
+          // console.log(reactCode, graphOutput);
 
           obj.code = reactCode;
           obj.message = messageContent;
-          obj.graph = graphOutput;
+          // obj.graph = graphOutput;
         }
       });
     
@@ -565,7 +527,7 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
   }
 
 
-  let obj = { message: "", code: "", graph: '[]', streaming: false };
+  let obj = { message: "", code: "", streaming: false };
 
   try {
     let messageContent = "";  // Separate variable to store message key's value
@@ -629,13 +591,13 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
         if (messageContent.trim() !== "") {
           // When streaming is done, send the react_code and graph_output
           const reactCode = JSON.parse(chatResponse).react_code;
-          const graphOutput = JSON.parse(chatResponse).graph_output;
+          // const graphOutput = JSON.parse(chatResponse).graph_output;
 
-          console.log(reactCode, graphOutput);
+          // console.log(reactCode, graphOutput);
 
           obj.code = reactCode;
           obj.message = messageContent;
-          obj.graph = graphOutput;
+          // obj.graph = graphOutput;
         }
       });
     
@@ -716,7 +678,7 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
         streaming: false, // Streaming complete
         code: obj.code, // Send the code now
         codeFound: true,
-        graph: obj.graph, // Send the graph output now
+        // graph: obj.graph, // Send the graph output now
       });
     return obj;
   } catch (error) {
