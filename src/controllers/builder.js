@@ -11,6 +11,8 @@ const dashboardHelper = require('../helpers/dashboard');
 const { OpenAI } = require("openai");
 const redisClient = require('../utils/redisClient');
 const { default: axios } = require('axios');
+const chatSession = require('../models/chat/chatSession.model');
+const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY });
 
 async function createLog(data) {
     try {
@@ -311,6 +313,72 @@ module.exports = {
             
         }
     },
+
+    fixError :async (req,res)=>{
+        try {
+          const fetchedApp = await App.findOne({ url: req.body.appName });
+          let prompt = `This is my code : ${fetchedApp.componentCode}, This is Error: ${req.body.errorMessage}
+            
+                You need to resolve this issue into my code and regenerate it. You must return code only no extra text allowed. Generate code in renderer format like React.createElement.
+            `;
+
+          const response = await axios.post(
+            "https://api.anthropic.com/v1/messages",
+            {
+              model: "claude-3-5-sonnet-20240620", // Using Claude model
+              max_tokens: 8000,
+              messages: [
+                {
+                  role: "user",
+                  content: prompt,
+                },
+              ],
+            },
+            {
+              headers: {
+                "content-type": "application/json",
+                "x-api-key": process.env["ANTHROPIC_API_KEY"],
+                "anthropic-version": "2023-06-01",
+              },
+            }
+          );
+
+          await openai.beta.threads.messages.create(
+            fetchedApp.thread_id,
+            {
+              role: "user",
+              content: `resolve this issue in my code : ${req.body.errorMessage}`,
+            },
+            {
+              role: "assistant",
+              content: response.data.content[0].text,
+            }
+          );
+
+          fetchedApp.componentCode = response.data.content[0].text;
+          await fetchedApp.save();
+
+          // Find the existing chat session
+          let oldChatSession = await chatSession
+            .findOne({
+              agentId: new mongoose.Types.ObjectId(fetchedApp._id),
+            });
+
+            if(oldChatSession.messages[oldChatSession.messages.length - 1].role === 'assistant'){
+                oldChatSession.messages[oldChatSession.messages.length - 1].code = response.data.content[0].text;
+                await oldChatSession.save();
+            }
+
+            res.status(201).json({
+                message: "Regenerated Successfully",
+                data: fetchedApp
+              });
+        } catch (error) {
+            createLog({userId:req.user.userId.toString(),error:error.message,appId:req.body.appId})
+            res.status(500).json({ error: error.message });
+        }
+    },
+
     getOverViewDetails:async (req,res)=>{
         try {
             const appId=req.params.appId;

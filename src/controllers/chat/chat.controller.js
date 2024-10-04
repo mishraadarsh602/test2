@@ -647,7 +647,7 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
         const paramsArray = [];
         paramsArray.push(`appId=${app._id}`); // Ensure to append appId
 
-        // Preserve existing parameters, including `${city}`
+        // Preserve existing parameters, including `${city}`  
         for (const [key, value] of Object.entries(existingParams)) {
           paramsArray.push(`${key}=${value}`);
         }
