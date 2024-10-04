@@ -452,7 +452,7 @@ const submitToolOutputs = async (toolOutputs, runId, threadId, onPartialResponse
           const newQueryString = paramsArray.join('&');
       
           // Construct the new URL with the updated query string
-          return `fetch(\`${process.env.BACKEND_URL}/builder/callAPI?${newQueryString}\`)`;
+          return `fetch(\`${window.location.origin}/api/v1/builder/callAPI?${newQueryString}\`)`;
       });
 
       // Update app componentCode and save
@@ -656,7 +656,7 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
         const newQueryString = paramsArray.join("&");
 
         // Construct the new URL with the updated query string
-        return `fetch(\`${process.env.BACKEND_URL}/builder/callAPI?${newQueryString}\`)`;
+        return `fetch(\`${window.location.origin}/api/v1/builder/callAPI?${newQueryString}\`)`;
       });
 
       // Update app componentCode and save
