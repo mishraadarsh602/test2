@@ -623,6 +623,15 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
       ]);
     }
 
+    if(!isStartChat && app.agent_type !== 'AI_Tool' && oldChatSession.messages.length === 1){
+      console.log(
+        "Premade new chat loaded......................................."
+      );
+      await updateHumanMessageToChatSession(userId, app._id, userMessage, [
+        image === null ? "" : image,
+      ]);
+    }
+
     const appDetails = await App.findOne({ _id: app._id });
     if (obj.code) {
       const urlRegex = /fetch\(`([^`]+)`\)/;
