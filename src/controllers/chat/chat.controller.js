@@ -452,7 +452,7 @@ const submitToolOutputs = async (toolOutputs, runId, threadId, onPartialResponse
           const newQueryString = paramsArray.join('&');
       
           // Construct the new URL with the updated query string
-          return `fetch(\`${window.location.origin}/api/v1/builder/callAPI?${newQueryString}\`)`;
+          return `fetch(\`${process.env.BACKEND_URL}/builder/callAPI?${newQueryString}\`)`;
       });
 
       // Update app componentCode and save
@@ -501,14 +501,14 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
   if (app.agent_type !== "AI_Tool") {
     console.log("pre-made--------------------------")
     assistantObj = {
-      assistant_id: process.env.NODE_ENV == 'staging' || process.env.NODE_ENV == 'production' ? process.env.PREMADE_ASSISTANT_ID : process.env.DEV_PREMADE_ASSISTANT_ID,
+      assistant_id: process.env.PREMADE_ASSISTANT_ID,
     };
     if(isStartChat){
       assistantObj.additional_instructions = additional_instructions;
     }
   } else {
     console.log("custom--------------------------")
-    assistantObj = { assistant_id: process.env.NODE_ENV == 'staging' || process.env.NODE_ENV == 'production' ? process.env.ASSISTANT_ID : process.env.DEV_ASSISTANT_ID };
+    assistantObj = { assistant_id: process.env.ASSISTANT_ID };
     if(isStartChat){
       assistantObj.additional_instructions = `${theme}`;
     }
@@ -656,7 +656,7 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
         const newQueryString = paramsArray.join("&");
 
         // Construct the new URL with the updated query string
-        return `fetch(\`${window.location.origin}/api/v1/builder/callAPI?${newQueryString}\`)`;
+        return `fetch(\`${process.env.BACKEND_URL}/builder/callAPI?${newQueryString}\`)`;
       });
 
       // Update app componentCode and save
