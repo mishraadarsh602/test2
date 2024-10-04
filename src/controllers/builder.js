@@ -320,6 +320,13 @@ module.exports = {
           let prompt = `This is my code : ${fetchedApp.componentCode}, This is Error: ${req.body.errorMessage}
             
                 You need to resolve this issue into my code and regenerate it. You must return code only no extra text allowed. Generate code in renderer format like React.createElement.
+
+                'Cannot use import statement outside a module' if you get this error remove all import statement from code just follow this format
+                
+                function AppName(){
+                    ....
+                }
+                return AppName;
             `;
 
           const response = await axios.post(
