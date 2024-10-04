@@ -501,17 +501,15 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
     app.componentCode
   );
   if (app.agent_type !== "AI_Tool") {
-    console.log("pre-made--------------------------")
+    console.log("pre-made--------------------------");
     assistantObj = {
       assistant_id: process.env.PREMADE_ASSISTANT_ID,
     };
-    if(isStartChat){
-      assistantObj.additional_instructions = additional_instructions;
-    }
+    assistantObj.additional_instructions = additional_instructions;
   } else {
-    console.log("custom--------------------------")
+    console.log("custom--------------------------");
     assistantObj = { assistant_id: process.env.ASSISTANT_ID };
-    if(isStartChat){
+    if (isStartChat) {
       assistantObj.additional_instructions = `${theme}`;
     }
   }

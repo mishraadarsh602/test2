@@ -23,7 +23,7 @@ router.delete('/delete_app/:appId', builderController.deleteApp);
 router.get('/get_all_apps',auth, builderController.getAllAppsOfUser);
 router.post('/check_unique_app_name',auth, builderController.checkUniqueApp);
 router.post('/check_unique_url', builderController.checkUniqueUrl);
-router.post('/liveApp/:appId',auth, builderController.liveApp);
+router.post('/liveApp/:appId', builderController.liveApp);
 router.get('/getOverView/:appId',auth,builderController.getOverViewDetails);
 router.post('/visitor/delete',auth, builderController.deleteVisitors);
 router.get('/getPreviewApp/:appId', auth,builderController.getPreviewApp);
