@@ -63,6 +63,6 @@ const appVisitorSchema = new mongoose.Schema(
         timestamps: true,
     }
 );
-
+appVisitorSchema.index({ app: 1, createdAt: 1 })
 const appVisitors = mongoose.model('appVisitors', appVisitorSchema);
 module.exports = appVisitors;

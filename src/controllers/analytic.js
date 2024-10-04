@@ -2,7 +2,6 @@ const App = require('../models/app');
 const appVisitorModel = require('../models/appVisitors');
 const appModel=require('../models/app');
 const featureListModel=require('../models/featureList');
-const appVisitorsModel = require('../models/appVisitors');
 const { default: mongoose } = require('mongoose');
 async function updateAppVisitor(id, visitorCount) {
     try {
@@ -95,7 +94,7 @@ module.exports={
     },
     fetchVisitors:async (req,res)=>{
         try {
-        const allVisitors=await appVisitorsModel.aggregate([
+        const allVisitors=await appVisitorModel.aggregate([
             {
               $match: {
                 app: new mongoose.Types.ObjectId(req.body.appId),
