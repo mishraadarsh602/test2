@@ -14,6 +14,7 @@ const userSchema = new mongoose.Schema(
       required: true,
       lowercase: true,
       unique: true,
+      index: true
     },
     ogUserId:{
       type:String,
