@@ -30,9 +30,10 @@ module.exports = (server) => {
 
     // Listen for the 'startChat' event from the client
     socket.on("startChat", async (data) => {
+      try{
       console.log(data);
       const app = await App.findOne({
-        name: data.appName,
+        url: data.appName,
         user: new mongoose.Types.ObjectId(data.userId),
       });
     
@@ -66,19 +67,18 @@ module.exports = (server) => {
         returnedOutput.code,
         returnedOutput.message
       );
-
-      // Optionally, emit a response to the client
-      // socket.emit("message", {
-      //   code: returnedOutput.code,
-      //   text: returnedOutput.message,
-      // });
+      
+    }catch(error){
+      console.log(error)
+    }
     });
 
     socket.on("fetchPreviousChat", async (data) => {
-      console.log(data);
+      try{
+        console.log(data);
 
       const app = await App.findOne({
-        name: data.appName,
+        url: data.appName,
         user: new mongoose.Types.ObjectId(data.userId),
       });
     
@@ -108,14 +108,18 @@ module.exports = (server) => {
       }
       // console.log(msg);
       socket.emit("previousMessages", msg);
+      
+    }catch(error){
+      console.log(error)
+    }
     });
 
     socket.on("continueChat", async (data) => {
       // console.log("Chat Continued by user:", data);
       console.log(data);
-
+      try{
       const app = await App.findOne({
-        name: data.appName,
+        url: data.appName,
         user: new mongoose.Types.ObjectId(data.userId),
       });
     
@@ -172,12 +176,10 @@ module.exports = (server) => {
         returnedOutput.code,
         returnedOutput.message
       );
+    }catch(error){
+      console.log(error)
+    }
       
-      // Optionally, emit a response to the client
-      // socket.emit("message", {
-      //   code: returnedOutput.code,
-      //   text: returnedOutput.message,
-      // });
     });
 
     socket.on("disconnect", () => {

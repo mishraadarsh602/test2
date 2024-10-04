@@ -21,15 +21,14 @@ module.exports = {
       let response;
       
       // Check if Redis client is already connected
-      // if (!redisClient.isOpen) {
-      //   await redisClient.connect();
-      // }
+      if (!redisClient.isOpen) {
+        await redisClient.connect();
+      }
 
-      // let componentCode = await redisClient.get(`componentCode-${parameter}`);
-      let componentCode=null;
-      if (!componentCode) {
+      let app = await redisClient.get(`app-${parameter}`);
+      if (!app) {
         response = await App.findOne({ url: parameter, status: "live" });
-  
+        
         // If response not found, try to fetch by _id
         if (!response && mongoose.Types.ObjectId.isValid(parameter)) {
           response = await App.findOne({
@@ -39,17 +38,16 @@ module.exports = {
         }
 
         if (!response) {
-          return res.status(404).json({ error: "Page Not Found" });
+          return res.status(405).json({ error: "Page Not Found" });
         }
-  
-        // await redisClient.set(`componentCode-${parameter}`, JSON.stringify(response));
+        await redisClient.set(`app-${parameter}`, JSON.stringify(response));
       }
 
       res.status(201).json({
         message: "Fetched live preview successfully",
-        data: componentCode ? JSON.parse(componentCode) : response,
+        data: app ? JSON.parse(app) : response,
       });
-    } catch (error) {
+    } catch (error) {    
       res.status(500).json({ error: "Internal Server Error" });
     }
   },
