@@ -4,6 +4,7 @@ const featureListSchema = new mongoose.Schema(
         type: { 
             type: String,
             required: true,
+            index: true
         },
         title:{
             type:String,
@@ -17,6 +18,7 @@ const featureListSchema = new mongoose.Schema(
             type: Boolean,
             required: true,
             default:true,
+            index: true
         },
         comingSoon:{  
             type: Boolean,
