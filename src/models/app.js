@@ -200,6 +200,8 @@ const appSchema = new mongoose.Schema({
         default: false
     },
 }, { timestamps: true });
-
+appSchema.index({ "url": 1, "status": 1 });
+appSchema.index({ "user": 1, "status": 1, "name": 1, "updatedAt": -1 });
+appSchema.index({ "parentApp": 1, "status": 1 });
 const App = mongoose.model('App', appSchema);
 module.exports = App;

@@ -33,8 +33,8 @@ module.exports = (server) => {
       try{
       console.log(data);
       const app = await App.findOne({
-        url: data.appName,
         user: new mongoose.Types.ObjectId(data.userId),
+        url: data.appName
       });
     
       if (!app) {
@@ -78,8 +78,8 @@ module.exports = (server) => {
         console.log(data);
 
       const app = await App.findOne({
-        url: data.appName,
         user: new mongoose.Types.ObjectId(data.userId),
+        url: data.appName
       });
     
       if (!app) {
@@ -119,8 +119,8 @@ module.exports = (server) => {
       console.log(data);
       try{
       const app = await App.findOne({
-        url: data.appName,
         user: new mongoose.Types.ObjectId(data.userId),
+        url: data.appName
       });
     
       if (!app) {

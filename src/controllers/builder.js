@@ -114,7 +114,7 @@ module.exports = {
                 return res.status(400).json({ error: 'User ID is required' });
             }
            
-            let apps = await App.find({ status: 'dev', user: userId });
+            let apps = await App.find({ user: userId, status: 'dev' });
             if (!apps || apps.length == 0) {
                 return res.status(200).json({ message: 'No app found' });
             }
