@@ -425,33 +425,6 @@ module.exports = {
         }
     },
 
-    
-  callAPI: async (req, res) => {
-    try {
-      const appId = req.params.appId;
-
-      let appData = await App.findOne({
-        _id: appId,
-      });
-
-      let api = appData.apis[0].api;
-
-      axios
-        .get(api)
-        .then((response) => {
-          res.status(201).json({
-            message: "fetch api successfully",
-            data: response.data,
-          });
-        })
-        .catch((error) => {
-          console.error("Error fetching data:", error); // Handle the error here
-        });
-    } catch (error) {
-      console.log("erorr is ----> ", error);
-    }
-  },
-
   callAPI: async (req, res) => {
     try {
       console.log();
