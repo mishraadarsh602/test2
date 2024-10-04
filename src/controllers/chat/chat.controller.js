@@ -481,6 +481,8 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
   // Ensure oldChatSession exists before proceeding
   if (!oldChatSession) {
     isStartChat = true;
+  } else {
+    isStartChat = false; // Existing chat session found
   }
   let theme = ``;
   if (app.header.logo.enabled && app.header.logo.url) {
