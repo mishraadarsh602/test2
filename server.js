@@ -8,6 +8,8 @@ const errorHandle = require("./src/utils/errorHandle");
 const path = require('path');
 const dotenv = require('dotenv');
 const cookieParser = require('cookie-parser');
+const redisClient=require('./src/utils/redisClient');
+redisClient.connect();
 connectDB();
 const app = express();
 const server = http.createServer(app);  // Create the HTTP server

@@ -186,6 +186,12 @@ module.exports = {
             let previousLiveApp=await App.findOne({parentApp:req.params.appId,status:'live'});
             if(previousLiveApp){
                 previousLiveApp.status='old';
+                if (!redisClient.isOpen) {
+                    await redisClient.connect();
+                }
+                // deleting redis apps
+                redisClient.del(`app-${previousLiveApp.url}`)
+                redisClient.del(`app-${previousLiveApp._id}`)
                 await previousLiveApp.save();
                 // changing status of parentApp
                 const parentApp=await App.findOne({_id:req.params.appId});
