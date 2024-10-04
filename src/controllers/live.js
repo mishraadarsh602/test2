@@ -27,14 +27,14 @@ module.exports = {
 
       let app = await redisClient.get(`app-${parameter}`);
       if (!app) {
-        response = await App.findOne({ url: parameter, status: "live" });
-        
+        response = await App.findOne({ url: parameter, status: "live" }, { apis: 0, thread_id: 0 });
+
         // If response not found, try to fetch by _id
         if (!response && mongoose.Types.ObjectId.isValid(parameter)) {
           response = await App.findOne({
             _id: new mongoose.Types.ObjectId(parameter),
             status: "live",
-          });
+          }, { apis: 0, thread_id: 0 });
         }
 
         if (!response) {
