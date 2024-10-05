@@ -18,7 +18,7 @@ router.get('/get_assistant_conversatation', aiController.runAssistantConversatio
 router.get('/generate_graph', aiController.tryGraphMaking);
 router.get('/returnCode',aiController.returnCode);
 router.get('/get_app/:url',auth, builderController.getAppByUrl);
-router.post('/update_app/:appName',auth, builderController.updateApp);
+router.post('/update_app/:id',auth, builderController.updateApp);
 router.delete('/delete_app/:appId', builderController.deleteApp);
 router.get('/get_all_apps',auth, builderController.getAllAppsOfUser);
 router.post('/check_unique_app_name',auth, builderController.checkUniqueApp);

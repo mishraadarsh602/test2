@@ -128,7 +128,10 @@ module.exports = {
     },
     updateApp: async (req, res) => {
         try {
-            let appName = req.params.appName;
+            const userId = req.user ? req.user.userId : null;
+            if (!userId) {
+                return res.status(400).json({ error: 'User ID is required' });
+            }
             // let { name } = req.body;
             let updateData = req.body;
 
@@ -140,7 +143,7 @@ module.exports = {
             //     updateData.name = name;
             // }
 
-            let updatedApp = await App.findOneAndUpdate({name:appName,status:'dev'}, updateData, { new: true }).lean();
+            let updatedApp = await App.findOneAndUpdate({_id:req.params.id,user:userId,status:'dev'}, updateData, { new: true }).lean();
             if (!updatedApp) {
                 return res.status(404).json({ error: 'App not found' });
             }
@@ -170,9 +173,13 @@ module.exports = {
 
     checkUniqueApp: async (req, res) => {
         try {
+            const userId = req.user ? req.user.userId : null;
+            if (!userId) {
+                return res.status(400).json({ error: 'User ID is required' });
+            }
             let name = decodeURIComponent(req.body.name);
             let appId = req.body.appId;
-            let existingApp = await App.findOne({ name, _id: { $ne: appId }}).lean();
+            let existingApp = await App.findOne({ name,user:userId,status:'dev', _id: { $ne: appId }}).lean();
             if (existingApp) {
                 return res.status(409 ).json({ error: 'Name already exists' });
             } 
