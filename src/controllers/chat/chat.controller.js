@@ -714,7 +714,6 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
           text: prompt,
         },
       ];
-      console.log("image",image)
       if (image) {
         content.push({
           type: "image",
@@ -725,7 +724,6 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
           },  
         });
       }
-      console.log("content",content)
       const response = await axios.post(
         "https://api.anthropic.com/v1/messages",
         {
@@ -748,7 +746,6 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
       );
 
       obj.code = response.data.content[0].text;
-        console.log("sonnet respose",obj.code)
       // Call the callback to stream partial responses
       onPartialResponse({
         message: chatResponse,
