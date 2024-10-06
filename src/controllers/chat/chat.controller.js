@@ -708,6 +708,18 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
 
       obj.code = response.data.content[0].text;
 
+      await openai.beta.threads.messages.create(
+        thread_id,
+        {
+          role: "user",
+          content: userMessage
+        },
+        {
+          role: "assistant",
+          content: response.data.content[0].text
+        }
+      );
+
       const urlRegex = /fetch\(`([^`]+)`\)/;
       const originalApis = []; // Array to store original API objects
 
