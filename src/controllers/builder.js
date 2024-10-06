@@ -499,7 +499,8 @@ module.exports = {
       // Forward the data as-is (whether it's binary, JSON, or text)
       res.send(response.data);
     } catch (error) {
-      console.log("erorr is ----> ");
+      console.log("erorr is ----> ",error);
+      res.send(error);
     }
   },
   checkUniqueUrl:async(req,res)=>{
