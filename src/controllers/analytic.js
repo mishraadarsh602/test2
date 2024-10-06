@@ -3,22 +3,17 @@ const appVisitorModel = require('../models/appVisitors');
 const appModel=require('../models/app');
 const featureListModel=require('../models/featureList');
 const { default: mongoose } = require('mongoose');
-async function updateAppVisitor(id, visitorCount) {
+
+async function updateCount(req) {
     try {
-        await appModel.updateOne({ _id:id, status: 'dev' }, { $set: { visitorCount } });
+        await appModel.updateOne({ _id: req.body.app }, { $inc: { visitorCount: 1 } });
+        await featureListModel.updateOne({ type: req.body.agent_type }, { $inc: { visitorCount: 1 } });
     } catch (error) {
-        
+        console.log(error)
     }
 }
 
-async function updateFeatureListCount(id) {
-    try {
-        const liveApp = await App.findOne({ _id:id }, { agent_type: 1, _id: 0 });        
-        await featureListModel.updateOne({ type: liveApp.agent_type }, { $inc: { visitorCount: 1 } });
-    } catch (error) {
 
-    }   
-}
 module.exports={
     calculatorStats: async(req, res) => {
         try {
@@ -70,28 +65,26 @@ module.exports={
         } catch (error) {
         }
     },
+
     generateVisitor: async (req, res) => {
         try {
-            const userId = req.user ? req.user.userId : null;
-            if (!userId) {
+            if (!req.body.user) {
                 return res.status(400).json({ error: 'User ID is required' });
             }
             const visitorCreated = new appVisitorModel({
-                user: userId,
                 ...req.body
             });
             await visitorCreated.save();
-            const visitorCount = await appVisitorModel.count({ app: req.body.app }); // req.body.app is parentapp id which  refers to dev app
-            updateAppVisitor(req.body.app, visitorCount);
-            updateFeatureListCount(req.body.app,);
+            updateCount(req)
 
             return res.status(200).json({
                 message: 'Visits updated successfully',
             });
         } catch (error) {
-
+            res.status(500).json({ error: error.message });
         }
     },
+
     fetchVisitors:async (req,res)=>{
         try {
         const allVisitors=await appVisitorModel.aggregate([

@@ -17,6 +17,9 @@ const appVisitorSchema = new mongoose.Schema(
             ref:'user',
             required:true
         },
+        agent_type: {
+            type: String
+        },
         browser:{
             type:String,
             required:true,
