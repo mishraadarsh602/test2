@@ -25,6 +25,12 @@ const featureListSchema = new mongoose.Schema(
             required: true,
             default:true,
         },
+        apis: [{
+            api: {
+                type: String,
+                default: ''
+            }
+        }],
         componentCode:{
             type: String,
             required:true

@@ -49,9 +49,10 @@ module.exports = {
       if (appData.agent_type !== "AI_Tool") {
         let feature = await featureListModel.findOne(
           { type: appData["agent_type"] },
-          { componentCode: 1 }
+          { componentCode: 1, apis: 1 }
         );
         appData["componentCode"] = feature.componentCode;
+        appData["apis"] = feature.apis || [];
       }
       const user = await userService.getUserById(userId);
       if (user?.brandDetails?.enabled && user?.brandDetails?.customBrand) {
@@ -62,6 +63,7 @@ module.exports = {
         appData.theme.backgroundColor = backgroundColor || appData.theme.backgroundColor;
       }
       let newApp = new App(appData);
+      newApp["componentCode"] = newApp["componentCode"].replace('${appId}', newApp._id.toString());
       let savedApp = await newApp.save();
 
       // Creating first message in db for premade
