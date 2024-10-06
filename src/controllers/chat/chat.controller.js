@@ -317,14 +317,16 @@ const handleRequiresAction = async (data, runId, threadId, onPartialResponse, ap
           tool_call_id: toolCall.id,
           output: JSON.stringify(results),
         };
-      } else if (toolCall.function.name === "generate_graph") {
+      } 
+      else if (toolCall.function.name === "generate_graph") {
         const { userInput } = JSON.parse(toolCall.function.arguments);
         const chartData = await generate_graph({ userInput });
         return {
           tool_call_id: toolCall.id,
           output: JSON.stringify(chartData),
         };
-      } else if (toolCall.function.name === "get_api_url") {
+      } 
+      else if (toolCall.function.name === "get_api_url") {
         const data = await get_api_url();
         return {
           tool_call_id: toolCall.id,
@@ -712,17 +714,18 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
           text: prompt,
         },
       ];
+      console.log("image",image)
       if (image) {
         content.push({
           type: "image",
           source: {
             type: "base64",
-            media_type: getMediaType(image),
-            data: fetchImageAsBase64(image),
+            media_type: await getMediaType(image),
+            data: await fetchImageAsBase64(image),
           },  
         });
       }
-
+      console.log("content",content)
       const response = await axios.post(
         "https://api.anthropic.com/v1/messages",
         {
@@ -745,7 +748,7 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
       );
 
       obj.code = response.data.content[0].text;
-
+        console.log("sonnet respose",obj.code)
       // Call the callback to stream partial responses
       onPartialResponse({
         message: chatResponse,
