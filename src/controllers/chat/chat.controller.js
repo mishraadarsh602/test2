@@ -522,26 +522,40 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
   if (app.agent_type !== "AI_Tool") {
     console.log("pre-made--------------------------");
     assistantObj = {
-      assistant_id: process.env.PREMADE_ASSISTANT_ID,
+      assistant_id:
+        process.env.NODE_ENV == "staging" ||
+        process.env.NODE_ENV == "production"
+          ? process.env.PREMADE_ASSISTANT_ID
+          : process.env.DEV_PREMADE_ASSISTANT_ID,
     };
     assistantObj.additional_instructions = additional_instructions;
   } else {
     console.log("custom--------------------------");
-    assistantObj = { assistant_id: process.env.ASSISTANT_ID };
+    assistantObj = {
+      assistant_id:
+        process.env.NODE_ENV == "staging" ||
+        process.env.NODE_ENV == "production"
+          ? process.env.ASSISTANT_ID
+          : process.env.DEV_ASSISTANT_ID,
+    };
     if (isStartChat) {
       assistantObj.additional_instructions = `${theme}`;
     }
   }
-  console.log("additional_instructions",additional_instructions)
+  console.log("additional_instructions", additional_instructions);
 
   if (image) {
     try {
-      const imageResponse = await addImageToThread(thread_id, userMessage, image);
+      const imageResponse = await addImageToThread(
+        thread_id,
+        userMessage,
+        image
+      );
       console.log("Image sent successfully", imageResponse);
     } catch (error) {
       console.error("Error uploading image", error);
     }
-  }else{
+  } else {
     // Add user message to thread
     const messageResponse = await addMessageToThread(thread_id, userMessage);
     if (messageResponse) {
