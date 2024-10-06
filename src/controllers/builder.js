@@ -323,8 +323,10 @@ module.exports = {
 
     fixError :async (req,res)=>{
         try {
-          const fetchedApp = await App.findOne({ url: req.body.appName });
-          let prompt = `This is my code : ${fetchedApp.componentCode}, This is Error: ${req.body.errorMessage}
+          let fetchedApp = await App.findOne({ url: req.body.appName });
+          let prompt = `This is my code : ${fetchedApp.componentCode}, This is Error: ${req.body.errorMessage}.
+
+          You just need to resolve error only don't change any UI design and API
             
                 You need to resolve this issue into my code and regenerate it. You must return code only no extra text allowed. Generate code in renderer format like React.createElement.
 
@@ -370,6 +372,48 @@ module.exports = {
           );
 
           fetchedApp.componentCode = response.data.content[0].text;
+
+          const urlRegex = /fetch\(`([^`]+)`\)/;
+          const originalApis = []; // Array to store original API objects
+    
+          // Replace URLs in the code while extracting them
+          fetchedApp.componentCode = fetchedApp.componentCode.replace(urlRegex, (matchedUrl) => {
+            // Extract the full URL from the matched string
+            const fullUrl = matchedUrl.match(/`([^`]+)`/)[1];
+            if(fullUrl.startsWith('http://localhost')){
+                return fullUrl
+            }
+            // Store the matched URL as an object in the array
+            originalApis.push({ api: fullUrl });
+    
+            // Use a regex to extract existing query parameters
+            const existingParams = {};
+            const paramRegex = /[?&]([^=]+)=([^&]*)/g;
+            let match;
+    
+            // Find and store existing parameters
+            while ((match = paramRegex.exec(fullUrl)) !== null) {
+              existingParams[match[1]] = match[2];
+            }
+    
+            // Build a new query string with existing and new parameters
+            const paramsArray = [];
+            paramsArray.push(`appId=${app._id}`); // Ensure to append appId
+    
+            // Preserve existing parameters, including `${city}`  
+            for (const [key, value] of Object.entries(existingParams)) {
+              paramsArray.push(`${key}=${value}`);
+            }
+    
+            // Join parameters with '&' to form the new query string
+            const newQueryString = paramsArray.join("&");
+    
+            // Construct the new URL with the updated query string
+            return `fetch(\`${process.env.BACKEND_URL}/builder/callAPI?${newQueryString}\`)`;
+          });
+    
+          // Update app componentCode and save
+          fetchedApp.apis = originalApis;
           await fetchedApp.save();
 
           // Find the existing chat session
