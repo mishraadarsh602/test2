@@ -466,6 +466,25 @@ const submitToolOutputs = async (toolOutputs, runId, threadId, onPartialResponse
   }
 };
 
+async function getMediaType(url) {
+  try {
+      const response = await axios.head(url);
+      return response.headers['content-type'];
+  } catch (error) {
+      console.error('Error:', error.message);
+  }
+}
+
+async function fetchImageAsBase64(url) {
+  try {
+      const response = await axios.get(url, { responseType: 'arraybuffer' });
+      const base64Image = Buffer.from(response.data, 'binary').toString('base64');
+      return base64Image;
+  } catch (error) {
+      console.error('Error:', error.message);
+  }
+}
+
 const aiAssistantChatStart = async (userId, userMessage, app, image = null, isStartChat, onPartialResponse) => {
 
   const thread_id = app.thread_id;
@@ -673,6 +692,23 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
 
       let prompt = `You are an AI assistant who inhances my code and returns in string \"\" format. We were going to work on a React-based Javascript App. Your purpose is to assist with creating, editing and improving React codebases with tailwind CSS, custom inline CSS, and Javascript only. \nCreate the best and most visually appealing UI, working functionality, valid syntax, and other properties according to provided my code. My code:${obj.code}\ MY requirement: ${userMessage}\nInhance it to best, and you're free to inhance the structure, style, and functionality. Follow the code pattern in terms of function usage, API calls, and element creation. **Ensure that all React hooks are written with the full 'React' prefix, e.g., React.useState().** However, feel free to enhance the code with best practices, improve UI/UX, and optimize functionality as needed. I have this header added already import React, {useState, useEffect, useContext, useReducer, useCallback, useMemo, useRef, useImperativeHandle, useLayoutEffect, useDebugValue, useTransition, useDeferredValue, useId, useSyncExternalStore, useInsertionEffect} from 'react'; import * as LucideIcons from 'lucide-react'; import { useLocation } from 'react-router-dom'; Note: Input is code and output will be only one code file which will run as JSX. You must return code only no extra text allowed. Generate code in renderer format like React.createElement.`;
 
+      let content = [
+        {
+          type: "text",
+          text: prompt,
+        },
+      ];
+      if (image) {
+        content.push({
+          type: "image",
+          source: {
+            type: "base64",
+            media_type: getMediaType(image),
+            data: fetchImageAsBase64(image),
+          },  
+        });
+      }
+
       const response = await axios.post(
         "https://api.anthropic.com/v1/messages",
         {
@@ -681,7 +717,7 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
           messages: [
             {
               role: "user",
-              content: prompt,
+              content: content,
             },
           ],
         },
