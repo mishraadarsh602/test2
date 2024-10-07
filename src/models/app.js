@@ -38,6 +38,10 @@ const appSchema = new mongoose.Schema({
             altText: {
                 type: String,
                 default: 'logo'
+            },
+            link:{
+                type:String,
+                default:'https://outgrow.co'
             }
         }
     },
