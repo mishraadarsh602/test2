@@ -7,6 +7,7 @@ const { default: axios } = require('axios');
 const { OpenAI } = require("openai");
 const { default: mongoose } = require('mongoose');
 const { URL, URLSearchParams } = require('url');
+const sharp = require('sharp');
 
 const generateSessionId = () => {
   return uuidv4();  // Generates a unique UUID
@@ -477,13 +478,22 @@ async function getMediaType(url) {
   }
 }
 
-async function fetchImageAsBase64(url) {
+// Helper function to fetch image as base64 and reduce resolution
+async function fetchAndResizeImageAsBase64(imageUrl) {
   try {
-      const response = await axios.get(url, { responseType: 'arraybuffer' });
-      const base64Image = Buffer.from(response.data, 'binary').toString('base64');
-      return base64Image;
+    // Fetch the image and reduce its resolution to 500X500 (or any desired dimensions)
+    const imageBuffer = await axios.get(imageUrl, { responseType: "arraybuffer" });
+    
+    // Resize the image using sharp
+    const resizedImageBuffer = await sharp(imageBuffer.data)
+      .resize(500, 500) // You can adjust the width and height as needed
+      .toBuffer();
+    
+    // Convert resized image to base64
+    return resizedImageBuffer.toString('base64');
   } catch (error) {
-      console.error('Error:', error.message);
+    console.error("Error fetching and resizing image:", error);
+    return null;
   }
 }
 
@@ -680,7 +690,7 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
           source: {
             type: "base64",
             media_type: await getMediaType(image),
-            data:  await fetchImageAsBase64(image),
+            data:  await fetchAndResizeImageAsBase64(image),
           },  
         });
       }

@@ -374,7 +374,7 @@ module.exports = {
           fetchedApp.componentCode = response.data.content[0].text;
 
           const urlRegex = /fetch\(`([^`]+)`\)/;
-          const originalApis = []; // Array to store original API objects
+          let originalApis = []; // Array to store original API objects
     
           // Replace URLs in the code while extracting them
           fetchedApp.componentCode = fetchedApp.componentCode.replace(
