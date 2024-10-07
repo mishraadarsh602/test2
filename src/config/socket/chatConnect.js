@@ -50,6 +50,7 @@ module.exports = (server) => {
         data.image ? data.image[0] : null,
         true,
         (partialResponse) => {
+          socket.removeAllListeners("partialResponse"); // Clean up event listeners before adding a new one
           // Emit each partial response as it's received
           socket.emit("partialResponse", {
             text: partialResponse.message,
@@ -159,6 +160,7 @@ module.exports = (server) => {
         data.image ? data.image[0] : null,
         false,
         (partialResponse) => {
+          socket.removeAllListeners("partialResponse"); // Clean up event listeners before adding a new one
           // Emit each partial response as it's received
           socket.emit("partialResponse", {
             text: partialResponse.message,
