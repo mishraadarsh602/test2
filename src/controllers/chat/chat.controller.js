@@ -581,6 +581,7 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
     let chatResponse = "";
     let isInsideCodeBlock = false;
     let codeBlockBuffer = "";
+    // let isInsideLastMsgBlock = false;
 
     // Start streaming from OpenAI or another source
     const run = await openai.beta.threads.runs
@@ -590,6 +591,15 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
 
         const parts = textDelta.value.split("```");
         parts.forEach((part, index) => {
+          // console.log(part);
+          // Check if the part contains a code block
+          if (part.includes("``")) {
+            // console.log("Found code block delimiter");
+            //   console.log(part);
+            // isInsideLastMsgBlock = true;
+            isInsideCodeBlock = false; // Resetting this as we are about to process a last message
+            // obj.message = 'CODE RENDERING\n\n'; // Initializing message for rendering
+          }
           if (isInsideCodeBlock) {
             // Call the callback to stream partial responses
             onPartialResponse({
@@ -600,6 +610,12 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
               codeFound: true,
             });
             if (index % 2 !== 0) {
+              // console.log(
+              //   codeBlockBuffer,
+              //   isInsideCodeBlock,
+              //   part,
+              //   "--------------"
+              // );
               codeBlockBuffer += part;
             }
           } else {
@@ -626,10 +642,28 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
               });
             }
           }
+
+          // Check for the last message logic
+          // if (isInsideLastMsgBlock && !isInsideCodeBlock) {
+          //   // We want to append the last message only if we are not inside a code block
+          //   obj.message += part;
+          //   obj.streaming = true;
+
+          //   // Call the callback to stream partial responses
+          //   onPartialResponse({
+          //     message: obj.message, // Send the final last message
+          //     fullChatResponse: chatResponse,
+          //     streaming: true,
+          //     code: "",
+          //   });
+
+          //   // Resetting the flag after streaming the last message
+          //   isInsideLastMsgBlock = false; // Prevent multiple calls
+          // }
         });
+        // console.log(isInsideCodeBlock, parts.length, "............................");
       });
 
-    console.log();
     if (chatResponse.trim() === "") {
       for await (const event of run) {
         // onEvent(event, onPartialResponse);
