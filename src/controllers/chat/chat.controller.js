@@ -497,6 +497,12 @@ async function fetchAndResizeImageAsBase64(imageUrl) {
   }
 }
 
+// Helper function to extract the domain from a URL
+function extractDomain(url) {
+  const domain = url.split('/')[2]; // Extracts the domain part of the URL
+  return domain;
+}
+
 const aiAssistantChatStart = async (userId, userMessage, app, image = null, isStartChat, onPartialResponse) => {
 
   const thread_id = app.thread_id;
@@ -765,12 +771,16 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
       );
 
       const urlRegex = /fetch\(`([^`]+)`\)/;
-      const originalApis = []; // Array to store original API objects
+      let originalApis = []; // Array to store original API objects
 
       // Replace URLs in the code while extracting them
       obj.code = obj.code.replace(urlRegex, (matchedUrl) => {
         // Extract the full URL from the matched string
         const fullUrl = matchedUrl.match(/`([^`]+)`/)[1];
+        if (fullUrl.startsWith(process.env.BACKEND_URL)) {
+          originalApis = appDetails.apis;
+          return fullUrl;
+        }
         // Store the matched URL as an object in the array
         originalApis.push({ api: fullUrl });
 
@@ -798,6 +808,20 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
 
         // Construct the new URL with the updated query string
         return `fetch(\`${process.env.BACKEND_URL}/builder/callAPI?${newQueryString}\`)`;
+      });
+
+       // Updating apis array based on domain comparison
+       appDetails.apis.forEach((fetchedApi, index) => {
+        const originalApi = originalApis[index];
+
+        // If the original API exists, compare the domains
+        if (
+          originalApi &&
+          extractDomain(fetchedApi.api) !== extractDomain(originalApi.api)
+        ) {
+          // Only update if the domain is different
+          originalApis[index].api = fetchedApi.api;
+        }
       });
 
       // Update app componentCode and save

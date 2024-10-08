@@ -143,6 +143,12 @@ module.exports = {
             //     updateData.name = name;
             // }
 
+            for(let i = 0; i < req.body.apis.length; i++){
+                if(req.body.apis[i].api.startsWith(process.env.BACKEND_URL)){
+                    throw new Error("This URL is not allowed");
+                }
+            }
+
             let updatedApp = await App.findOneAndUpdate({ _id: req.params.id }, updateData, { new: true }).lean();
             if (!updatedApp) {
                 return res.status(404).json({ error: 'App not found' });
@@ -417,18 +423,18 @@ module.exports = {
           );
 
         //   // Updating apis array based on domain comparison
-        //   fetchedApp.apis.forEach((fetchedApi, index) => {
-        //     const originalApi = originalApis[index];
+          fetchedApp.apis.forEach((fetchedApi, index) => {
+            const originalApi = originalApis[index];
 
-        //     // If the original API exists, compare the domains
-        //     if (
-        //       originalApi &&
-        //       extractDomain(fetchedApi.api) !== extractDomain(originalApi.api)
-        //     ) {
-        //       // Only update if the domain is different
-        //       originalApis[index].api = fetchedApi.api;
-        //     }
-        //   });
+            // If the original API exists, compare the domains
+            if (
+              originalApi &&
+              extractDomain(fetchedApi.api) !== extractDomain(originalApi.api)
+            ) {
+              // Only update if the domain is different
+              originalApis[index].api = fetchedApi.api;
+            }
+          });
           // Update app componentCode and save
           fetchedApp.apis = originalApis;
           await fetchedApp.save();
