@@ -22,6 +22,10 @@ module.exports={
                 {
                     $match: {
                         app: new mongoose.Types.ObjectId(app),
+                        createdAt: {
+                            $gte: new Date(req.body.startDate), 
+                            $lt: new Date(req.body.endDate) 
+                        }
                     }
                 },
                 {
