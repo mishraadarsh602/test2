@@ -401,7 +401,7 @@ module.exports = {
 
               // Build a new query string with existing and new parameters
               const paramsArray = [];
-              paramsArray.push(`appId=${app._id}`); // Ensure to append appId
+              paramsArray.push(`appId=${fetchedApp._id}`); // Ensure to append appId
 
               // Preserve existing parameters, including `${city}`
               for (const [key, value] of Object.entries(existingParams)) {
