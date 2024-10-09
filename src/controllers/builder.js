@@ -34,7 +34,7 @@ module.exports = {
             let decryptedToken = CryptoJS.AES.decrypt(decodedToken, process.env.CRYPTO_SECRET_KEY).toString(CryptoJS.enc.Utf8);
             const tokenObject = JSON.parse(decryptedToken);
             const { name, email, userId, companyId, companyName, planId, exp } = tokenObject;
-            if (exp < Date.now()) {
+            if (!exp || exp < Date.now()) {
                 return res.status(401).json({ error: 'Token expired' });
             }
             let userExist = await userService.findUserByEmail(email);
