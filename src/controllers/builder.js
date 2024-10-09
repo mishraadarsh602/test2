@@ -333,16 +333,15 @@ module.exports = {
     fixError :async (req,res)=>{
         try {
           let fetchedApp = await App.findOne({ url: req.body.appName });
-          let prompt = `This is my code : ${fetchedApp.componentCode}, This is Error: ${req.body.errorMessage}.
-
-          You just need to resolve error only don't change any UI design and API
-            
-                You need to resolve this issue into my code and regenerate it. You must return code only no extra text allowed. Generate code in renderer format like React.createElement.
-
-                'Cannot use import statement outside a module' if you get this error remove all import statement from code just follow this format
-                
+            let prompt = `This is my code : ${fetchedApp.componentCode}, This is Error: ${req.body.errorMessage}.
+            You need to resolve this issue from my code without changing any UI design, API, code structure and regenerate new correct code by eliminating error.
+            Follow the code pattern in terms of function usage, API calls, and element creation. 
+            **Ensure that all React hooks are written with the full 'React' prefix, e.g., React.useState().** 
+            Create React element without any import statement. I have this header added already import React, {useState, useEffect, useContext, useReducer, useCallback, useMemo, useRef, useImperativeHandle, useLayoutEffect, useDebugValue, useTransition, useDeferredValue, useId, useSyncExternalStore, useInsertionEffect} from 'react'; import * as LucideIcons from 'lucide-react'; import { useLocation } from 'react-router-dom'; 
+            Note: Input is code and output will be only one code file which will run as JSX. You must return code only no extra text allowed.
+            Output structure:
                 function AppName(){
-                    ....
+                    ...
                 }
                 return AppName;
             `;
