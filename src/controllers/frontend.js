@@ -53,6 +53,8 @@ module.exports = {
         );
         appData["componentCode"] = feature.componentCode;
         appData["apis"] = feature.apis || [];
+      }else{
+        appData["apis"] = [];
       }
       const user = await userService.getUserById(userId);
       if (user?.brandDetails?.enabled && user?.brandDetails?.customBrand) {
@@ -67,7 +69,6 @@ module.exports = {
       let savedApp = await newApp.save();
 
       // Creating first message in db for premade
-
       if (appData.agent_type !== "AI_Tool") {
         const oldChatSession = await chatSession
           .findOne({

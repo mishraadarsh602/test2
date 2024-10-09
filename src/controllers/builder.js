@@ -147,6 +147,9 @@ module.exports = {
                 if(req.body.apis[i].api.startsWith(process.env.BACKEND_URL)){
                     throw new Error("This URL is not allowed");
                 }
+                if(req.body.apis[i].api.trim() === ''){
+                    throw new Error("This URL is not allowed");
+                }
             }
 
             let updatedApp = await App.findOneAndUpdate({ _id: req.params.id }, updateData, { new: true }).lean();
