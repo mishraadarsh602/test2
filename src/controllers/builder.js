@@ -31,10 +31,12 @@ module.exports = {
             let bodyToken  =  req.body.auth;
             let decodedToken = decodeURIComponent(bodyToken);
             decodedToken= decodedToken.replace(/\s/g, "+");
-    
             let decryptedToken = CryptoJS.AES.decrypt(decodedToken, process.env.CRYPTO_SECRET_KEY).toString(CryptoJS.enc.Utf8);
             const tokenObject = JSON.parse(decryptedToken);
-            const { name, email, userId, companyId, companyName, planId } = tokenObject;
+            const { name, email, userId, companyId, companyName, planId, exp } = tokenObject;
+            if (exp < Date.now()) {
+                return res.status(401).json({ error: 'Token expired' });
+            }
             let userExist = await userService.findUserByEmail(email);
             if (userExist) {
                 const token = await userExist.generateToken();
