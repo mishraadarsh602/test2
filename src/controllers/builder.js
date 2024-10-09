@@ -394,7 +394,7 @@ module.exports = {
               const fullUrl = matchedUrl.match(/`([^`]+)`/)[1];
               if (fullUrl.startsWith(process.env.BACKEND_URL)) {
                 originalApis = fetchedApp.apis;
-                return fullUrl;
+                return `fetch(\`${fullUrl}\`)`;
               }
               // Store the matched URL as an object in the array
               originalApis.push({ api: fullUrl });
@@ -450,7 +450,7 @@ module.exports = {
             });
 
             if(oldChatSession.messages[oldChatSession.messages.length - 1].role === 'assistant'){
-                oldChatSession.messages[oldChatSession.messages.length - 1].code = response.data.content[0].text;
+                oldChatSession.messages[oldChatSession.messages.length - 1].code = fetchedApp.componentCode;
                 await oldChatSession.save();
             }
 

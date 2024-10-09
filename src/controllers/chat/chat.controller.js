@@ -801,7 +801,7 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
         const fullUrl = matchedUrl.match(/`([^`]+)`/)[1];
         if (fullUrl.startsWith(process.env.BACKEND_URL)) {
           originalApis = appDetails.apis;
-          return fullUrl;
+          return `fetch(\`${fullUrl}\`)`;
         }
         // Store the matched URL as an object in the array
         originalApis.push({ api: fullUrl });
