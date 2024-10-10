@@ -32,5 +32,9 @@ router.get('/callAPI', builderController.callAPI);
 router.post('/brand_guide',auth, builderController.getBrandGuide);
 router.post('/upload_file_aws',auth,upload.single("image"),builderController.uploadFile);
 router.patch('/update_brand_guide',auth, builderController.updateBrandGuide);
+//payment details
+router.post('/create_stripe_checkout_session',auth, builderController.createStripeCheckoutSession);
+router.get('/retrieve_stripe_checkout_session',auth, builderController.retrieveStripeCheckoutSession);
+
 
 module.exports = router;

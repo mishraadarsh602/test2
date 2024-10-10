@@ -586,7 +586,71 @@ module.exports = {
         return res.status(200).json({message:'url updated successfully'})
     } catch (error) {    
     }   
-  }
+  },
+  createStripeCheckoutSession: async (req, res) => {
+    try {
+        let { amount, currency, billing_address, shipping_address, mobile_no, description,app_id } = req.body;
+        //    let  user_app = await AppV2.findOne({ _id: app_id }).lean();
+            // let stripe_user_secret_key = cryptor.decryptv1(user_app.ecom.stripeCheckout.secret_key);
+        const stripe_user_secret_key = 'sk_test_4eC39HqLyjWDarjtT1zdp7dc';
+        const stripe = require('stripe')(stripe_user_secret_key);
+        const createPrice = await stripe.prices.create({
+            unit_amount: amount, // Replace with your desired price in cents
+            currency: currency,
+            product_data: {
+                name: description ? description : "Pay",
+            },
+            billing_scheme: 'per_unit' // Or 'recurring' with an interval if applicable
+        });
+        const sessionConfig = {
+            ui_mode: 'embedded',
+            payment_method_types: ['card'],
+            line_items: [
+                {
+                    price: createPrice.id,
+                    quantity: 1,
+                },
+            ],
+            mode: 'payment',
+            redirect_on_completion: 'never',
+            billing_address_collection: billing_address ? "required" : "auto",
+            phone_number_collection: {
+                enabled: mobile_no ? true : false,
+            },
+            expires_at: Math.floor(Date.now() / 1000) + (3600 * 2), // Configured to expire after 2 hours
+        };
+        if (shipping_address) {
+            sessionConfig.shipping_address_collection = {
+                allowed_countries: ['AC', 'AD', 'AE', 'AF', 'AG', 'AI', 'AL', 'AM', 'AO', 'AQ', 'AR', 'AT', 'AU', 'AW', 'AX', 'AZ', 'BA', 'BB', 'BD', 'BE', 'BF', 'BG', 'BH', 'BI', 'BJ', 'BL', 'BM', 'BN', 'BO', 'BQ', 'BR', 'BS', 'BT', 'BV', 'BW', 'BY', 'BZ', 'CA', 'CD', 'CF', 'CG', 'CH', 'CI', 'CK', 'CL', 'CM', 'CN', 'CO', 'CR', 'CV', 'CW', 'CY', 'CZ', 'DE', 'DJ', 'DK', 'DM', 'DO', 'DZ', 'EC', 'EE', 'EG', 'EH', 'ER', 'ES', 'ET', 'FI', 'FJ', 'FK', 'FO', 'FR', 'GA', 'GB', 'GD', 'GE', 'GF', 'GG', 'GH', 'GI', 'GL', 'GM', 'GN', 'GP', 'GQ', 'GR', 'GS', 'GT', 'GU', 'GW', 'GY', 'HK', 'HN', 'HR', 'HT', 'HU', 'ID', 'IE', 'IL', 'IM', 'IN', 'IO', 'IQ', 'IS', 'IT', 'JE', 'JM', 'JO', 'JP', 'KE', 'KG', 'KH', 'KI', 'KM', 'KN', 'KR', 'KW', 'KY', 'KZ', 'LA', 'LB', 'LC', 'LI', 'LK', 'LR', 'LS', 'LT', 'LU', 'LV', 'LY', 'MA', 'MC', 'MD', 'ME', 'MF', 'MG', 'MK', 'ML', 'MM', 'MN', 'MO', 'MQ', 'MR', 'MS', 'MT', 'MU', 'MV', 'MW', 'MX', 'MY', 'MZ', 'NA', 'NC', 'NE', 'NG', 'NI', 'NL', 'NO', 'NP', 'NR', 'NU', 'NZ', 'OM', 'PA', 'PE', 'PF', 'PG', 'PH', 'PK', 'PL', 'PM', 'PN', 'PR', 'PS', 'PT', 'PY', 'QA', 'RE', 'RO', 'RS', 'RU', 'RW', 'SA', 'SB', 'SC', 'SE', 'SG', 'SH', 'SI', 'SJ', 'SK', 'SL', 'SM', 'SN', 'SO', 'SR', 'SS', 'ST', 'SV', 'SX', 'SZ', 'TA', 'TC', 'TD', 'TF', 'TG', 'TH', 'TJ', 'TK', 'TL', 'TM', 'TN', 'TO', 'TR', 'TT', 'TV', 'TW', 'TZ', 'UA', 'UG', 'US', 'UY', 'UZ', 'VA', 'VC', 'VE', 'VG', 'VN', 'VU', 'WF', 'WS', 'XK', 'YE', 'YT', 'ZA', 'ZM', 'ZW'],
+            };
+        }
+        const session = await stripe.checkout.sessions.create(sessionConfig);
+        // return response.ok(res, { session });
+        res.status(201).json({
+            message: "Session created successfully",
+            data: session,
+          });
+
+    } catch (err) {
+        return response.error(res, err);
+    }
+  },
+  retrieveStripeCheckoutSession: async (req, res) => {
+    // let  user_app = await AppV2.findOne({ _id: req.query.app_id }).lean();
+    // let stripe_user_secret_key = cryptor.decryptv1(user_app.ecom.stripeCheckout.secret_key);
+    console.log("req.query:",req.query.session_id)
+    const stripe_user_secret_key = 'sk_test_4eC39HqLyjWDarjtT1zdp7dc';
+    const stripe = require('stripe')(stripe_user_secret_key);
+    const session = await stripe.checkout.sessions.retrieve(req.query.session_id);
+    res.status(201).json({
+        message: "Session retrieve successfully",
+        data: session,
+      });
+    // return response.ok(res, {
+    //     session:session,
+    // });
+
+    },
 }
 
 // Helper function to extract the domain from a URL
