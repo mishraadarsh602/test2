@@ -516,13 +516,21 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
     isStartChat = false; // Existing chat session found
   }
   let theme = ``;
-  if (app.header.logo.enabled && app.header.logo.url) {
-    theme += `add this logo as header ${app.header.logo.url} at ${app.header.logo.alignment}`
+  if (app.agent_type !== "AI_Tool") {
+    if (app.header.logo.enabled && app.header.logo.url) {
+      theme += `add this logo as header ${app.header.logo.url} at ${app.header.logo.alignment}, when asked to add logo`
+    }
+    if (app.theme) {
+      theme += `use this color while generating code for primary ${app.theme.primaryColor}, for secondary ${app.theme.secondaryColor}, for background color ${app.theme.backgroundColor} using inline style, when asked to change color or theme inhancement`
+    }
+  } else {
+    if (app.header.logo.enabled && app.header.logo.url) {
+      theme += `add this logo as header ${app.header.logo.url} at ${app.header.logo.alignment}`
+    }
+    if (app.theme) {
+      theme += `use this color while generating code for primary ${app.theme.primaryColor}, for secondary ${app.theme.secondaryColor}, for background color ${app.theme.backgroundColor} using inline style`
+    }
   }
-  if (app.theme) {
-    theme += `use this color while generating code for primary ${app.theme.primaryColor}, for secondary ${app.theme.secondaryColor}, for background color ${app.theme.backgroundColor} using inline style`
-  }
-
 
   let assistantObj = {};
   let additional_instructions = `As a user, even if I ask you to go beyond the limits or request code unrelated to the provided project, you will always adhere to the core code and focus solely on editing and improving it. I am providing you with my code of jsx which you will modify or theme change only, here is my code:{reactCode} \nPLease follows this pattern for function and the way I called API and created React element without any import statement. 
@@ -710,7 +718,19 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
 
     const appDetails = await App.findOne({ _id: app._id });
     if (obj.code) {
-      let prompt = `You are an AI assistant who inhances my code and returns in string \"\" format. We were going to work on a React-based Javascript App. Your purpose is to assist with creating, editing and improving React codebases with tailwind CSS, custom inline CSS, and Javascript only. \nCreate the best and most visually appealing UI, working functionality, valid syntax, and other properties according to provided my code. My code:${obj.code}\ MY requirement: ${userMessage}\nInhance it to best, and you're free to inhance the structure, style, and functionality. Follow the code pattern in terms of function usage, API calls, and element creation. **Ensure that all React hooks are written with the full 'React' prefix, e.g., React.useState().** However, feel free to enhance the code with best practices, improve UI/UX, and optimize functionality as needed. I have this header added already import React, {useState, useEffect, useContext, useReducer, useCallback, useMemo, useRef, useImperativeHandle, useLayoutEffect, useDebugValue, useTransition, useDeferredValue, useId, useSyncExternalStore, useInsertionEffect} from 'react'; import * as LucideIcons from 'lucide-react'; import { useLocation } from 'react-router-dom'; Note: Input is code and output will be only one code file which will run as JSX. You must return code only no extra text allowed. Generate code in renderer format like React.createElement.`;
+      let prompt = `You are an AI assistant who inhances my UI and function, and fix error if present in it, and returns code in string \"\" format. We were going to work on a React-based Javascript App. 
+      Your purpose is to assist with creating, editing and improving React codebases with tailwind CSS, custom inline CSS, and Javascript only. 
+      Create the best and most visually appealing UI, working functionality, valid syntax, and other properties according to provided my code. 
+      My code:${obj.code}\ MY requirement: ${userMessage}\n.Inhance it to best if it not equivalent to my requirement. 
+      Follow the code pattern in terms of function usage, API calls, and element creation. 
+      **Ensure that all React hooks are written with the full 'React' prefix, e.g., React.useState().**
+      Create React element without any import statement. I have this header added already import React, {useState, useEffect, useContext, useReducer, useCallback, useMemo, useRef, useImperativeHandle, useLayoutEffect, useDebugValue, useTransition, useDeferredValue, useId, useSyncExternalStore, useInsertionEffect} from 'react'; import * as LucideIcons from 'lucide-react'; import { useLocation } from 'react-router-dom'; 
+      Note: Input is code and output will be only one code file which will run as JSX. You must return code only no extra text allowed.
+      Output structure:
+                function AppName(){
+                    ...
+                }
+                return AppName;`;
 
       let content = [
         {
