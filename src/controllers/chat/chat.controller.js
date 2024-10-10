@@ -794,13 +794,13 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
         }
       );
 
-      const urlRegex = /fetch\(`([^`]+)`\)/;
+      const urlRegex = /fetch\((['"`])([^'"`]+)\1\)/;
       let originalApis = []; // Array to store original API objects
 
       // Replace URLs in the code while extracting them
       obj.code = obj.code.replace(urlRegex, (matchedUrl) => {
         // Extract the full URL from the matched string
-        const fullUrl = matchedUrl.match(/`([^`]+)`/)[1];
+        const fullUrl = matchedUrl.match(/(['"`])([^'"`]+)\1/)[2]; // URL is in the second capture group
         if (fullUrl.startsWith(process.env.BACKEND_URL)) {
           originalApis = appDetails.apis;
           return `fetch(\`${fullUrl}\`)`;
