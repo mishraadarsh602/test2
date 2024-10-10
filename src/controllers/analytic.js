@@ -18,53 +18,36 @@ module.exports={
     calculatorStats: async(req, res) => {
         try {
             let app=req.body.appId;
-            let data = await appVisitorModel.aggregate([
-                {
-                    $match: {
-                        app: new mongoose.Types.ObjectId(app),
-                        createdAt: {
-                            $gte: new Date(req.body.startDate), 
-                            $lt: new Date(req.body.endDate) 
-                        }
-                    }
-                },
-                {
-                    $group: {
-                        _id: {
-                            $dateToString: {
-                                format: "%Y-%m-%d",
-                                date: "$createdAt"
-                            }
-                        },
-                        dailyCount: { $sum: 1 },
-                        totalVisitors: { $sum: 1 }
-                    }
-                },
-                {
-                    $group: {
-                        _id: null,
-                        traffic: {
-                            $push: {
-                                date: "$_id",
-                                count: "$dailyCount"
-                            }
-                        },
-                        visitorCount: { $sum: "$totalVisitors" }
-                    }
-                },
-                {
-                    $project: {
-                        _id: 0,
-                        traffic: 1,
-                        visitorCount: 1
-                    }
+            let results=await appVisitorModel.find({
+                app,
+                createdAt: {
+                    $gte: new Date(req.body.startDate), 
+                    $lt: new Date(req.body.endDate) 
                 }
-            ]
-            )
-            
+        
+        },{browser:1,createdAt:1,_id:0,device:1}).lean();
+            let response={
+                trafficStats:{},
+                devices:{},
+                browser:{},
+                totalVisitors:results.length
+            }
+            results.forEach((el) => {
+                let formattedDate=el.createdAt.toLocaleDateString('en-GB')
+
+                // traffic Stats or page Views
+                response.trafficStats[formattedDate] = (response.trafficStats[formattedDate] || 0) + 1;
+
+                // browsers
+                response.browser[el.browser] = (response.browser[el.browser] || 0) + 1;
+
+                // devices
+                response.devices[el.device] = (response.browser[el.device] || 0) + 1;
+
+              });
             return res.status(200).json({
                 message: 'calc stats fetched successfully',
-                data:data?data[0]:null
+                data:response
             })
         } catch (error) {
         }
