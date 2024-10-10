@@ -420,14 +420,16 @@ const submitToolOutputs = async (toolOutputs, runId, threadId, onPartialResponse
     const appDetails = await App.findOne({ _id: app._id });
     if (obj.code) {
 
-      const urlRegex = /fetch\(`([^`]+)`\)/;
+      const urlRegex = /fetch\((?:`([^`]+)`|'([^']+)')\)/;
       const originalApis = []; // Array to store original API objects
       
       // Replace URLs in the code while extracting them
       obj.code = obj.code.replace(urlRegex, (matchedUrl) => {
           
           // Extract the full URL from the matched string
-          const fullUrl = matchedUrl.match(/`([^`]+)`/)[1];
+          const matched_url = matchedUrl.match(/`([^`]+)`|'([^']+)'/);
+          const fullUrl = matched_url[1] || matched_url[2];
+
           // Store the matched URL as an object in the array
           originalApis.push({ api: fullUrl });
       

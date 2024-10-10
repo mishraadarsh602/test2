@@ -383,7 +383,7 @@ module.exports = {
 
           fetchedApp.componentCode = response.data.content[0].text;
 
-          const urlRegex = /fetch\(`([^`]+)`\)/;
+          const urlRegex = /fetch\((?:`([^`]+)`|'([^']+)')\)/;
           let originalApis = []; // Array to store original API objects
     
           // Replace URLs in the code while extracting them
@@ -391,7 +391,8 @@ module.exports = {
             urlRegex,
             (matchedUrl) => {
               // Extract the full URL from the matched string
-              const fullUrl = matchedUrl.match(/`([^`]+)`/)[1];
+              const matched_url = matchedUrl.match(/`([^`]+)`|'([^']+)'/);
+              const fullUrl = matched_url[1] || matched_url[2];
               if (fullUrl.startsWith(process.env.BACKEND_URL)) {
                 originalApis = fetchedApp.apis;
                 return `fetch(\`${fullUrl}\`)`;
