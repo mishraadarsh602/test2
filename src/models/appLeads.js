@@ -2,39 +2,48 @@ const mongoose = require('mongoose');
 
 const appLeadSchema = new mongoose.Schema(
     {
-        name:{
-            type:String,
-            required:true
-        },
-        user:{
-            type: mongoose.Schema.ObjectId,
-            ref:'user',
-            required:true
-        },
-        browser:{
-            type:String,
-            required:true,
-        },
-        device:{
-            type:String,
-            required:true,
-        },
-        ipAddress:{
-            type:String,
-            required:true
-        },
-        deleted:{
-            type:Boolean,
-            default:false
-        },
-        email:{
-            type:String,
-            required:true,
-        },
-        parentApp:{
+        key: {
             type: mongoose.Schema.Types.ObjectId,
-        ref: 'App',
-        }
+            ref: 'appVisitors'
+        },
+        app: { // parentApp of status dev
+              type: mongoose.Schema.ObjectId,
+              ref: 'App',
+            required: true
+        },
+        live_app: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'App'
+        },
+        fields: [
+            {
+                field_name: {
+                    type: String,
+                    trim: true,
+                    default: ''
+                },
+                value: {
+                    type: String,
+                    trim: true,
+                    default: ''
+                },
+                title: {
+                    type: String,
+                    trim: true,
+                    default: ''
+                },
+                subtype: {
+                    type: String,
+                    trim: true,
+                    default: ''
+                },
+                placeholder: {
+                    type: String,
+                    trim: true,
+                    default: ''
+                }
+            }
+        ],
     },
     {
         timestamps: true,
