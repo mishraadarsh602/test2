@@ -12,11 +12,6 @@ const appVisitorSchema = new mongoose.Schema(
             ref: 'App',
             required: true
         },
-        user:{
-            type: mongoose.Schema.ObjectId,
-            ref:'user',
-            required:true
-        },
         agent_type: {
             type: String
         },

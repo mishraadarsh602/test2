@@ -3,6 +3,7 @@ const appVisitorModel = require('../models/appVisitors');
 const appModel=require('../models/app');
 const featureListModel=require('../models/featureList');
 const { default: mongoose } = require('mongoose');
+const Bowser = require("bowser"); 
 
 async function updateCount(req) {
     try {
@@ -55,11 +56,11 @@ module.exports={
 
     generateVisitor: async (req, res) => {
         try {
-            if (!req.body.user) {
-                return res.status(400).json({ error: 'User ID is required' });
-            }
+            const browser = Bowser.getParser(req.body.userAgent).parsedResult.browser.name;
             const visitorCreated = new appVisitorModel({
-                ...req.body
+                ...req.body,
+                browser
+                    
             });
             await visitorCreated.save();
             updateCount(req)
