@@ -1,5 +1,6 @@
 const App = require('../models/app');
 const appVisitorModel = require('../models/appVisitors');
+const appLeadsModel = require('../models/appLeads');
 const appModel=require('../models/app');
 const featureListModel=require('../models/featureList');
 const { default: mongoose } = require('mongoose');
@@ -62,11 +63,13 @@ module.exports={
                 browser
                     
             });
+            let key=visitorCreated._id;
             await visitorCreated.save();
             updateCount(req)
 
             return res.status(200).json({
                 message: 'Visits updated successfully',
+                key
             });
         } catch (error) {
             res.status(500).json({ error: error.message });
@@ -113,5 +116,16 @@ module.exports={
             // createLog({userId:req.user.userId.toString(),error:error.message,appId:req.body.appId})
             res.status(500).json({ error: error.message });
         }
+    },
+    saveLead:async(req,res)=>{
+        try {
+            const leadCreated = new appLeadsModel({
+                ...req.body,
+            });
+            await leadCreated.save();
+            return res.status(200).json({message:'Lead created successfully'});
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }   
     },
 }

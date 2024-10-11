@@ -4,5 +4,6 @@ const auth = require('../../middleware/auth');
 const analyticController = require('../../controllers/analytic');
 router.post('/calculator_stats',auth,analyticController.calculatorStats);
 router.post('/visitor_key',analyticController.generateVisitor);
+router.post('/saveLead',analyticController.saveLead);
 router.post('/get_engagements',auth,analyticController.fetchVisitors);
 module.exports=router;

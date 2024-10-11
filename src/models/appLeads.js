@@ -6,6 +6,11 @@ const appLeadSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: 'appVisitors'
         },
+        app: { // parentApp of status dev
+              type: mongoose.Schema.ObjectId,
+              ref: 'App',
+            required: true
+        },
         live_app: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'App'
@@ -39,10 +44,6 @@ const appLeadSchema = new mongoose.Schema(
                 }
             }
         ],
-        parentApp:{
-            type: mongoose.Schema.Types.ObjectId,
-        ref: 'App',
-        }
     },
     {
         timestamps: true,
