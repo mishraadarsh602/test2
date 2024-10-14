@@ -76,6 +76,10 @@ const appSchema = new mongoose.Schema({
         type: String,
         default: ''
     },
+    tool_type: {
+        type: String,
+        default: ''
+    },
     theme: {
         primaryColor: {
             type: String,
