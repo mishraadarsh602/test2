@@ -602,8 +602,8 @@ module.exports = {
             }
           );
      
-      res.send(response.data.content[0].text);
-    } catch (error) {
+          return res.status(200).json({suggestion: response.data.content[0].text })
+        } catch (error) {
       console.log("erorr is ----> ",error);
       res.send(error);
     }
