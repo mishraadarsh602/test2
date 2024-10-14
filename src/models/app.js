@@ -142,39 +142,7 @@ const appSchema = new mongoose.Schema({
             type: String,
             default: 'stripeCheckout',
             enum: ['stripeCheckout','sensepass']
-        },
-        chargebeeScript: {
-            type: String,
-            default: ''
-        },
-        chargebeeCta: [{
-            redirect: {
-                type: {
-                    type: String,
-                    default: ''
-                },
-                urlRedirectType: {
-                    type: String,
-                    default: ''
-                },
-                urlLink: {
-                    type: String,
-                    default: ''
-                },
-                open_in_tab: {
-                    type: Boolean,
-                    default: true
-                }
-            },
-            buttonCode: {
-                type: String,
-                default: ''
-            },
-            ctaLabel: {
-                type: String,
-                default: ''
-            }
-        }]
+        }
     },
     payments:{
       type : Array,
