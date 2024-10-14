@@ -8,7 +8,7 @@ const appSchema = new mongoose.Schema({
         required: true,
         // unique: true
     },
-    url:{
+    url: {
         type: String,
         required: true,
     },
@@ -39,9 +39,9 @@ const appSchema = new mongoose.Schema({
                 type: String,
                 default: 'logo'
             },
-            link:{
-                type:String,
-                default:'https://outgrow.co'
+            link: {
+                type: String,
+                default: 'https://outgrow.co'
             }
         }
     },
@@ -103,14 +103,14 @@ const appSchema = new mongoose.Schema({
             type: Boolean,
             default: true
         },
-        skip:{
-            type:Boolean,
-            default:false
+        skip: {
+            type: Boolean,
+            default: false
         },
         fields: [fieldsSchema],
-        title:{
-            type:String,
-            default:'How can we get in touch?'
+        title: {
+            type: String,
+            default: 'How can we get in touch?'
         },
         thankYouMessage: {
             type: String,
@@ -129,79 +129,52 @@ const appSchema = new mongoose.Schema({
         //     required: false
         // }
     },
-    payments: {
+    paymentSetting: {
         enabled: {
             type: Boolean,
             default: false
         },
-        mode: {
+        paymentType: {
             type: String,
-            default: 'live'
+            default: 'stripeCheckout',
+            enum: ['stripeCheckout','sensepass']
         },
-        currency: {
+        chargebeeScript: {
             type: String,
-            default: 'USD'
+            default: ''
         },
-        amount: {
-            type: Number,
-            default: 0.00
-        },
-        recurringBilling: {
-            enabled: {
-                type: Boolean,
-                default: false
+        chargebeeCta: [{
+            redirect: {
+                type: {
+                    type: String,
+                    default: ''
+                },
+                urlRedirectType: {
+                    type: String,
+                    default: ''
+                },
+                urlLink: {
+                    type: String,
+                    default: ''
+                },
+                open_in_tab: {
+                    type: Boolean,
+                    default: true
+                }
             },
-            interval: {
-                type: String,
-                default: 'monthly'
-            }
-        },
-        providers: [{
-            name: {
-                type: String,
-                default: ''
-            },
-            enabled: {
-                type: Boolean,
-                default: false
-            },
-            config: {
-                // publicKey: { type: String, default: '' },
-                // secretKey: { type: String, default: '' },
-                // webhookSecret: { type: String, default: '' },
-                // clientId: { type: String, default: '' },
-                // clientSecret: { type: String, default: '' },
-                // environment: { type: String, default: '' }
-                type: Object,
-                default: {}
-            }
-        }],
-        taxRates: {
-            default: {
-                type: Number,
-                default: 0.00
-            },
-            byCountry: {
-                type: Object,
-                default: {}
-            }
-        },
-        invoicing: {
-            enabled: {
-                type: Boolean,
-                default: true
-            },
-            companyName: {
+            buttonCode: {
                 type: String,
                 default: ''
             },
-            companyAddress: {
+            ctaLabel: {
                 type: String,
                 default: ''
             }
-        },
-
-
+        }]
+    },
+    payments:{
+      type : Array,
+        default : []  
     },
     visitorCount: {
         type: Number,

@@ -35,10 +35,9 @@ module.exports={
                 totalVisitors:results.length
             }
             results.forEach((el) => {
-                let formattedDate=el.createdAt.toLocaleDateString('en-GB')
 
                 // traffic Stats or page Views
-                response.trafficStats[formattedDate] = (response.trafficStats[formattedDate] || 0) + 1;
+                response.trafficStats[el.createdAt] = (response.trafficStats[el.createdAt] || 0) + 1;
 
                 // browsers
                 response.browser[el.browser] = (response.browser[el.browser] || 0) + 1;
