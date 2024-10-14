@@ -8,11 +8,17 @@ const { OpenAI } = require("openai");
 const { default: mongoose } = require('mongoose');
 const { URL, URLSearchParams } = require('url');
 const sharp = require('sharp');
+const systemPromptSession = require('../../models/chat/systemPrompt.model');
+const { default: Anthropic } = require('@anthropic-ai/sdk');
 
 const generateSessionId = () => {
   return uuidv4();  // Generates a unique UUID
 };
 const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY });
+
+const client = new Anthropic({
+  apiKey: process.env['ANTHROPIC_API_KEY'],
+});
 
 const startChatSession = async (userId, agentId, message, imageArray) => {
   try {
@@ -498,6 +504,17 @@ async function fetchAndResizeImageAsBase64(imageUrl) {
 }
 
 const aiAssistantChatStart = async (userId, userMessage, app, image = null, isStartChat, onPartialResponse) => {
+  const prompts = await systemPromptSession.findOne({});
+  let parentPrompt = prompts?.parentPrompt;
+  parentPrompt = parentPrompt.replace("{userInput}", userMessage);
+  console.log("parentPrompt", parentPrompt);
+  const message = await client.messages.create({
+    max_tokens: 1024,
+    messages: [{ role: "user", content: parentPrompt }],
+    model: "claude-3-5-sonnet-20240620",
+  });
+  let parentResponse = JSON.parse(message.content[0].text.trim());
+  console.log(parentResponse);
 
   const thread_id = app.thread_id;
 
@@ -564,6 +581,16 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
     }
   }
   console.log("additional_instructions", additional_instructions);
+
+  if(parentResponse.ToolTYPE === 'AIBASED'){
+    assistantObj = {
+      assistant_id:
+        process.env.NODE_ENV == "staging" ||
+        process.env.NODE_ENV == "production"
+          ? process.env.AI_ASSISTANT_ID
+          : process.env.DEV_AI_ASSISTANT_ID,
+    };
+  }
 
   if (image) {
     try {
@@ -841,6 +868,9 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
         });
       }
       // Update app componentCode and save
+      if (isStartChat) {
+        appDetails["tool_type"] = parentResponse.ToolTYPE;
+      }
       appDetails.apis = originalApis;
       appDetails.componentCode = obj.code;
       await appDetails.save();

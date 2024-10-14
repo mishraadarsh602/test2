@@ -29,6 +29,7 @@ router.post('/visitor/delete',auth, builderController.deleteVisitors);
 router.get('/getPreviewApp/:appId', auth,builderController.getPreviewApp);
 router.post('/fixError', auth,builderController.fixError);
 router.get('/callAPI', builderController.callAPI);
+router.post('/callAI', builderController.callAI);
 router.post('/brand_guide',auth, builderController.getBrandGuide);
 router.post('/upload_file_aws',auth,upload.single("image"),builderController.uploadFile);
 router.patch('/update_brand_guide',auth, builderController.updateBrandGuide);

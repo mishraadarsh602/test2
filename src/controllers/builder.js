@@ -574,6 +574,41 @@ module.exports = {
       res.send(error);
     }
   },
+
+  callAI: async (req, res) => {
+    try {
+      console.log();
+      const userPrompt = req.body.prompt; // Change here to get appId from the query
+      let prompt = `${userPrompt}`;
+
+          const response = await axios.post(
+            "https://api.anthropic.com/v1/messages",
+            {
+              model: "claude-3-5-sonnet-20240620", // Using Claude model
+              max_tokens: 8000,
+              messages: [
+                {
+                  role: "user",
+                  content: prompt,
+                },
+              ],
+            },
+            {
+              headers: {
+                "content-type": "application/json",
+                "x-api-key": process.env["ANTHROPIC_API_KEY"],
+                "anthropic-version": "2023-06-01",
+              },
+            }
+          );
+     
+          return res.status(200).json({suggestion: response.data.content[0].text })
+        } catch (error) {
+      console.log("erorr is ----> ",error);
+      res.send(error);
+    }
+  },
+  
   checkUniqueUrl:async(req,res)=>{
     try {
         const url=req.body.url;
@@ -589,18 +624,15 @@ module.exports = {
   },
   createStripeCheckoutSession: async (req, res) => {
     try {
-        let { amount, currency, billing_address, shipping_address, mobile_no, description,app_id } = req.body;
-        //    let  user_app = await AppV2.findOne({ _id: app_id }).lean();
-            // let stripe_user_secret_key = cryptor.decryptv1(user_app.ecom.stripeCheckout.secret_key);
-        const stripe_user_secret_key = 'sk_test_4eC39HqLyjWDarjtT1zdp7dc';
-        const stripe = require('stripe')(stripe_user_secret_key);
+        let { amount, currency, billingAddress, shippingAddress, mobileNo, description,publicKey,secretKey } = req.body;
+        const stripe = require('stripe')(secretKey);
         const createPrice = await stripe.prices.create({
-            unit_amount: amount, // Replace with your desired price in cents
+            unit_amount: amount, 
             currency: currency,
             product_data: {
                 name: description ? description : "Pay",
             },
-            billing_scheme: 'per_unit' // Or 'recurring' with an interval if applicable
+            billing_scheme: 'per_unit' 
         });
         const sessionConfig = {
             ui_mode: 'embedded',
@@ -613,13 +645,13 @@ module.exports = {
             ],
             mode: 'payment',
             redirect_on_completion: 'never',
-            billing_address_collection: billing_address ? "required" : "auto",
+            billing_address_collection: billingAddress ? "required" : "auto",
             phone_number_collection: {
-                enabled: mobile_no ? true : false,
+                enabled: mobileNo ? true : false,
             },
             expires_at: Math.floor(Date.now() / 1000) + (3600 * 2), // Configured to expire after 2 hours
         };
-        if (shipping_address) {
+        if (shippingAddress) {
             sessionConfig.shipping_address_collection = {
                 allowed_countries: ['AC', 'AD', 'AE', 'AF', 'AG', 'AI', 'AL', 'AM', 'AO', 'AQ', 'AR', 'AT', 'AU', 'AW', 'AX', 'AZ', 'BA', 'BB', 'BD', 'BE', 'BF', 'BG', 'BH', 'BI', 'BJ', 'BL', 'BM', 'BN', 'BO', 'BQ', 'BR', 'BS', 'BT', 'BV', 'BW', 'BY', 'BZ', 'CA', 'CD', 'CF', 'CG', 'CH', 'CI', 'CK', 'CL', 'CM', 'CN', 'CO', 'CR', 'CV', 'CW', 'CY', 'CZ', 'DE', 'DJ', 'DK', 'DM', 'DO', 'DZ', 'EC', 'EE', 'EG', 'EH', 'ER', 'ES', 'ET', 'FI', 'FJ', 'FK', 'FO', 'FR', 'GA', 'GB', 'GD', 'GE', 'GF', 'GG', 'GH', 'GI', 'GL', 'GM', 'GN', 'GP', 'GQ', 'GR', 'GS', 'GT', 'GU', 'GW', 'GY', 'HK', 'HN', 'HR', 'HT', 'HU', 'ID', 'IE', 'IL', 'IM', 'IN', 'IO', 'IQ', 'IS', 'IT', 'JE', 'JM', 'JO', 'JP', 'KE', 'KG', 'KH', 'KI', 'KM', 'KN', 'KR', 'KW', 'KY', 'KZ', 'LA', 'LB', 'LC', 'LI', 'LK', 'LR', 'LS', 'LT', 'LU', 'LV', 'LY', 'MA', 'MC', 'MD', 'ME', 'MF', 'MG', 'MK', 'ML', 'MM', 'MN', 'MO', 'MQ', 'MR', 'MS', 'MT', 'MU', 'MV', 'MW', 'MX', 'MY', 'MZ', 'NA', 'NC', 'NE', 'NG', 'NI', 'NL', 'NO', 'NP', 'NR', 'NU', 'NZ', 'OM', 'PA', 'PE', 'PF', 'PG', 'PH', 'PK', 'PL', 'PM', 'PN', 'PR', 'PS', 'PT', 'PY', 'QA', 'RE', 'RO', 'RS', 'RU', 'RW', 'SA', 'SB', 'SC', 'SE', 'SG', 'SH', 'SI', 'SJ', 'SK', 'SL', 'SM', 'SN', 'SO', 'SR', 'SS', 'ST', 'SV', 'SX', 'SZ', 'TA', 'TC', 'TD', 'TF', 'TG', 'TH', 'TJ', 'TK', 'TL', 'TM', 'TN', 'TO', 'TR', 'TT', 'TV', 'TW', 'TZ', 'UA', 'UG', 'US', 'UY', 'UZ', 'VA', 'VC', 'VE', 'VG', 'VN', 'VU', 'WF', 'WS', 'XK', 'YE', 'YT', 'ZA', 'ZM', 'ZW'],
             };
@@ -632,24 +664,17 @@ module.exports = {
           });
 
     } catch (err) {
-        return response.error(res, err);
+        res.status(500).json({ error: err.message });
     }
   },
   retrieveStripeCheckoutSession: async (req, res) => {
-    // let  user_app = await AppV2.findOne({ _id: req.query.app_id }).lean();
-    // let stripe_user_secret_key = cryptor.decryptv1(user_app.ecom.stripeCheckout.secret_key);
-    console.log("req.query:",req.query.session_id)
-    const stripe_user_secret_key = 'sk_test_4eC39HqLyjWDarjtT1zdp7dc';
+    const stripe_user_secret_key = req.query.secret_key;
     const stripe = require('stripe')(stripe_user_secret_key);
     const session = await stripe.checkout.sessions.retrieve(req.query.session_id);
     res.status(201).json({
         message: "Session retrieve successfully",
         data: session,
       });
-    // return response.ok(res, {
-    //     session:session,
-    // });
-
     },
 }
 
