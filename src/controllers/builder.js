@@ -574,6 +574,41 @@ module.exports = {
       res.send(error);
     }
   },
+
+  callAI: async (req, res) => {
+    try {
+      console.log();
+      const userPrompt = req.body.prompt; // Change here to get appId from the query
+      let prompt = `${userPrompt}`;
+
+          const response = await axios.post(
+            "https://api.anthropic.com/v1/messages",
+            {
+              model: "claude-3-5-sonnet-20240620", // Using Claude model
+              max_tokens: 8000,
+              messages: [
+                {
+                  role: "user",
+                  content: prompt,
+                },
+              ],
+            },
+            {
+              headers: {
+                "content-type": "application/json",
+                "x-api-key": process.env["ANTHROPIC_API_KEY"],
+                "anthropic-version": "2023-06-01",
+              },
+            }
+          );
+     
+      res.send(response.data.content[0].text);
+    } catch (error) {
+      console.log("erorr is ----> ",error);
+      res.send(error);
+    }
+  },
+  
   checkUniqueUrl:async(req,res)=>{
     try {
         const url=req.body.url;
