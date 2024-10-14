@@ -61,13 +61,17 @@ const appSchema = new mongoose.Schema({
         api: {
             type: String,
             default: ''
+        },
+        key: {
+            type: String,
+            default: ''
         }
     }],
     ai: {
         model: {
             type: String,
-            enum: ['claude-3-5-sonnet-20240620', 'gpt-4o', 'gpt-4o-mini'],
-            default: 'dclaude-3-5-sonnet-20240620v'
+            enum: ['anthropic', 'openai'],
+            default: 'anthropic'
         },
         key: {
             type: String,
