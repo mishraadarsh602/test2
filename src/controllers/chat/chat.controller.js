@@ -582,7 +582,7 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
   }
   console.log("additional_instructions", additional_instructions);
 
-  if(parentResponse.ToolTYPE === 'AIBASED'){
+  if(parentResponse.ToolTYPE === 'AIBASED' || app.tool_type === 'AIBASED'){
     assistantObj = {
       assistant_id:
         process.env.NODE_ENV == "staging" ||
@@ -851,6 +851,10 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
         // Construct the new URL with the updated query string
         return `fetch(\`${process.env.BACKEND_URL}/builder/callAPI?${newQueryString}\`)`;
       });
+
+      if(obj.code.includes('Call_AI_API')){
+        obj.code = obj.code.replace('Call_AI_API', `http://localhost:4000/api/v1/builder/callAI`)
+      }
 
       if (appDetails.apis.length > 0 && appDetails.apis[0].api.trim() !== "") {
         // Updating apis array based on domain comparison
