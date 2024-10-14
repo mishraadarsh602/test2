@@ -28,16 +28,24 @@ module.exports={
                 }
         
         },{browser:1,createdAt:1,_id:0,device:1}).lean();
+        const leadsCount=await appLeadsModel.count({app, createdAt: {
+            $gte: new Date(req.body.startDate), 
+            $lt: new Date(req.body.endDate) 
+        }});
+        let conversionRate= results.length> 0 ?  ((leadsCount/results.length)*100).toFixed(2) : 0 +'%';
             let response={
                 trafficStats:{},
                 devices:{},
                 browser:{},
-                totalVisitors:results.length
+                totalVisitors:results.length,
+                conversions:leadsCount,
+                conversionRate
             }
             results.forEach((el) => {
-
+                let formattedDate=el.createdAt.toLocaleDateString()
+                
                 // traffic Stats or page Views
-                response.trafficStats[el.createdAt] = (response.trafficStats[el.createdAt] || 0) + 1;
+                response.trafficStats[formattedDate] = (response.trafficStats[formattedDate] || 0) + 1;
 
                 // browsers
                 response.browser[el.browser] = (response.browser[el.browser] || 0) + 1;
@@ -50,7 +58,7 @@ module.exports={
                 message: 'calc stats fetched successfully',
                 data:response
             })
-        } catch (error) {
+        } catch (error) {   
         }
     },
 
