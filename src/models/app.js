@@ -63,6 +63,17 @@ const appSchema = new mongoose.Schema({
             default: ''
         }
     }],
+    ai: {
+        model: {
+            type: String,
+            enum: ['claude-3-5-sonnet-20240620', 'gpt-4o', 'gpt-4o-mini'],
+            default: 'dclaude-3-5-sonnet-20240620v'
+        },
+        key: {
+            type: String,
+            default: ''
+        }
+    },
     componentCode: {
         type: String,
         default: ''
