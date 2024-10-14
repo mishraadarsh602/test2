@@ -18,6 +18,7 @@ const fieldsSchema = new mongoose.Schema(
             default: 'First Name'
         },
         fileName: [],
+        previousIcons:[],
         fieldsArray: [dropdownSchema],
         givenArray:[],
         previousIcons:[],

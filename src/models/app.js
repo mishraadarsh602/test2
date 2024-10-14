@@ -95,6 +95,14 @@ const appSchema = new mongoose.Schema({
             type: Boolean,
             default: false
         },
+        buttonText:{
+            type:String,
+            default:'Submit'
+        },
+        isIconPresent: {
+            type: Boolean,
+            default: true
+        },
         skip:{
             type:Boolean,
             default:false
