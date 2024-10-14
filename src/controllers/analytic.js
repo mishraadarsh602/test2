@@ -32,7 +32,7 @@ module.exports={
             $gte: new Date(req.body.startDate), 
             $lt: new Date(req.body.endDate) 
         }});
-        let conversionRate=((leadsCount/results.length)*100).toFixed(2)+'%';
+        let conversionRate= results.length> 0 ?  ((leadsCount/results.length)*100).toFixed(2) : 0 +'%';
             let response={
                 trafficStats:{},
                 devices:{},
@@ -58,7 +58,7 @@ module.exports={
                 message: 'calc stats fetched successfully',
                 data:response
             })
-        } catch (error) {
+        } catch (error) {   
         }
     },
 
