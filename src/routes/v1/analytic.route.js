@@ -6,4 +6,5 @@ router.post('/calculator_stats',auth,analyticController.calculatorStats);
 router.post('/visitor_key',analyticController.generateVisitor);
 router.post('/saveLead',analyticController.saveLead);
 router.post('/get_engagements',auth,analyticController.fetchVisitors);
+router.post('/get_leads',auth,analyticController.get_leads);
 module.exports=router;

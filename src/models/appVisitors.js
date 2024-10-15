@@ -27,9 +27,10 @@ const appVisitorSchema = new mongoose.Schema(
             type:String,
             required:true
         },
-        deleted:{
-            type:Boolean,
-            default:false
+        type:{
+            type: String,
+            enum: ['Visitor', 'Lead', 'Engagement', 'Deleted'],
+            default: 'Visitor'
         },
         utm_source: {
             type: String,
@@ -56,6 +57,10 @@ const appVisitorSchema = new mongoose.Schema(
             trim: true,
             default: ''
         },
+        lead:{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'appLeads',
+        }
     },
     {
         timestamps: true,

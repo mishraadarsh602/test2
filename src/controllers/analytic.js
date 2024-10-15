@@ -124,13 +124,66 @@ module.exports={
             res.status(500).json({ error: error.message });
         }
     },
+    get_leads: async (req, res) => {
+        try {
+          const response = await appVisitorModel.find({
+            type: 'Lead',
+            app: new mongoose.Types.ObjectId(req.body.appId)
+          }).populate("lead").lean();
+      
+          let finalResponse = { columns: [], data: [] };
+          let columnSet = new Set();
+      
+          const fixedColumns = ["browser", "device", "utm_source", "utm_campaign", "utm_term", "utm_content"];
+          fixedColumns.forEach(col => columnSet.add(col));
+      
+          response.forEach(el => {
+            let fieldCount = {}; 
+            let dataRow = {};  
+      
+            dataRow["browser"] = el.browser || 'Not Applicable';
+            dataRow["device"] = el.device || 'Not Applicable';
+            dataRow["utm_source"] = el.utm_source || 'Not Applicable';
+            dataRow["utm_campaign"] = el.utm_campaign || 'Not Applicable';
+            dataRow["utm_term"] = el.utm_term || 'Not Applicable';
+            dataRow["utm_content"] = el.utm_content || 'Not Applicable';
+      
+            el.lead.fields.forEach(field => {
+                let fieldName = field.field_name;
+                fieldName=fieldName.split(' ').join('');
+              fieldCount[fieldName] = (fieldCount[fieldName] || 0) + 1;
+      
+              if (fieldCount[fieldName] > 1) {
+                fieldName = `${fieldName}_${fieldCount[fieldName] - 1}`;
+              }
+      
+              columnSet.add(fieldName);
+              dataRow[fieldName] = field.value;
+            });
+      
+            finalResponse.data.push(dataRow);
+          });
+      
+          finalResponse.columns = Array.from(columnSet);
+      
+          finalResponse.data = finalResponse.data.map(row => {
+            return finalResponse.columns.map(column => row[column] || 'Not Applicable');
+          });
+      
+          return res.status(200).json({ data: finalResponse });
+      
+        } catch (error) {
+          return res.status(500).json({ message: 'Internal server error' });
+        }
+      },
     saveLead:async(req,res)=>{
         try {
             const leadCreated = new appLeadsModel({
                 ...req.body,
             });
             await leadCreated.save();
-            return res.status(200).json({message:'Lead created successfully'});
+           let response= await appVisitorModel.updateOne({ _id:req.body.key},{lead:leadCreated._id,type:'Lead'});
+            return res.status(200).json({message:'Lead created successfully',data:response});
         } catch (error) {
             res.status(500).json({ error: error.message });
         }   
