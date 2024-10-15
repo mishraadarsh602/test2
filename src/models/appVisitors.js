@@ -60,6 +60,25 @@ const appVisitorSchema = new mongoose.Schema(
         lead:{
             type: mongoose.Schema.Types.ObjectId,
             ref: 'appLeads',
+        },
+        transaction_mode: {
+            type: String,
+            trim: true,
+            default: ''
+        },
+        transaction_status: {
+            type: String,
+            trim: true,
+            default: ''
+        },
+        transaction_json: {
+            type: String,
+            trim: true,
+            default: ''
+        },
+        transaction_completed: {
+            type: Boolean,
+            default: false
         }
     },
     {

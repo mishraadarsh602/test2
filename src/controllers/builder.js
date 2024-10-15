@@ -681,6 +681,53 @@ module.exports = {
         data: session,
       });
     },
+    saveTransactionDetails: async (req, res) => {
+        try {
+            let payment_success = '';
+            let { key, token, appId, description, currency, amount, paymentMethod, paymentStatus, email } = req.body;
+            if(paymentMethod == 'stripeCheckout'){
+                    payment_success = 'Payment Processed with Transaction ID: ' + token;
+                    let visit = await appVisitorsModel.findOne({ live_app: appId, _id: key });
+                    let transactionObj = {
+                        paymentStatus: paymentStatus,
+                        description: description,
+                        amount: isNaN(amount)?0:amount,
+                        currency: currency,
+                        email:email,
+                        id: token
+                    }
+                    let tempTransactionJSON;
+                    try {
+                        tempTransactionJSON = JSON.parse(visit.transaction_json);
+                    } catch (err) {
+                        tempTransactionJSON = {};
+                    }
+                    if (!tempTransactionJSON.transactionArray)
+                        tempTransactionJSON.transactionArray = [];
+                    tempTransactionJSON.transactionArray.push(transactionObj)
+
+                    if (visit.transaction_completed) {
+                        visit.transaction_json = JSON.stringify(tempTransactionJSON);
+                        await visit.save();
+                    } else
+                    await appVisitorsModel.updateOne({ live_app: appId, _id: key }, { $set: { transaction_status: payment_success, transaction_completed: true, transaction_json: JSON.stringify(tempTransactionJSON), transaction_mode: paymentMethod, amount:isNaN(amount)?0:amount, currency:currency } });
+                    res.status(201).json({
+                        message: "Transaction details saved successfully",
+                        data: transactionObj,
+                    });
+
+                } 
+            } catch (err) {
+                let visit = await appVisitorsModel.findOne({ live_app: req.body.appId, _id: req.body.key });
+                if (!visit.transaction_completed) {
+                    let payment_error = 'Payment Failed with code: ' + err.code + ' - ' + err.message;
+                    await appVisitorsModel.updateOne({ live_app: req.body.appId, _id: req.body.key }, { $set: { transaction_status: payment_error, transaction_completed: false, transaction_json: JSON.stringify(err), transaction_mode: req.body.paymentMethod } });
+                }
+
+                // return response.error(res, err);
+                    res.status(500).json({ error: err.message });
+            }
+    },
 }
 
 // Helper function to extract the domain from a URL
