@@ -204,7 +204,7 @@ module.exports = {
         try {
             let id=req.params._id;
             let previousLiveApp=await App.findOne({parentApp:req.params.appId,status:'live'});
-            const parentApp=await App.findOne({_id:req.params.appId});
+            const parentApp=await App.findOne({_id:req.params.appId,status:'dev'});
             if(previousLiveApp){
                 previousLiveApp.status='old';
                 if (!redisClient.isOpen) {
@@ -229,7 +229,7 @@ module.exports = {
                 message: "App live successfully",
               });
         } catch (error) {            
-          
+
             createLog({userId:req.user.userId.toString(),error:error.message,appId:req.body.appId})
             res.status(500).json({ error: error.message });
         }
@@ -734,7 +734,7 @@ module.exports = {
                     }
                     if (!tempTransactionJSON.transactionArray)
                         tempTransactionJSON.transactionArray = [];
-                    tempTransactionJSON.transactionArray.push(transactionObj)
+                        tempTransactionJSON.transactionArray.push(transactionObj)
 
                     if (visit.transaction_completed) {
                         visit.transaction_json = JSON.stringify(tempTransactionJSON);
