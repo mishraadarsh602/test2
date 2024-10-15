@@ -8,7 +8,7 @@ const Bowser = require("bowser");
 
 async function updateCount(req) {
     try {
-        await appModel.updateOne({ _id: req.body.app }, { $inc: { visitorCount: 1 } });
+        await appModel.updateOne({ _id: req.body.app,status:'dev' }, { $inc: { visitorCount: 1 } });
         await featureListModel.updateOne({ type: req.body.agent_type }, { $inc: { visitorCount: 1 } });
     } catch (error) {
         console.log(error)
