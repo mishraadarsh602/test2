@@ -746,71 +746,71 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
 
     const appDetails = await App.findOne({ _id: app._id });
     if (obj.code) {
-      let prompt = `You are an AI assistant who inhances my UI and function, and fix error if present in it, and returns code in string \"\" format. We were going to work on a React-based Javascript App. 
-      Your purpose is to assist with creating, editing and improving React codebases with tailwind CSS, custom inline CSS, and Javascript only. 
-      Create the best and most visually appealing UI, working functionality, valid syntax, and other properties according to provided my code. 
-      My code:${obj.code}\ MY requirement: ${userMessage}\n.Inhance it to best if it not equivalent to my requirement. 
-      Follow the code pattern in terms of function usage, API calls, and element creation. 
-      **Ensure that all React hooks are written with the full 'React' prefix, e.g., React.useState().**
-      Create React element without any import statement. I have this header added already import React, {useState, useEffect, useContext, useReducer, useCallback, useMemo, useRef, useImperativeHandle, useLayoutEffect, useDebugValue, useTransition, useDeferredValue, useId, useSyncExternalStore, useInsertionEffect} from 'react'; import * as LucideIcons from 'lucide-react'; import { useLocation } from 'react-router-dom'; 
-      Note: Input is code and output will be only one code file which will run as JSX. You must return code only no extra text allowed.
-      Output structure:
-                function AppName(){
-                    ...
-                }
-                return AppName;`;
+      // let prompt = `You are an AI assistant who inhances my UI and function, and fix error if present in it, and returns code in string \"\" format. We were going to work on a React-based Javascript App. 
+      // Your purpose is to assist with creating, editing and improving React codebases with tailwind CSS, custom inline CSS, and Javascript only. 
+      // Create the best and most visually appealing UI, working functionality, valid syntax, and other properties according to provided my code. 
+      // My code:${obj.code}\ MY requirement: ${userMessage}\n.Inhance it to best if it not equivalent to my requirement. 
+      // Follow the code pattern in terms of function usage, API calls, and element creation. 
+      // **Ensure that all React hooks are written with the full 'React' prefix, e.g., React.useState().**
+      // Create React element without any import statement. I have this header added already import React, {useState, useEffect, useContext, useReducer, useCallback, useMemo, useRef, useImperativeHandle, useLayoutEffect, useDebugValue, useTransition, useDeferredValue, useId, useSyncExternalStore, useInsertionEffect} from 'react'; import * as LucideIcons from 'lucide-react'; import { useLocation } from 'react-router-dom'; 
+      // Note: Input is code and output will be only one code file which will run as JSX. You must return code only no extra text allowed.
+      // Output structure:
+      //           function AppName(){
+      //               ...
+      //           }
+      //           return AppName;`;
 
-      let content = [
-        {
-          type: "text",
-          text: prompt,
-        },
-      ];
-      if (image) {
-        content.push({
-          type: "image",
-          source: {
-            type: "base64",
-            media_type: await getMediaType(image),
-            data: await fetchAndResizeImageAsBase64(image),
-          },
-        });
-      }
+      // let content = [
+      //   {
+      //     type: "text",
+      //     text: prompt,
+      //   },
+      // ];
+      // if (image) {
+      //   content.push({
+      //     type: "image",
+      //     source: {
+      //       type: "base64",
+      //       media_type: await getMediaType(image),
+      //       data: await fetchAndResizeImageAsBase64(image),
+      //     },
+      //   });
+      // }
 
-      const response = await axios.post(
-        "https://api.anthropic.com/v1/messages",
-        {
-          model: "claude-3-5-sonnet-20240620", // Using Claude model
-          max_tokens: 8000,
-          messages: [
-            {
-              role: "user",
-              content: content,
-            },
-          ],
-        },
-        {
-          headers: {
-            "content-type": "application/json",
-            "x-api-key": process.env["ANTHROPIC_API_KEY"],
-            "anthropic-version": "2023-06-01",
-          },
-        }
-      );
+      // const response = await axios.post(
+      //   "https://api.anthropic.com/v1/messages",
+      //   {
+      //     model: "claude-3-5-sonnet-20240620", // Using Claude model
+      //     max_tokens: 8000,
+      //     messages: [
+      //       {
+      //         role: "user",
+      //         content: content,
+      //       },
+      //     ],
+      //   },
+      //   {
+      //     headers: {
+      //       "content-type": "application/json",
+      //       "x-api-key": process.env["ANTHROPIC_API_KEY"],
+      //       "anthropic-version": "2023-06-01",
+      //     },
+      //   }
+      // );
 
-      obj.code = response.data.content[0].text;
+      // obj.code = response.data.content[0].text;
 
-      await openai.beta.threads.messages.create(
-        thread_id,
-        {
-          role: "user",
-          content: userMessage,
-        },
-        {
-          role: "assistant",
-          content: response.data.content[0].text,
-        }
-      );
+      // await openai.beta.threads.messages.create(
+      //   thread_id,
+      //   {
+      //     role: "user",
+      //     content: userMessage,
+      //   },
+      //   {
+      //     role: "assistant",
+      //     content: response.data.content[0].text,
+      //   }
+      // );
 
       const urlRegex = /fetch\((['"`])([^'"`]+)\1\)/;
       let originalApis = []; // Array to store original API objects
@@ -853,7 +853,7 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
       });
 
       if(obj.code.includes('Call_AI_API')){
-        obj.code = obj.code.replace('Call_AI_API', `http://localhost:4000/api/v1/builder/callAI`)
+        obj.code = obj.code.replace('Call_AI_API', `${process.env.BACKEND_URL}/builder/callAI`)
       }
 
       if (appDetails.apis.length > 0 && appDetails.apis[0].api.trim() !== "") {
