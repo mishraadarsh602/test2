@@ -181,7 +181,7 @@ module.exports = {
       const assistant = await openai.beta.assistants.update(process.env.DEV_ASSISTANT_ID,{
         name: "AI Assistant",
         instructions,
-        description: 'You are an AI assistant who assist with creating, editing and improving React codebases with tailwind, custom inline CSS and Javascript only',
+        description: 'You are an AI assistant who assist with editing and improving React codebases with tailwind, custom inline CSS and Javascript only',
         model: "gpt-4o-mini",
         temperature: 0.1,
         top_p: 0.9,
