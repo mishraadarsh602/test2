@@ -92,6 +92,7 @@ userSchema.methods.generateToken = async function () {
     name:this.name,
     email:this.email,
     role:this.role,
+    status: this.status
   },
   secretKey,
   {

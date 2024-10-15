@@ -1,5 +1,4 @@
 const jwt = require('jsonwebtoken');
-// const secretKey = "jwt-secret-cGmzBNH2wUo&list=PLwGdqUZWnOp2Z3eFOgtOGvOWIk4e8Bsr_";
 const secretKey = process.env.JWT_SECRET_KEY;
 const auth = async (req, res, next) => {
     try {
@@ -7,6 +6,10 @@ const auth = async (req, res, next) => {
         const token = req.cookies.token;
         if(!token) return res.status(401).json({ error: 'Access Denied' });
         const verified = jwt.verify(token, secretKey);
+        // Check if the token has a 'status' variable and if it's 'inactive'
+        if (verified.status && verified.status === 'inactive') {
+            return res.status(401).json({ error: 'Access Removed' });
+        }
         req.user = verified;
         next();
     }
