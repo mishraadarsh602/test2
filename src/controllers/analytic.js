@@ -177,7 +177,7 @@ module.exports={
           let finalResponse = { columns: [], data: [] };
           let columnSet = new Set();
       
-          const fixedColumns = ["browser", "device", "utm_source", "utm_campaign", "utm_term", "utm_content"];
+          const fixedColumns = ["browser", "device", "utm_source", "utm_campaign", "utm_term", "utm_content","transaction_completed","transaction_status"];
           fixedColumns.forEach(col => columnSet.add(col));
           
           response.forEach(el => {
@@ -190,6 +190,11 @@ module.exports={
             dataRow["utm_campaign"] = el.utm_campaign || 'Not Applicable';
             dataRow["utm_term"] = el.utm_term || 'Not Applicable';
             dataRow["utm_content"] = el.utm_content || 'Not Applicable';
+            dataRow["transaction_completed"] = el.transaction_completed || 'Not Applicable';
+            dataRow["transaction_status"] = el.transaction_status || 'Not Applicable';
+            // dataRow["transaction_json"] = el.transaction_json || 'Not Applicable';
+
+
       
             el.lead?.fields.forEach(field => {
                 let fieldName = field.field_name;
