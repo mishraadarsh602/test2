@@ -734,7 +734,7 @@ module.exports = {
                     }
                     if (!tempTransactionJSON.transactionArray)
                         tempTransactionJSON.transactionArray = [];
-                    tempTransactionJSON.transactionArray.push(transactionObj)
+                        tempTransactionJSON.transactionArray.push(transactionObj)
 
                     if (visit.transaction_completed) {
                         visit.transaction_json = JSON.stringify(tempTransactionJSON);
