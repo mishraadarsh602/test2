@@ -305,7 +305,7 @@ module.exports = {
 
              const result = await appVisitorsModel.updateMany(
                  { _id: { $in: visitorIds } },
-                 { $set: { deleted: true } }
+                 { type: 'Deleted' } 
              );
 
              res.status(200).json({

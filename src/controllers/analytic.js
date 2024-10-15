@@ -90,6 +90,7 @@ module.exports={
             {
               $match: {
                 app: new mongoose.Types.ObjectId(req.body.appId),
+                type:{$ne:'Deleted'}
               }
             },
             {
