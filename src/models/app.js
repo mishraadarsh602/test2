@@ -148,7 +148,7 @@ const appSchema = new mongoose.Schema({
         //     required: false
         // }
     },
-    paymentSetting: {
+    payments:{
         enabled: {
             type: Boolean,
             default: false
@@ -157,11 +157,11 @@ const appSchema = new mongoose.Schema({
             type: String,
             default: 'stripeCheckout',
             enum: ['stripeCheckout','sensepass']
+        },
+        providers:{
+            type : Array,
+            default : []  
         }
-    },
-    payments:{
-      type : Array,
-        default : []  
     },
     visitorCount: {
         type: Number,
