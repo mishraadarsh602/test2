@@ -527,40 +527,40 @@ module.exports = {
       api = api.replace(regex, appData.apis[0].key);
       console.log(api)
     //   // Create a URL object from the original API to parse query parameters
-    //   const originalRequestUrl = new URL(api, `http://${req.headers.host}`); // Constructing the full URL for parsing
-    //   const originalQueryParameters = Object.fromEntries(
-    //     originalRequestUrl.searchParams
-    //   ); // Extract query parameters
+      const originalRequestUrl = new URL(api, `http://${req.headers.host}`); // Constructing the full URL for parsing
+      const originalQueryParameters = Object.fromEntries(
+        originalRequestUrl.searchParams
+      ); // Extract query parameters
 
     //   // Log the original query parameters
-    //   console.log("Original Query Parameters:", originalQueryParameters);
+      console.log("Original Query Parameters:", originalQueryParameters);
 
       // Create a URL object from req.url to parse query parameters
-    //   const customRequestUrl = new URL(req.url, `http://${req.headers.host}`); // Constructing the full URL for parsing
-    //   const customQueryParameters = Object.fromEntries(
-    //     customRequestUrl.searchParams
-    //   ); // Extract query parameters
+      const customRequestUrl = new URL(req.url, `http://${req.headers.host}`); // Constructing the full URL for parsing
+      const customQueryParameters = Object.fromEntries(
+        customRequestUrl.searchParams
+      ); // Extract query parameters
 
     //   // Log the incoming query parameters for debugging
-    //   console.log("Incoming Query Parameters:", customQueryParameters);
-    //   // Replace variables in the original API URL with actual values dynamically
-    //   api = api.replace(/\$\{(.*?)\}/g, (match, variableName) => {
-    //     let key = variableName.trim();
-    //     console.log(`Checking for replacement: ${key}`, match); // Debugging output
-    //     console.log(originalQueryParameters);
-    //     key = Object.keys(originalQueryParameters).find(
-    //       (keyName) => originalQueryParameters[keyName] === match
-    //     );
-    //     console.log(`Checking for replacement: ${key}`, match); // Debugging output
-    //     if (key in customQueryParameters) {
-    //       // Check if the key exists in incoming query parameters
-    //       const value = customQueryParameters[key];
-    //       console.log(`Replacing ${match} with ${value}`); // Debugging output
-    //       return value || ""; // Replace with the corresponding value from incoming query parameters
-    //     }
-    //     return ""; // Fallback if the key does not exist
-    //   });
-    //   console.log(api);
+      console.log("Incoming Query Parameters:", customQueryParameters);
+      // Replace variables in the original API URL with actual values dynamically
+      api = api.replace(/\$\{(.*?)\}/g, (match, variableName) => {
+        let key = variableName.trim();
+        console.log(`Checking for replacement: ${key}`, match); // Debugging output
+        console.log(originalQueryParameters);
+        key = Object.keys(originalQueryParameters).find(
+          (keyName) => originalQueryParameters[keyName] === match
+        );
+        console.log(`Checking for replacement: ${key}`, match); // Debugging output
+        if (key in customQueryParameters) {
+          // Check if the key exists in incoming query parameters
+          const value = customQueryParameters[key];
+          console.log(`Replacing ${match} with ${value}`); // Debugging output
+          return value || ""; // Replace with the corresponding value from incoming query parameters
+        }
+        return ""; // Fallback if the key does not exist
+      });
+      console.log(api);
 
       const response = await axios.get(api, {
         responseType: "arraybuffer", // Handle any kind of response (binary, JSON, etc.)
