@@ -36,6 +36,8 @@ router.patch('/update_brand_guide',auth, builderController.updateBrandGuide);
 //payment details
 router.post('/create_stripe_checkout_session',auth, builderController.createStripeCheckoutSession);
 router.get('/retrieve_stripe_checkout_session',auth, builderController.retrieveStripeCheckoutSession);
+router.post('/save_transaction_details',auth, builderController.saveTransactionDetails);
+
 
 
 module.exports = router;

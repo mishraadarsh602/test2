@@ -305,7 +305,7 @@ module.exports = {
 
              const result = await appVisitorsModel.updateMany(
                  { _id: { $in: visitorIds } },
-                 { $set: { deleted: true } }
+                 { type: 'Deleted' } 
              );
 
              res.status(200).json({
@@ -427,20 +427,50 @@ module.exports = {
           );
 
         //   // Updating apis array based on domain comparison
-          fetchedApp.apis.forEach((fetchedApi, index) => {
-            const originalApi = originalApis[index];
+        //   fetchedApp.apis.forEach((fetchedApi, index) => {
+        //     const originalApi = originalApis[index];
 
-            // If the original API exists, compare the domains
-            if (
-              originalApi &&
-              extractDomain(fetchedApi.api) !== extractDomain(originalApi.api)
-            ) {
-              // Only update if the domain is different
-              originalApis[index].api = fetchedApi.api;
+        //     // If the original API exists, compare the domains
+        //     if (
+        //       originalApi &&
+        //       extractDomain(fetchedApi.api) !== extractDomain(originalApi.api)
+        //     ) {
+        //       // Only update if the domain is different
+        //       originalApis[index].api = fetchedApi.api;
+        //     }
+        //   });
+
+          // Using Promise.all() with map() to handle asynchronous operations
+        const results = await Promise.all(
+            fetchedApp.apis.map(async (fetchedApi, index) => {
+              const originalApi = originalApis[index];
+              if (
+                fetchedApi &&
+                fetchedApi.api &&
+                originalApi &&
+                originalApi.api
+              ) {
+                if (
+                  extractDomain(fetchedApi.api) !== extractDomain(originalApi.api)
+                ) {
+                  originalApis[index].api = fetchedApi.api; // Update originalApis
+                  return { success: true, index, newApi: fetchedApi.api }; // Return a success result
+                }
+              }
+              return { success: false, index }; // Return a failure result
+            })
+          );
+  
+          // Check results
+          results.forEach((result) => {
+            if (result.success) {
+                fetchedApp.apis[0].api = originalApis[0].api;
+            } else {
+              console.log(`No update needed for index ${result.index}`);
             }
           });
           // Update app componentCode and save
-          fetchedApp.apis = originalApis;
+        //   fetchedApp.apis = originalApis;
           await fetchedApp.save();
 
           // Find the existing chat session
@@ -680,6 +710,53 @@ module.exports = {
         message: "Session retrieve successfully",
         data: session,
       });
+    },
+    saveTransactionDetails: async (req, res) => {
+        try {
+            let payment_success = '';
+            let { key, token, appId, description, currency, amount, paymentMethod, paymentStatus, email } = req.body;
+            if(paymentMethod == 'stripeCheckout'){
+                    payment_success = 'Payment Processed with Transaction ID: ' + token;
+                    let visit = await appVisitorsModel.findOne({ live_app: appId, _id: key });
+                    let transactionObj = {
+                        paymentStatus: paymentStatus,
+                        description: description,
+                        amount: isNaN(amount)?0:amount,
+                        currency: currency,
+                        email:email,
+                        id: token
+                    }
+                    let tempTransactionJSON;
+                    try {
+                        tempTransactionJSON = JSON.parse(visit.transaction_json);
+                    } catch (err) {
+                        tempTransactionJSON = {};
+                    }
+                    if (!tempTransactionJSON.transactionArray)
+                        tempTransactionJSON.transactionArray = [];
+                    tempTransactionJSON.transactionArray.push(transactionObj)
+
+                    if (visit.transaction_completed) {
+                        visit.transaction_json = JSON.stringify(tempTransactionJSON);
+                        await visit.save();
+                    } else
+                    await appVisitorsModel.updateOne({ live_app: appId, _id: key }, { $set: { transaction_status: payment_success, transaction_completed: true, transaction_json: JSON.stringify(tempTransactionJSON), transaction_mode: paymentMethod, amount:isNaN(amount)?0:amount, currency:currency } });
+                    res.status(201).json({
+                        message: "Transaction details saved successfully",
+                        data: transactionObj,
+                    });
+
+                } 
+            } catch (err) {
+                let visit = await appVisitorsModel.findOne({ live_app: req.body.appId, _id: req.body.key });
+                if (!visit.transaction_completed) {
+                    let payment_error = 'Payment Failed with code: ' + err.code + ' - ' + err.message;
+                    await appVisitorsModel.updateOne({ live_app: req.body.appId, _id: req.body.key }, { $set: { transaction_status: payment_error, transaction_completed: false, transaction_json: JSON.stringify(err), transaction_mode: req.body.paymentMethod } });
+                }
+
+                // return response.error(res, err);
+                    res.status(500).json({ error: err.message });
+            }
     },
 }
 
