@@ -427,20 +427,50 @@ module.exports = {
           );
 
         //   // Updating apis array based on domain comparison
-          fetchedApp.apis.forEach((fetchedApi, index) => {
-            const originalApi = originalApis[index];
+        //   fetchedApp.apis.forEach((fetchedApi, index) => {
+        //     const originalApi = originalApis[index];
 
-            // If the original API exists, compare the domains
-            if (
-              originalApi &&
-              extractDomain(fetchedApi.api) !== extractDomain(originalApi.api)
-            ) {
-              // Only update if the domain is different
-              originalApis[index].api = fetchedApi.api;
+        //     // If the original API exists, compare the domains
+        //     if (
+        //       originalApi &&
+        //       extractDomain(fetchedApi.api) !== extractDomain(originalApi.api)
+        //     ) {
+        //       // Only update if the domain is different
+        //       originalApis[index].api = fetchedApi.api;
+        //     }
+        //   });
+
+          // Using Promise.all() with map() to handle asynchronous operations
+        const results = await Promise.all(
+            fetchedApp.apis.map(async (fetchedApi, index) => {
+              const originalApi = originalApis[index];
+              if (
+                fetchedApi &&
+                fetchedApi.api &&
+                originalApi &&
+                originalApi.api
+              ) {
+                if (
+                  extractDomain(fetchedApi.api) !== extractDomain(originalApi.api)
+                ) {
+                  originalApis[index].api = fetchedApi.api; // Update originalApis
+                  return { success: true, index, newApi: fetchedApi.api }; // Return a success result
+                }
+              }
+              return { success: false, index }; // Return a failure result
+            })
+          );
+  
+          // Check results
+          results.forEach((result) => {
+            if (result.success) {
+                fetchedApp.apis[0].api = originalApis[0].api;
+            } else {
+              console.log(`No update needed for index ${result.index}`);
             }
           });
           // Update app componentCode and save
-          fetchedApp.apis = originalApis;
+        //   fetchedApp.apis = originalApis;
           await fetchedApp.save();
 
           // Find the existing chat session
