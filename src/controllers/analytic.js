@@ -32,7 +32,8 @@ module.exports={
             $gte: new Date(req.body.startDate), 
             $lt: new Date(req.body.endDate) 
         }});
-        let conversionRate= results.length> 0 ?  ((leadsCount/results.length)*100).toFixed(2) : 0 +'%';
+        let conversionPercentage=results.length> 0 ?((leadsCount/results.length)*100):0;
+        let conversionRate= Number.isInteger(conversionPercentage)?conversionPercentage  :  conversionPercentage.toFixed(2);
             let response={
                 trafficStats:{},
                 devices:{},
