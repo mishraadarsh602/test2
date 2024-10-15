@@ -147,7 +147,7 @@ module.exports={
             {
              $project: {
                date:1,
-              createdAt:0,
+               createdAt:0,
                updatedAt:0,
                browser:1,updatedAt:1,createdAt:1,device:1,
                utm_source:1,
@@ -155,6 +155,10 @@ module.exports={
                utm_campaign:1,
                utm_term:1,
                utm_content:1,
+               transaction_completed:1,
+               amount:1,
+               currency:1,
+               
              }
             }
           ])
@@ -177,13 +181,12 @@ module.exports={
           let finalResponse = { columns: [], data: [] };
           let columnSet = new Set();
       
-          const fixedColumns = ["browser", "device", "utm_source", "utm_campaign", "utm_term", "utm_content","transaction_completed","transaction_status"];
+          const fixedColumns = ["browser", "device", "utm_source", "utm_campaign", "utm_term", "utm_content","transaction_completed","amount","currency"];
           fixedColumns.forEach(col => columnSet.add(col));
           
           response.forEach(el => {
             let fieldCount = {}; 
             let dataRow = {};  
-      
             dataRow["browser"] = el.browser || 'Not Applicable';
             dataRow["device"] = el.device || 'Not Applicable';
             dataRow["utm_source"] = el.utm_source || 'Not Applicable';
@@ -191,11 +194,8 @@ module.exports={
             dataRow["utm_term"] = el.utm_term || 'Not Applicable';
             dataRow["utm_content"] = el.utm_content || 'Not Applicable';
             dataRow["transaction_completed"] = el.transaction_completed || 'Not Applicable';
-            dataRow["transaction_status"] = el.transaction_status || 'Not Applicable';
-            // dataRow["transaction_json"] = el.transaction_json || 'Not Applicable';
-
-
-      
+            dataRow["amount"] = el.amount || 'Not Applicable';
+            dataRow["currency"] = el.currency || 'Not Applicable';
             el.lead?.fields.forEach(field => {
                 let fieldName = field.field_name;
                 fieldName=fieldName.split(' ').join('');

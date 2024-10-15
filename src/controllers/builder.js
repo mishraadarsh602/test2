@@ -713,34 +713,22 @@ module.exports = {
     },
     saveTransactionDetails: async (req, res) => {
         try {
-            let payment_success = '';
             let { key, token, appId, description, currency, amount, paymentMethod, paymentStatus, email } = req.body;
             if(paymentMethod == 'stripeCheckout'){
-                    payment_success = 'Payment Processed with Transaction ID: ' + token;
                     let visit = await appVisitorsModel.findOne({ live_app: appId, _id: key });
                     let transactionObj = {
                         paymentStatus: paymentStatus,
                         description: description,
-                        amount: isNaN(amount)?0:amount,
+                        amount: isNaN(amount)?0:amount/100,
                         currency: currency,
                         email:email,
                         id: token
                     }
-                    let tempTransactionJSON;
-                    try {
-                        tempTransactionJSON = JSON.parse(visit.transaction_json);
-                    } catch (err) {
-                        tempTransactionJSON = {};
-                    }
-                    if (!tempTransactionJSON.transactionArray)
-                        tempTransactionJSON.transactionArray = [];
-                        tempTransactionJSON.transactionArray.push(transactionObj)
-
                     if (visit.transaction_completed) {
-                        visit.transaction_json = JSON.stringify(tempTransactionJSON);
+                        visit.transaction_json = JSON.stringify(transactionObj);
                         await visit.save();
                     } else
-                    await appVisitorsModel.updateOne({ live_app: appId, _id: key }, { $set: { transaction_status: payment_success, transaction_completed: true, transaction_json: JSON.stringify(tempTransactionJSON), transaction_mode: paymentMethod, amount:isNaN(amount)?0:amount, currency:currency } });
+                    await appVisitorsModel.updateOne({ live_app: appId, _id: key }, { $set: { transaction_status: paymentStatus, transaction_completed: true, transaction_json: JSON.stringify(transactionObj), transaction_mode: paymentMethod, amount:isNaN(amount)?0:amount/100, currency:currency } });
                     res.status(201).json({
                         message: "Transaction details saved successfully",
                         data: transactionObj,
