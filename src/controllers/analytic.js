@@ -1,11 +1,11 @@
 const App = require('../models/app');
 const appVisitorModel = require('../models/appVisitors');
-const appLeadsModel = require('../models/appLeads');
 const appModel=require('../models/app');
 const featureListModel=require('../models/featureList');
 const { default: mongoose } = require('mongoose');
 const Bowser = require("bowser");
-
+const appVisitorsModel = require('../models/appVisitors');
+const appLeadsModel = require('../models/appLeads');
 async function updateCount(req) {
   try {
         await appModel.updateOne({ _id: req.body.app,}, { $inc: { visitorCount: 1 } });
@@ -301,4 +301,24 @@ module.exports={
       res.status(500).json({ error: error.message });
     }
   },
+  deleteVisitors:async (req, res) => {
+    try {
+        const { visitorIds } = req.body;
+        if (!Array.isArray(visitorIds) || visitorIds.length === 0) {
+            return res.status(400).json({ error: 'No visitor IDs provided' });
+        }
+
+        const result = await appVisitorsModel.updateMany(
+            { _id: { $in: visitorIds } },
+            { type: 'Deleted' } 
+        );
+
+        res.status(200).json({
+            message: 'Visitors deleted successfully',
+        });
+   } catch (error) {
+       // Send error response
+       res.status(500).json({ error: error.message });
+   }
+},
 }

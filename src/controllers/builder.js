@@ -296,29 +296,6 @@ module.exports = {
         }
     },
 
-     deleteVisitors:async (req, res) => {
-         try {
-             const { visitorIds } = req.body;
-             if (!Array.isArray(visitorIds) || visitorIds.length === 0) {
-                 return res.status(400).json({ error: 'No visitor IDs provided' });
-             }
-
-             const result = await appVisitorsModel.updateMany(
-                 { _id: { $in: visitorIds } },
-                 { type: 'Deleted' } 
-             );
-
-             res.status(200).json({
-                 message: 'Visitors deleted successfully',
-             });
-        } catch (error) {
-            // Log the error
-            createLog({ userId: req.user.userId.toString(), error: error.message, appId: req.body.appId });
-    
-            // Send error response
-            res.status(500).json({ error: error.message });
-        }
-    },
     getPreviewApp:async (req,res)=>{
         try {
             const appId=req.params.appId;

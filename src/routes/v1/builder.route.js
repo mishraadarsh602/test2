@@ -25,7 +25,6 @@ router.post('/check_unique_app_name',auth, builderController.checkUniqueAppName)
 router.post('/check_unique_url', builderController.checkUniqueUrl);
 router.post('/liveApp/:appId', builderController.liveApp);
 router.get('/getOverView/:appId',auth,builderController.getOverViewDetails);
-router.post('/visitor/delete',auth, builderController.deleteVisitors);
 router.get('/getPreviewApp/:appId', auth,builderController.getPreviewApp);
 router.post('/fixError', auth,builderController.fixError);
 router.get('/callAPI', builderController.callAPI);
