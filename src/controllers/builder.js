@@ -153,7 +153,7 @@ module.exports = {
                     throw new Error("This URL is not allowed");
                 }
             }
-
+            delete updateData['visitorCount']; // as user may increase the visitors by visiting live app and but update the previous data in builder  so visitor count again set to previous
             let updatedApp = await App.findOneAndUpdate({ _id: req.params.id }, updateData, { new: true }).lean();
             if (!updatedApp) {
                 return res.status(404).json({ error: 'App not found' });
