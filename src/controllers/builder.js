@@ -1,7 +1,6 @@
 const App = require('../models/app');
 const User = require('../models/user.model');
 const { v4: uuidv4 } = require('uuid');
-const builderLogsModel=require('../models/logs/logs-builder');
 const UserService = require('../service/userService');
 const mongoose=require('mongoose');
 const appVisitorsModel = require('../models/appVisitors');
@@ -14,14 +13,7 @@ const { default: axios } = require('axios');
 const chatSession = require('../models/chat/chatSession.model');
 const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY });
 
-async function createLog(data) {
-    try {
-        let logCreated = new builderLogsModel(data);
-         await logCreated.save();
-    } catch (error) {
-        // res.status(500).json({ error: error.message });
-    }
-}
+
 
 module.exports = {
 

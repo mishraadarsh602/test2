@@ -2,15 +2,6 @@ const App = require('../models/app');
 const appVisitorModel = require('../models/appVisitors');
 const appModel=require('../models/app');
 const featureListModel=require('../models/featureList');
-// const frontendLogsModel=require('../models/logs/logs-frontend');
-// async function createLog(data){
-//     try {
-//         let logCreated = new frontendLogsModel(data);
-//         await logCreated.save();
-//     } catch (error) {
-//         // res.status(500).json({ error: error.message });
-//     }
-// }
 const redisClient=require('../utils/redisClient');
 const appLeadsModel=require('../models/appLeads');
 const  mongoose = require('mongoose');
