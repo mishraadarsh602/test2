@@ -94,7 +94,11 @@ module.exports = {
 
     getAppByUrl: async (req, res) => {     
         try {
-             let app = await App.findOne({url:req.params.url},).lean();
+            const userId = req.user ? req.user.userId : null;
+            if (!userId) {
+                return res.status(401).json({ error: 'User ID is required' });
+            }
+             let app = await App.findOne({url:req.params.url,user:userId}).lean();
              if (!app) {
                 return res.status(404).json({ error: 'App not found' });
             }
