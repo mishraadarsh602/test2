@@ -582,7 +582,7 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
   }
   console.log("additional_instructions", additional_instructions);
 
-  if(parentResponse.ToolTYPE === 'AIBASED' || app.tool_type === 'AIBASED'){
+  if((parentResponse.ToolTYPE === 'AIBASED' || app.tool_type === 'AIBASED') && app.agent_type === "AI_Tool"){
     assistantObj = {
       assistant_id:
         process.env.NODE_ENV == "staging" ||
