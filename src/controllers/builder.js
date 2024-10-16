@@ -612,8 +612,9 @@ module.exports = {
 
   callAI: async (req, res) => {
     try {
-      console.log();
       const userPrompt = req.body.prompt; // Change here to get appId from the query
+      const appId = req.body.appId;
+      const appDetails = await App.findById(appId);
       let prompt = `${userPrompt}`;
 
           const response = await axios.post(
@@ -631,7 +632,7 @@ module.exports = {
             {
               headers: {
                 "content-type": "application/json",
-                "x-api-key": process.env["ANTHROPIC_API_KEY"],
+                "x-api-key": appDetails.ai['key'],
                 "anthropic-version": "2023-06-01",
               },
             }
