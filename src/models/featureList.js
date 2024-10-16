@@ -43,6 +43,10 @@ const featureListSchema = new mongoose.Schema(
             type: Number,
             default:0 
         },
+        rank: {
+            type: Number,
+            default: 999999
+        }
     },
     {
         timestamps: true,

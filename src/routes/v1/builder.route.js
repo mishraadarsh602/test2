@@ -34,9 +34,9 @@ router.post('/brand_guide',auth, builderController.getBrandGuide);
 router.post('/upload_file_aws',auth,upload.single("image"),builderController.uploadFile);
 router.patch('/update_brand_guide',auth, builderController.updateBrandGuide);
 //payment details
-router.post('/create_stripe_checkout_session',auth, builderController.createStripeCheckoutSession);
-router.get('/retrieve_stripe_checkout_session',auth, builderController.retrieveStripeCheckoutSession);
-router.post('/save_transaction_details',auth, builderController.saveTransactionDetails);
+router.post('/create_stripe_checkout_session', builderController.createStripeCheckoutSession);
+router.get('/retrieve_stripe_checkout_session', builderController.retrieveStripeCheckoutSession);
+router.post('/save_transaction_details', builderController.saveTransactionDetails);
 
 
 

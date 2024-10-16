@@ -153,7 +153,7 @@ module.exports = {
                     throw new Error("This URL is not allowed");
                 }
             }
-
+            delete updateData['visitorCount']; // as user may increase the visitors by visiting live app and but update the previous data in builder  so visitor count again set to previous
             let updatedApp = await App.findOneAndUpdate({ _id: req.params.id }, updateData, { new: true }).lean();
             if (!updatedApp) {
                 return res.status(404).json({ error: 'App not found' });
@@ -204,7 +204,7 @@ module.exports = {
         try {
             let id=req.params._id;
             let previousLiveApp=await App.findOne({parentApp:req.params.appId,status:'live'});
-            const parentApp=await App.findOne({_id:req.params.appId});
+            const parentApp=await App.findOne({_id:req.params.appId,status:'dev'});
             if(previousLiveApp){
                 previousLiveApp.status='old';
                 if (!redisClient.isOpen) {
@@ -229,7 +229,7 @@ module.exports = {
                 message: "App live successfully",
               });
         } catch (error) {            
-          
+
             createLog({userId:req.user.userId.toString(),error:error.message,appId:req.body.appId})
             res.status(500).json({ error: error.message });
         }
@@ -713,34 +713,22 @@ module.exports = {
     },
     saveTransactionDetails: async (req, res) => {
         try {
-            let payment_success = '';
             let { key, token, appId, description, currency, amount, paymentMethod, paymentStatus, email } = req.body;
             if(paymentMethod == 'stripeCheckout'){
-                    payment_success = 'Payment Processed with Transaction ID: ' + token;
                     let visit = await appVisitorsModel.findOne({ live_app: appId, _id: key });
                     let transactionObj = {
                         paymentStatus: paymentStatus,
                         description: description,
-                        amount: isNaN(amount)?0:amount,
+                        amount: isNaN(amount)?0:amount/100,
                         currency: currency,
                         email:email,
                         id: token
                     }
-                    let tempTransactionJSON;
-                    try {
-                        tempTransactionJSON = JSON.parse(visit.transaction_json);
-                    } catch (err) {
-                        tempTransactionJSON = {};
-                    }
-                    if (!tempTransactionJSON.transactionArray)
-                        tempTransactionJSON.transactionArray = [];
-                    tempTransactionJSON.transactionArray.push(transactionObj)
-
                     if (visit.transaction_completed) {
-                        visit.transaction_json = JSON.stringify(tempTransactionJSON);
+                        visit.transaction_json = JSON.stringify(transactionObj);
                         await visit.save();
                     } else
-                    await appVisitorsModel.updateOne({ live_app: appId, _id: key }, { $set: { transaction_status: payment_success, transaction_completed: true, transaction_json: JSON.stringify(tempTransactionJSON), transaction_mode: paymentMethod, amount:isNaN(amount)?0:amount, currency:currency } });
+                    await appVisitorsModel.updateOne({ live_app: appId, _id: key }, { $set: { transaction_status: paymentStatus, transaction_completed: true, transaction_json: JSON.stringify(transactionObj), transaction_mode: paymentMethod, amount:isNaN(amount)?0:amount/100, currency:currency } });
                     res.status(201).json({
                         message: "Transaction details saved successfully",
                         data: transactionObj,

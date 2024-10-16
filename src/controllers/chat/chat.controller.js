@@ -40,22 +40,12 @@ const startChatSession = async (userId, agentId, message, imageArray) => {
       ]
     });
 
-    // Check if a userSession already exists for this user
-    let userSessionDoc = await userSession.findOne({ userId });
-
-    if (!userSessionDoc) {
-      // Create a new user session if none exists
-      userSessionDoc = await userSession.create({
-        userId,
-        chatsessions: [newChatSession._id],
-        timeSpent: 0,
-        date: new Date(),
-      });
-    } else {
-      // Add the new chat session to the existing user session
-      userSessionDoc.chatsessions.push(newChatSession._id);
-      await userSessionDoc.save();
-    }
+    // This can be done asynchronously
+    userSession.findOneAndUpdate(
+      { userId },
+      { $push: { chatsessions: newChatSession._id }, $setOnInsert: { userId, timeSpent: 0, date: new Date() } },
+      { upsert: true, new: true }
+    ).exec().catch(error => console.error("Error updating user session:", error));
 
     return newChatSession; // Return the new session
   } catch (error) {
@@ -730,18 +720,18 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
       console.log(
         "new chat loaded.---------------------------------------------"
       );
-      await startChatSession(userId, app._id, userMessage, [
-        image === null ? "" : image,
-      ]);
+      // This can be done asynchronously
+      startChatSession(userId, app._id, userMessage, [image === null ? "" : image])
+        .catch(error => console.error("Error starting chat session:", error));
     }
 
     if(!isStartChat && app.agent_type !== 'AI_Tool' && oldChatSession.messages.length === 1){
       console.log(
         "Premade new chat loaded......................................."
       );
-      await updateHumanMessageToChatSession(userId, app._id, userMessage, [
-        image === null ? "" : image,
-      ]);
+      // This can be done asynchronously
+      updateHumanMessageToChatSession(userId, app._id, userMessage, [image === null ? "" : image])
+        .catch(error => console.error("Error updating human message:", error));
     }
 
     const appDetails = await App.findOne({ _id: app._id });
@@ -893,7 +883,8 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
       }
       // appDetails.apis = originalApis;
       appDetails.componentCode = obj.code;
-      await appDetails.save();
+      // This can be done asynchronously
+      appDetails.save().catch(error => console.error("Error saving app details:", error));
       // Call the callback to stream partial responses
       onPartialResponse({
         message: chatResponse,

@@ -239,7 +239,7 @@ module.exports = {
     },
     getFeatureLists:async (req,res)=>{
       try {
-        const allFeatureLists=await featureListModel.find({active:true},{type:1,icon:1,visitorCount:1,title:1,description:1,comingSoon:1});
+        const allFeatureLists = await featureListModel.find({ active: true }, { type: 1, icon: 1, visitorCount: 1, title: 1, description: 1, comingSoon: 1 }, { sort: { rank: 1 } });
         res.status(200).json({
           message: "All featureLists fetched successfully",
           data: allFeatureLists,

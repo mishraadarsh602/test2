@@ -79,7 +79,15 @@ const appVisitorSchema = new mongoose.Schema(
         transaction_completed: {
             type: Boolean,
             default: false
-        }
+        },
+        amount: {
+            type: Number,
+            default: null
+        },
+        currency: {
+            type: String,
+            default: null
+        },
     },
     {
         timestamps: true,
