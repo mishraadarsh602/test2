@@ -64,6 +64,7 @@ module.exports = {
         appData.theme.secondaryColor = secondaryColor || appData.theme.secondaryColor;
         appData.theme.backgroundColor = backgroundColor || appData.theme.backgroundColor;
       }
+      appData.ai['model'] = 'anthropic';
       let newApp = new App(appData);
       newApp["componentCode"] = newApp["componentCode"].replace('${appId}', newApp._id.toString());
       let savedApp = await newApp.save();

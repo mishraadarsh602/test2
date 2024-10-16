@@ -612,8 +612,9 @@ module.exports = {
 
   callAI: async (req, res) => {
     try {
-      console.log();
       const userPrompt = req.body.prompt; // Change here to get appId from the query
+      const appId = req.body.appId;
+      const appDetails = await App.findById(appId);
       let prompt = `${userPrompt}`;
 
           const response = await axios.post(
@@ -631,7 +632,7 @@ module.exports = {
             {
               headers: {
                 "content-type": "application/json",
-                "x-api-key": process.env["ANTHROPIC_API_KEY"],
+                "x-api-key": appDetails.ai['key'],
                 "anthropic-version": "2023-06-01",
               },
             }
@@ -715,7 +716,6 @@ module.exports = {
         try {
             let { key, token, appId, description, currency, amount, paymentMethod, paymentStatus, email } = req.body;
             if(paymentMethod == 'stripeCheckout'){
-                    let visit = await appVisitorsModel.findOne({ live_app: appId, _id: key });
                     let transactionObj = {
                         paymentStatus: paymentStatus,
                         description: description,
@@ -724,10 +724,6 @@ module.exports = {
                         email:email,
                         id: token
                     }
-                    if (visit.transaction_completed) {
-                        visit.transaction_json = JSON.stringify(transactionObj);
-                        await visit.save();
-                    } else
                     await appVisitorsModel.updateOne({ live_app: appId, _id: key }, { $set: { transaction_status: paymentStatus, transaction_completed: true, transaction_json: JSON.stringify(transactionObj), transaction_mode: paymentMethod, amount:isNaN(amount)?0:amount/100, currency:currency } });
                     res.status(201).json({
                         message: "Transaction details saved successfully",
