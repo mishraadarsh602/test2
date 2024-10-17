@@ -1,4 +1,4 @@
-const ErrorLogsModel=require('../models/logs/ErrorLogs');
+const ErrorLogsModel=require('../models/logs/errorLogs');
 const logErrorToDatabase = async (err, req) => {
   try {
     const errorLog = new ErrorLogsModel({
