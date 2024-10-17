@@ -9,5 +9,4 @@ router.post('/get_engagements',auth,analyticController.fetchVisitors);
 router.post('/get_leads',auth,analyticController.get_leads);
 router.post('/delete_leads',auth, analyticController.deleteLeads);
 router.post('/delete_visits',auth, analyticController.deleteVisitors);
-// router.post('/delete_leads',auth, analyticController.deleteLead);
 module.exports=router;
