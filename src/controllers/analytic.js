@@ -246,7 +246,8 @@ module.exports={
             transaction_completed: 1,
             amount: 1,
             currency: 1,
-            'lead.fields': 1
+            'lead.fields': 1,
+            'lead._id':1
           }
         }
       ]);
@@ -269,7 +270,7 @@ module.exports={
 
       response.forEach(el => {
         let fieldCount = {};
-        finalResponse.idsArray.push(el._id);
+        finalResponse.idsArray.push(el.lead._id);
         const dataRow = fixedColumns.map(entry => {
           const key =entry.key;
           return el[key] || 'Not Applicable';
@@ -331,5 +332,23 @@ module.exports={
         res.status(200).json(
           new ApiResponse(200,'Visitors deleted successfully')
          );
-})
+}),
+  deleteLeads:catchAsync(async(req,res)=>{
+    const { leadsIds } = req.body;
+    if (!Array.isArray(leadsIds) || leadsIds.length === 0) {
+      throw new ApiError(400, 'No Lead IDs provided');
+    }
+    const invalidId=leadsIds.some(leadId=>!moongooseHelper.isValidMongooseId(leadId))
+    if(invalidId){
+      throw new ApiError(400, 'Lead Id not valid');
+    }
+
+   const response= await appVisitorsModel.updateMany(
+      { lead: { $in: leadsIds } },
+      { lead: null } 
+  );
+  res.status(200).json(
+    new ApiResponse(200,'Leads deleted successfully',response)
+   );
+  })
 }
