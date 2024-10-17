@@ -9,7 +9,19 @@ const path = require('path');
 const dotenv = require('dotenv');
 const cookieParser = require('cookie-parser');
 const redisClient=require('./src/utils/redisClient');
-redisClient.connect();
+// Connect to Redis
+const connectRedis = async () => {
+  try {
+      await redisClient.connect();
+      console.log('Connected to Redis');
+  } catch (error) {
+      console.error('Error connecting to Redis:', error);
+      setTimeout(connectRedis, 5000); // Retry connection after 5 seconds
+  }
+};
+
+connectRedis(); // Start Redis connection
+
 connectDB();
 const app = express();
 const server = http.createServer(app);  // Create the HTTP server
@@ -52,4 +64,9 @@ app.get('/', (req, res) => {
 // Start the server on port 4000
 server.listen(process.env.PORT || 4000, () => {
   console.log('Server is running on http://localhost:4000');
+});
+
+// Error handling for Redis
+redisClient.on("error", (err) => {
+  console.error("Redis Client Error:", err);
 });
