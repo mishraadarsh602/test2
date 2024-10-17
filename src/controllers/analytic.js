@@ -30,7 +30,7 @@ module.exports={
             app: moongooseHelper.giveMoongooseObjectId(appId),
             createdAt: {
               $gte: new Date(startDate),
-              $lt: new Date(endDate)
+              $lte: new Date(endDate)
             }
           }
         },
@@ -136,7 +136,7 @@ module.exports={
             type:{$ne:'Deleted'},
             createdAt: {
               $gte: new Date(startDate),
-              $lt: new Date(endDate)
+              $lte: new Date(endDate)
             }
           }
         },
@@ -223,7 +223,7 @@ module.exports={
             app: moongooseHelper.giveMoongooseObjectId(appId),
             createdAt: {
               $gte: new Date(startDate),
-              $lt: new Date(endDate)
+              $lte: new Date(endDate)
             }
           }
         },
