@@ -137,6 +137,11 @@ module.exports={
           }
         },
         {
+          $sort: {
+            updatedAt: -1,
+          },
+        },
+        {
           $addFields: {
                 date:{
               $dateToString: {
@@ -198,8 +203,12 @@ module.exports={
         {
           $match: {
             app: moongooseHelper.giveMoongooseObjectId(appId),
-            type: { $ne: 'Deleted' },
           }
+        },
+        {
+          $sort: {
+            updatedAt: -1,
+          },
         },
         {
           $addFields: {
