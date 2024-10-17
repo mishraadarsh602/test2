@@ -8,6 +8,7 @@ const { OpenAI } = require("openai");
 const chatSession = require('../models/chat/chatSession.model');
 const catchAsync=require('../utils/catchAsync');
 const userService = new UserService();
+const moongooseHelper=require('../utils/moongooseHelper');
 const apiResponse=require('../utils/apiResponse');
 const ApiError=require('../utils/throwError')
 module.exports = {
@@ -111,7 +112,7 @@ module.exports = {
           dev: [
             {
               $match: {
-                user: new mongoose.Types.ObjectId(userId),
+                user: moongooseHelper.giveMoongooseObjectId(userId),
                 status: "dev",
                 name: { $regex: regexPattern },
               },
@@ -134,8 +135,9 @@ module.exports = {
           live: [
             {
               $match: {
-                user: new mongoose.Types.ObjectId(userId),
+                user: moongooseHelper.giveMoongooseObjectId(userId),
                 status: "live",
+                name: { $regex: regexPattern },
               },
             },
             {
@@ -191,37 +193,33 @@ module.exports = {
       },
     ]);
     const appCount = await App.count({
-      user: new mongoose.Types.ObjectId(userId),
+      user: moongooseHelper.giveMoongooseObjectId(userId),
       status: "dev",
       name: { $regex: regexPattern },
     });
     const showMore = req.body.skip + req.body.limit < appCount;
     res.status(200).json(
-      new apiResponse(200, {apps,showMore}, "All Apps fetched successfully")
+      new apiResponse(200,"All Apps fetched successfully",{apps,showMore},)
     )
   }),
 
   deleteApp:catchAsync(async(req,res)=>{
-    const appId = req.params.appId+'12';
-    if (!mongoose.Types.ObjectId.isValid(appId)) {
+    const appId = req.params.appId;
+    if (!moongooseHelper.isValidMongooseId(appId)) {
       throw new ApiError(400, "Invalid App ID");
     }
-    await App.updateOne({_id:appId+'123',user:req.user.userId}, {
+    await App.updateOne({_id:appId,user:req.user.userId}, {
       status: "deleted",
     });
-    res.status(200).json({ message: "App deleted successfully" });
+    res.status(200).json(new apiResponse(200, "All Apps fetched successfully"));
   }),
-    getFeatureLists:async (req,res)=>{
-      try {
-        const allFeatureLists = await featureListModel.find({ active: true }, { type: 1, icon: 1, visitorCount: 1, title: 1, description: 1, comingSoon: 1 }, { sort: { rank: 1 } });
-        res.status(200).json({
-          message: "All featureLists fetched successfully",
-          data: allFeatureLists,
-      });
-      } catch (error) {
-        res.status(500).json({ error: error.message });
-      }
-    },
+  getFeatureLists:catchAsync(async(req,res)=>{
+    const allFeatureLists = await featureListModel.find({ active: true }, { type: 1, icon: 1, visitorCount: 1, title: 1, description: 1, comingSoon: 1 }, { sort: { rank: 1 } });
+    res.status(200).json(
+      new apiResponse(200, "All featureLists fetched successfully",allFeatureLists)
+)
+}
+)
 }
 
 async function createThread() {

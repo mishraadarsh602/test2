@@ -5,9 +5,13 @@ const featureListModel=require('../models/featureList');
 const redisClient=require('../utils/redisClient');
 const appLeadsModel=require('../models/appLeads');
 const  mongoose = require('mongoose');
+const catchAsync=require('../utils/catchAsync');
+const moongooseHelper=require('../utils/moongooseHelper');
+const ApiResponse = require('../utils/apiResponse');
+const ApiError = require('../utils/throwError');
 module.exports = {
-    getLivePreview:async (req,res)=>{
-    try {
+    getLivePreview:catchAsync(
+      async (req,res)=>{
       const parameter = req.params.url;
       let response;
       
@@ -21,45 +25,22 @@ module.exports = {
         response = await App.findOne({ url: parameter, status: "live" }, { apis: 0, thread_id: 0 });
 
         // If response not found, try to fetch by _id
-        if (!response && mongoose.Types.ObjectId.isValid(parameter)) {
+        if (!response && moongooseHelper.isValidMongooseId(parameter)) {
           response = await App.findOne({
-            _id: new mongoose.Types.ObjectId(parameter),
+            _id: new moongooseHelper.giveMoongooseObjectId(parameter),
             status: "live",
           }, { apis: 0, thread_id: 0 });
         }
 
         if (!response) {
-          return res.status(405).json({ error: "Page Not Found" });
+          new ApiError(404,"App Not Found" )
         }
         await redisClient.set(`app-${parameter}`, JSON.stringify(response));
       }
 
-      res.status(201).json({
-        message: "Fetched live preview successfully",
-        data: app ? JSON.parse(app) : response,
-      });
-    } catch (error) {    
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  },
-  saveLead:async (req,res)=>{
-    try {
-      const userId = req.user ? req.user.userId : null;
-      if (!userId) {
-                return res.status(400).json({ error: 'User ID is required' });
-      }
-
-      let body={...req.body,user:userId,parentApp: new mongoose.Types.ObjectId(req.params.appId)}
-      const data=await appLeadsModel(body);
-      await data.save();
-      return res.status(200).json({
-        message: 'lead save successfully',
-});
-    } catch (error) {
-
-    }
-   
-  }
-
+      res.status(200).json(
+        new ApiResponse(200,"Fetched live preview successfully",app ? JSON.parse(app) : response)
+      );
+  }),
 };
 

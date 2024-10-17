@@ -9,8 +9,13 @@ const userService = new UserService();
 const dashboardHelper = require('../helpers/dashboard');
 const { OpenAI } = require("openai");
 const redisClient = require('../utils/redisClient');
+const catchAsync=require('../utils/catchAsync');
+const moongooseHelper=require('../utils/moongooseHelper');
+const apiResponse=require('../utils/apiResponse');
+const ApiError=require('../utils/throwError');
 const { default: axios } = require('axios');
 const chatSession = require('../models/chat/chatSession.model');
+const ApiResponse = require('../utils/apiResponse');
 const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY });
 
 
@@ -82,54 +87,21 @@ module.exports = {
             } catch (error) {
                 res.status(500).json({ error: error.message });
             }
-        },
-
-    getAppByUrl: async (req, res) => {     
-        try {
-            const userId = req.user ? req.user.userId : null;
-            if (!userId) {
-                return res.status(401).json({ error: 'User ID is required' });
-            }
-             let app = await App.findOne({url:req.params.url,user:userId}).lean();
-             if (!app) {
-                return res.status(404).json({ error: 'App not found' });
-            }
-            let liveApp=await App.findOne({parentApp:app._id,status:'live'},{url:1,_id:0});            
-            res.status(200).json({
-                message: "App fetched successfully",
-                data:{...app,isLive: !!liveApp,url:liveApp?liveApp.url:app.url},
-              });
-        } catch (error) {   
-            createLog({userId:req.user.userId,error:error.message,appId:req.params.appId})
-            res.status(500).json({ error: error.message });
-        }
-    },
-
-    getAllAppsOfUser: async (req, res) => {
-        try {
-            const userId = req.user ? req.user.userId : null;
-            if (!userId) {
-                return res.status(400).json({ error: 'User ID is required' });
-            }
-           
-            let apps = await App.find({ user: userId, status: 'dev' });
-            if (!apps || apps.length == 0) {
-                return res.status(200).json({ message: 'No app found' });
-            }
-            res.status(200).json({
-                message: "All Apps fetched successfully",
-                data: apps,
-            });
-        } catch (error) {
-            res.status(500).json({ error: error.message });
-        }
-    },
-    updateApp: async (req, res) => {
-        try {
-            const userId = req.user ? req.user.userId : null;
-            if (!userId) {
-                return res.status(400).json({ error: 'User ID is required' });
-            }
+        }, 
+      getAppByUrl:catchAsync(async(req,res)=>{
+           let app = await App.findOne({url:req.params.url,user:req.user.userId}).lean();
+           if (!app) {
+            throw new ApiError(404, "App not found");
+          }
+          let liveApp=await App.findOne({parentApp:app._id,status:'live'},{url:1,_id:0});     
+          res.status(200).json(
+            new apiResponse(200, "App fetched successfully",{...app,isLive: !!liveApp,url:liveApp?liveApp.url:app.url})
+           );
+        }),
+  updateApp:catchAsync(async (req, res) => {
+    if (!moongooseHelper.isValidMongooseId(req.params.id)) {
+      throw new ApiError(404, "AppId not valid");
+    }
             // let { name } = req.body;
             let updateData = req.body;
 
@@ -150,33 +122,11 @@ module.exports = {
                 }
             }
             delete updateData['visitorCount']; // as user may increase the visitors by visiting live app and but update the previous data in builder  so visitor count again set to previous
-            let updatedApp = await App.findOneAndUpdate({ _id: req.params.id }, updateData, { new: true }).lean();
-            if (!updatedApp) {
-                return res.status(404).json({ error: 'App not found' });
-            }
-
-            res.status(200).json({
-                message: "App Updated successfully",
-                data: updatedApp,
-            });
-        } catch (error) {
-            createLog({userId:req.user.userId.toString(),error:error.message,appId:req.params.appId})
-            res.status(500).json({ error: error.message });
-        }
-    },
-
-    deleteApp: async (req, res) => {
-        try {
-            const appId = req.params.appId;
-            const deletedApp = await App.findByIdAndUpdate(appId, { status: 'deleted' }).exec();
-            if (!deletedApp) {
-                return res.status(404).json({ error: 'App not found' });
-            }
-            res.status(200).json({ message: 'App deleted successfully' }); // app: deletedApp
-        } catch (error) {
-            res.status(500).json({ error: error.message });
-        }
-    },
+            await App.updateOne({ _id: req.params.id,user: req.user.userId}, updateData,).lean();
+            res.status(200).json(
+              new apiResponse(200, "App updated successfully")
+            );
+    }),
 
     checkUniqueAppName: async (req, res) => {
         try {
@@ -196,11 +146,16 @@ module.exports = {
             res.status(500).json({ error: error.message });
         }
     },
-    liveApp:async (req,res)=>{
-        try {
-            let id=req.params._id;
-            let previousLiveApp=await App.findOne({parentApp:req.params.appId,status:'live'});
-            const parentApp=await App.findOne({_id:req.params.appId,status:'dev'});
+    liveApp:catchAsync(async (req,res)=>{
+      let appId=req.params.appId;
+        if (!moongooseHelper.isValidMongooseId(appId)) {
+          throw new ApiError(404, "AppId not valid");
+        }
+        const parentApp=await App.findOne({_id:appId,user:req.user.userId});
+            if(!parentApp){
+              throw new ApiError(404, "App not found");
+            }
+            let previousLiveApp=await App.findOne({parentApp:appId,user:req.user.userId,status:'live'});
             if(previousLiveApp){
                 previousLiveApp.status='old';
                 if (!redisClient.isOpen) {
@@ -221,15 +176,10 @@ module.exports = {
             delete appData['_id'];
             let newApp = new App(appData);  
             await newApp.save();         
-            res.status(201).json({
-                message: "App live successfully",
-              });
-        } catch (error) {            
-
-            createLog({userId:req.user.userId.toString(),error:error.message,appId:req.body.appId})
-            res.status(500).json({ error: error.message });
-        }
-    },
+            res.status(201).json(
+              new apiResponse(201, "App live successfully")
+            );
+    }),
 
   
     getBrandGuide:async (req,res)=>{
@@ -292,18 +242,16 @@ module.exports = {
         }
     },
 
-    getPreviewApp:async (req,res)=>{
-        try {
-            const appId=req.params.appId;
-            const fetchedApp=await App.findById(appId);
-            res.status(201).json({
-                message: "fetch preview app",
-                data: fetchedApp,
-              });
-        } catch (error) {
-            
-        }
-    },
+    getPreviewApp:catchAsync(async(req,res)=>{
+      let appId=req.params.appId;
+      if (!moongooseHelper.isValidMongooseId(appId)) {
+        throw new ApiError(404, "AppId not valid");
+      }
+      const fetchedApp=await App.findOne({_id:appId,user:req.user.userId});
+      res.status(200).json(
+        new apiResponse(200, "App fetched successfully",fetchedApp)
+      )
+    }),
 
     fixError :async (req,res)=>{
         try {
@@ -467,51 +415,7 @@ module.exports = {
         }
     },
 
-    getOverViewDetails:async (req,res)=>{
-        try {
-            const appId=req.params.appId;
-            
-            const userId = req.user ? req.user.userId : null;
-            const visitorCounts = await appVisitorsModel.aggregate(
-                [
-                {
-                    $match: {
-                        deleted: false ,
-                        parentApp:new mongoose.Types.ObjectId(appId),
-                        user:new mongoose.Types.ObjectId(userId)
-                    }
-                },
-                {
-                    $group: {
-                        _id: {
-                            $dateToString: { format: "%Y-%m-%d", date: "$createdAt" }  
-                        },
-                        count: { $sum: 1 }  
-                    }
-                },
-                {
-                    $sort: { _id: 1 }  
-                },
-                {
-                    $project: {
-                        _id: 0,         
-                        date: "$_id",    
-                        count: 1         
-                    }
-                }
-            ]
-        
-        );
-            res.status(201).json({
-                message: "fetch overview successfully",
-                data: visitorCounts,
-              });
 
-        } catch (error) {
-                // console.log('erorr is ----> ',error);
-                
-        }
-    },
 
   callAPI: async (req, res) => {
     try {
@@ -618,19 +522,21 @@ module.exports = {
     }
   },
   
-  checkUniqueUrl:async(req,res)=>{
-    try {
+  checkUniqueUrl:catchAsync( async(req,res)=>{
         const url=req.body.url;
         const appId=req.body.appId;
+        if(!moongooseHelper.isValidMongooseId(appId)){
+          throw new ApiError(404, "AppId not valid");
+        }
         let existingApp = await App.findOne({ url, _id: { $ne: appId }}).lean();
         if (existingApp) {
             return res.status(409 ).json({ error: 'url already exists' });
         } 
-        await App.updateOne({_id:appId},{$set:{url,changed:true}})
-        return res.status(200).json({message:'url updated successfully'})
-    } catch (error) {    
-    }   
-  },
+        await App.updateOne({_id:appId,user:req.user.userId},{$set:{url,changed:true}})
+        return res.status(200).json(
+          new ApiResponse(200,"Url updated successfully")
+        )
+  }),
   createStripeCheckoutSession: async (req, res) => {
     try {
         let { amount, currency, billingAddress, shippingAddress, mobileNo, description,publicKey,secretKey } = req.body;

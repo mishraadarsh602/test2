@@ -1,29 +1,33 @@
-const App = require('../models/app');
 const appVisitorModel = require('../models/appVisitors');
 const appModel=require('../models/app');
 const featureListModel=require('../models/featureList');
-const { default: mongoose } = require('mongoose');
 const Bowser = require("bowser");
 const appVisitorsModel = require('../models/appVisitors');
 const appLeadsModel = require('../models/appLeads');
-async function updateCount(req) {
-  try {
-        await appModel.updateOne({ _id: req.body.app,}, { $inc: { visitorCount: 1 } });
-    await featureListModel.updateOne({ type: req.body.agent_type }, { $inc: { visitorCount: 1 } });
-  } catch (error) {
-    console.log(error)
+const catchAsync=require('../utils/catchAsync');
+const moongooseHelper=require('../utils/moongooseHelper');
+const ApiError=require('../utils/throwError');
+const ApiResponse = require('../utils/apiResponse');
+updateCount=catchAsync(async (req)=>{
+  if(!moongooseHelper.isValidMongooseId(req.body.app)){
+    throw new ApiError(400,'AppId not valid');
   }
-}
+  await appModel.updateOne({ _id: req.body.app,}, { $inc: { visitorCount: 1 } });
+  await featureListModel.updateOne({ type: req.body.agent_type }, { $inc: { visitorCount: 1 } });
+})
 
 
 module.exports={
-  calculatorStats: async (req, res) => {
-    try {
+  calculatorStats: catchAsync(
+     async (req, res) => {
       const { appId, startDate, endDate } = req.body;
+      if(!moongooseHelper.isValidMongooseId(appId)){
+        throw new ApiError(400,'AppId not valid')
+      }
      const results=await appVisitorModel.aggregate( [
         {
           $match: {
-            app: new mongoose.Types.ObjectId(appId),
+            app: moongooseHelper.giveMoongooseObjectId(appId),
             createdAt: {
               $gte: new Date(startDate),
               $lt: new Date(endDate)
@@ -94,44 +98,42 @@ module.exports={
         response.devices[device] = (response.devices[device] || 0) + 1;
       });
 
-      return res.status(200).json({
-        message: 'Calc stats fetched successfully',
-        data: response,
-      });
-
-    } catch (error) {
-      return res.status(500).json({ message: 'Internal server error' });
-    }
-  },
-
-  generateVisitor: async (req, res) => {
-    try {
+      return res.status(200).json(
+        new ApiResponse(200,'Calc stats fetched successfully',response)
+      );
+  }),
+  generateVisitor: catchAsync(
+     async (req, res) => {
+      if(!moongooseHelper.isValidMongooseId(req.body.app)){
+        throw new ApiError(400,'AppId not valid')
+      }
+      if(!moongooseHelper.isValidMongooseId(req.body.live_app)){
+        throw new ApiError(400,'live AppId not valid')
+      }
       const browser = Bowser.getParser(req.body.userAgent).parsedResult.browser.name;
       const visitorCreated = new appVisitorModel({
         ...req.body,
         browser
 
       });
-            let key=visitorCreated._id;
+      let key=visitorCreated._id;
       await visitorCreated.save();
-      updateCount(req)
-
-      return res.status(200).json({
-        message: 'Visits updated successfully',
-        key
-      });
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  },
-
-    fetchVisitors:async (req,res)=>{
-    try {
+      updateCount(req);
+      return res.status(201).json(
+        new ApiResponse(201, 'Visits updated successfully',key)
+    );
+  }),
+    fetchVisitors:catchAsync(
+       async (req,res)=>{
+        let appId=req.body.appId;
+        if(!moongooseHelper.isValidMongooseId(appId)){
+          throw new ApiError(400,'AppId not valid')
+        }
         const allVisitors=await appVisitorModel.aggregate([
         {
           $match: {
-            app: new mongoose.Types.ObjectId(req.body.appId),
-                type:{$ne:'Deleted'}
+            app: moongooseHelper.giveMoongooseObjectId(appId),
+            type:{$ne:'Deleted'}
           }
         },
         {
@@ -182,20 +184,20 @@ module.exports={
         }),
         idsArray:allVisitors.map(el=>el._id)
       }
-      res.status(201).json({
-        message: "fetch visitors successfully",
-        data: response,
-      });
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  },
-  get_leads: async (req, res) => {
-    try {
+      res.status(200).json(
+        new ApiResponse(200,"fetch visitors successfully",response) 
+    );
+  }),
+  get_leads: catchAsync(
+     async (req, res) => {
+      let appId=req.body.appId;
+      if(!moongooseHelper.isValidMongooseId(appId)){
+        throw new ApiError(400,'AppId not valid')
+      }
       const response = await appVisitorModel.aggregate([
         {
           $match: {
-            app: new mongoose.Types.ObjectId(req.body.appId),
+            app: moongooseHelper.giveMoongooseObjectId(appId),
             type: { $ne: 'Deleted' },
           }
         },
@@ -283,42 +285,42 @@ module.exports={
       finalResponse.columns = Array.from(columnSet);
 
 
-      return res.status(200).json({ data: finalResponse, });
-
-    } catch (error) {
-      return res.status(500).json({ message: 'Internal server error' });
-    }
-  },
-  saveLead:async(req,res)=>{
-    try {
+      return res.status(200).json(
+        new ApiResponse(200,'leads fetched successfully',finalResponse)
+      );
+  }),
+  saveLead:catchAsync(
+     async(req,res)=>{
+      let key=req.body.key;
+      if(!moongooseHelper.isValidMongooseId(key)){
+        throw new ApiError(400,'Key Not Valid')
+      }
       const leadCreated = new appLeadsModel({
         ...req.body,
       });
       await leadCreated.save();
-      let response= await appVisitorModel.updateOne({ _id:req.body.key},{lead:leadCreated._id,type:'Lead'});
-            return res.status(200).json({message:'Lead created successfully',data:response});
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  },
-  deleteVisitors:async (req, res) => {
-    try {
+       await appVisitorModel.updateOne({ _id:req.body.key},{lead:leadCreated._id,type:'Lead'});
+        return res.status(201).json(
+              new ApiResponse(201,'Lead created successfully')
+            );
+  }),
+  deleteVisitors: catchAsync(
+     async (req, res) => {
         const { visitorIds } = req.body;
         if (!Array.isArray(visitorIds) || visitorIds.length === 0) {
-            return res.status(400).json({ error: 'No visitor IDs provided' });
+          throw new ApiError(400, 'No visitor IDs provided');
         }
-
-        const result = await appVisitorsModel.updateMany(
+       const invalidId=visitorIds.some(visitorId=>!moongooseHelper.isValidMongooseId(visitorId))
+        if(invalidId){
+          throw new ApiError(400, 'Visitor Id not valid');
+        }
+        await appVisitorsModel.updateMany(
             { _id: { $in: visitorIds } },
             { type: 'Deleted' } 
         );
 
-        res.status(200).json({
-            message: 'Visitors deleted successfully',
-        });
-   } catch (error) {
-       // Send error response
-       res.status(500).json({ error: error.message });
-   }
-},
+        res.status(200).json(
+          new ApiResponse(200,'Visitors deleted successfully')
+         );
+})
 }
