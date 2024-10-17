@@ -126,6 +126,7 @@ module.exports = {
               $project: {
                 name: 1,
                 url: 1,
+                _id:0,
                 status: 1,
                 visitorCount: 1,
                 type: 1,

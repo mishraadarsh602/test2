@@ -20,7 +20,7 @@ router.get('/returnCode',aiController.returnCode);
 router.get('/get_app/:url',auth, builderController.getAppByUrl);
 router.post('/update_app/:id',auth, builderController.updateApp);
 router.post('/check_unique_app_name',auth, builderController.checkUniqueAppName);
-router.post('/check_unique_url', builderController.checkUniqueUrl);
+router.post('/check_unique_url', auth,builderController.checkUniqueUrl);
 router.post('/liveApp/:appId',auth,builderController.liveApp);
 router.get('/getPreviewApp/:appId', auth,builderController.getPreviewApp);
 router.post('/fixError', auth,builderController.fixError);
