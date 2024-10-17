@@ -175,8 +175,7 @@ module.exports={
         { key: "utm_term", label: "Utm Term" },
         { key: "utm_content", label: "Utm Content" },
         { key: "transaction_completed", label: "Transaction Completed" },
-        { key: "amount", label: "Amount" },
-        { key: "currency", label: "Currency" }
+        { key: "transactionAmount",label:"Transaction Amount" }
       ];
 
       let response = {
@@ -184,6 +183,21 @@ module.exports={
         data: allVisitors.map((visitor) => {
           return fixedColumns.map(entry => {
             const key = entry.key;
+            if (key === 'transactionAmount') {
+              const amount = visitor['amount'];
+              const currency = visitor['currency'];
+              return amount && currency ? `${amount} ${currency}` : 'Not Applicable';
+            }
+            if (key === 'transaction_completed') {
+            const transactionCompleted = visitor['transaction_completed'];
+            if (transactionCompleted === true) {
+                return 'True';
+            } else if (transactionCompleted === false) {
+                return 'False';
+            } else {
+                return 'Not Applicable';
+            }
+            }
             return visitor[key] ? visitor[key] : 'Not Applicable'
           })
         }),
@@ -263,8 +277,7 @@ module.exports={
         { key: "utm_term", label: "Utm Term" },
         { key: "utm_content", label: "Utm Content" },
         { key: "transaction_completed", label: "Transaction Completed" },
-        { key: "amount", label: "Amount" },
-        { key: "currency", label: "Currency" }
+        { key: "transactionAmount",label:"Transaction Amount" }
       ];
       fixedColumns.forEach(entry => columnSet.add(entry.label));
 
@@ -273,6 +286,21 @@ module.exports={
         finalResponse.idsArray.push(el.lead._id);
         const dataRow = fixedColumns.map(entry => {
           const key =entry.key;
+          if (key === 'transactionAmount') {
+            const amount = el['amount'];
+            const currency = el['currency'];
+            return amount && currency ? `${amount} ${currency}` : 'Not Applicable';
+          }
+          if (key === 'transaction_completed') {
+             const transactionCompleted = el['transaction_completed'];
+            if (transactionCompleted === true) {
+                return 'True';
+            } else if (transactionCompleted === false) {
+                return 'False';
+            } else {
+                return 'Not Applicable';
+            }
+          }
           return el[key] || 'Not Applicable';
         });
         el.lead?.fields.forEach(field => {
