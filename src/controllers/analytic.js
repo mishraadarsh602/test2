@@ -343,12 +343,13 @@ module.exports={
       throw new ApiError(400, 'Lead Id not valid');
     }
 
-   const response= await appVisitorsModel.updateMany(
+   await appVisitorsModel.updateMany(
       { lead: { $in: leadsIds } },
       { lead: null } 
   );
+  await appLeadsModel.deleteMany({ _id: { $in: leadsIds } });
   res.status(200).json(
-    new ApiResponse(200,'Leads deleted successfully',response)
+    new ApiResponse(200,'Leads deleted successfully')
    );
   })
 }
