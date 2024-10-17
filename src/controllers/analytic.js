@@ -125,7 +125,7 @@ module.exports={
   }),
     fetchVisitors:catchAsync(
        async (req,res)=>{
-        let appId=req.body.appId;
+        const { appId, startDate, endDate } = req.body;
         if(!moongooseHelper.isValidMongooseId(appId)){
           throw new ApiError(400,'AppId not valid')
         }
@@ -133,7 +133,11 @@ module.exports={
         {
           $match: {
             app: moongooseHelper.giveMoongooseObjectId(appId),
-            type:{$ne:'Deleted'}
+            type:{$ne:'Deleted'},
+            createdAt: {
+              $gte: new Date(startDate),
+              $lt: new Date(endDate)
+            }
           }
         },
         {
@@ -209,7 +213,7 @@ module.exports={
   }),
   get_leads: catchAsync(
      async (req, res) => {
-      let appId=req.body.appId;
+      const { appId, startDate, endDate } = req.body;
       if(!moongooseHelper.isValidMongooseId(appId)){
         throw new ApiError(400,'AppId not valid')
       }
@@ -217,6 +221,10 @@ module.exports={
         {
           $match: {
             app: moongooseHelper.giveMoongooseObjectId(appId),
+            createdAt: {
+              $gte: new Date(startDate),
+              $lt: new Date(endDate)
+            }
           }
         },
         {
