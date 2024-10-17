@@ -22,6 +22,8 @@ module.exports = (server) => {
       ],
       methods: ["GET", "POST"],
     },
+    pingTimeout: 60000, // Set timeout for inactive sockets (60 seconds)
+    pingInterval: 25000 // Interval for ping messages (25 seconds)  
   });
 
   // Set up a basic connection event
@@ -30,162 +32,170 @@ module.exports = (server) => {
 
     // Listen for the 'startChat' event from the client
     socket.on("startChat", async (data) => {
-      try{
-      console.log(data);
-      const app = await App.findOne({
-        user: new mongoose.Types.ObjectId(data.userId),
-        url: data.appName
-      });
-    
-      if (!app) {
-        throw new Error("App or user not found");
-      }
-    
-      const appId = app._id;
+      try {
+        console.log(data);
+        const app = await App.findOne({
+          user: new mongoose.Types.ObjectId(data.userId),
+          url: data.appName,
+        });
 
-      const returnedOutput = await aiAssistantChatStart(
-        data.userId,
-        data.message,
-        app,
-        data.image ? data.image[0] : null,
-        true,
-        (partialResponse) => {
-          socket.removeAllListeners("partialResponse"); // Clean up event listeners before adding a new one
-          // Emit each partial response as it's received
-          socket.emit("partialResponse", {
-            text: partialResponse.message,
-            fullChatResponse: partialResponse.fullChatResponse,
-            streaming: partialResponse.streaming,
-            code: partialResponse.code,
-            codeFound: partialResponse.codeFound
-          });
+        if (!app) {
+          throw new Error("App or user not found");
         }
-      );
 
-      await updateAIMessageToChatSession(
-        data.userId,
-        appId,
-        returnedOutput.code,
-        returnedOutput.message
-      );
-      
-    }catch(error){
-      console.log(error)
-    }
+        const appId = app._id;
+
+        const returnedOutput = await aiAssistantChatStart(
+          data.userId,
+          data.message,
+          app,
+          data.image ? data.image[0] : null,
+          true,
+          (partialResponse) => {
+            socket.removeAllListeners("partialResponse"); // Clean up event listeners before adding a new one
+            // Emit each partial response as it's received
+            socket.emit("partialResponse", {
+              text: partialResponse.message,
+              fullChatResponse: partialResponse.fullChatResponse,
+              streaming: partialResponse.streaming,
+              code: partialResponse.code,
+              codeFound: partialResponse.codeFound,
+            });
+          }
+        );
+
+        await updateAIMessageToChatSession(
+          data.userId,
+          appId,
+          returnedOutput.code,
+          returnedOutput.message
+        );
+      } catch (error) {
+        console.log(error);
+      }
     });
 
     socket.on("fetchPreviousChat", async (data) => {
-      try{
+      try {
         console.log(data);
 
-      const app = await App.findOne({
-        user: new mongoose.Types.ObjectId(data.userId),
-        url: data.appName
-      });
-    
-      if (!app) {
-        throw new Error("App or user not found");
-      }
-    
-      const appId = app._id;
+        const app = await App.findOne({
+          user: new mongoose.Types.ObjectId(data.userId),
+          url: data.appName,
+        });
 
-      // console.log("Chat fetched:", data);
-      const messages = await fetchPreviousChat(data.userId, appId);
-      // console.log(messages);
-      let msg = [];
-      if (messages.length > 0) {
-        for (let i = 0; i < messages.length; i++) {
-          if (messages[i].role === 'assistant') {
-            msg.push({ text: messages[i].content, code: messages[i].code, sender: "bot" });
-          } else if (messages[i].role === 'user') {
-            msg.push({
-              text: messages[i].content,
-              image: messages[i].image,
-              // code: messages[i].code,
-              sender: "user",
-            });
+        if (!app) {
+          throw new Error("App or user not found");
+        }
+
+        const appId = app._id;
+
+        // console.log("Chat fetched:", data);
+        const messages = await fetchPreviousChat(data.userId, appId);
+        // console.log(messages);
+        let msg = [];
+        if (messages.length > 0) {
+          for (let i = 0; i < messages.length; i++) {
+            if (messages[i].role === "assistant") {
+              msg.push({
+                text: messages[i].content,
+                code: messages[i].code,
+                sender: "bot",
+              });
+            } else if (messages[i].role === "user") {
+              msg.push({
+                text: messages[i].content,
+                image: messages[i].image,
+                // code: messages[i].code,
+                sender: "user",
+              });
+            }
           }
         }
+        // console.log(msg);
+        socket.emit("previousMessages", msg);
+      } catch (error) {
+        console.log(error);
       }
-      // console.log(msg);
-      socket.emit("previousMessages", msg);
-      
-    }catch(error){
-      console.log(error)
-    }
     });
 
     socket.on("continueChat", async (data) => {
       // console.log("Chat Continued by user:", data);
       console.log(data);
-      try{
-      const app = await App.findOne({
-        user: new mongoose.Types.ObjectId(data.userId),
-        url: data.appName
-      });
-    
-      if (!app) {
-        throw new Error("App or user not found");
-      }
-    
-      const appId = app._id;
+      try {
+        const app = await App.findOne({
+          user: new mongoose.Types.ObjectId(data.userId),
+          url: data.appName,
+        });
 
-      const messages = await fetchPreviousChat(data.userId, appId);
-      let msg = [];
-
-      for (let i = 0; i < messages.length; i++) {
-        if (i === 0) {
-          msg.push(["system", messages[i].content]);
-        } else if (i % 2 !== 0) {
-          msg.push(["human", messages[i].content]);
-        } else {
-          msg.push(["ai", messages[i].content]);
+        if (!app) {
+          throw new Error("App or user not found");
         }
-      }
 
-      await updateHumanMessageToChatSession(
-        data.userId,
-        appId,
-        data.message,
-        data.image ? [data.image[0]] : null,
-      );
+        const appId = app._id;
 
-      msg.push(["human", data.message]);
+        const messages = await fetchPreviousChat(data.userId, appId);
+        let msg = [];
 
-      // const returnedOutput = await continueChatSessionMessages(data.userId, data.message, appId);
-      const returnedOutput = await aiAssistantChatStart(
-        data.userId,
-        data.message,
-        app,
-        data.image ? data.image[0] : null,
-        false,
-        (partialResponse) => {
-          socket.removeAllListeners("partialResponse"); // Clean up event listeners before adding a new one
-          // Emit each partial response as it's received
-          socket.emit("partialResponse", {
-            text: partialResponse.message,
-            fullChatResponse: partialResponse.fullChatResponse,
-            streaming: partialResponse.streaming,
-            code: partialResponse.code,
-            codeFound: partialResponse.codeFound
-          });
+        for (let i = 0; i < messages.length; i++) {
+          if (i === 0) {
+            msg.push(["system", messages[i].content]);
+          } else if (i % 2 !== 0) {
+            msg.push(["human", messages[i].content]);
+          } else {
+            msg.push(["ai", messages[i].content]);
+          }
         }
-      );
 
-      await updateAIMessageToChatSession(
-        data.userId,
-        appId,
-        returnedOutput.code,
-        returnedOutput.message
-      );
-    }catch(error){
-      console.log(error)
-    }
-      
+        await updateHumanMessageToChatSession(
+          data.userId,
+          appId,
+          data.message,
+          data.image ? [data.image[0]] : null
+        );
+
+        msg.push(["human", data.message]);
+
+        // const returnedOutput = await continueChatSessionMessages(data.userId, data.message, appId);
+        const returnedOutput = await aiAssistantChatStart(
+          data.userId,
+          data.message,
+          app,
+          data.image ? data.image[0] : null,
+          false,
+          (partialResponse) => {
+            socket.removeAllListeners("partialResponse"); // Clean up event listeners before adding a new one
+            // Emit each partial response as it's received
+            socket.emit("partialResponse", {
+              text: partialResponse.message,
+              fullChatResponse: partialResponse.fullChatResponse,
+              streaming: partialResponse.streaming,
+              code: partialResponse.code,
+              codeFound: partialResponse.codeFound,
+            });
+          }
+        );
+
+        await updateAIMessageToChatSession(
+          data.userId,
+          appId,
+          returnedOutput.code,
+          returnedOutput.message
+        );
+      } catch (error) {
+        console.log(error);
+      }
     });
 
     socket.on("disconnect", () => {
-      // console.log("Client disconnected:", socket.id);
+      console.log("Client disconnected:", socket.id);
+      socket.removeAllListeners(); // Clean up all listeners
+    });
+
+    socket.on("error", (err) => {
+      console.error("Socket error:", err);
+      // Optionally, you can emit an error response to the client
+      socket.emit("error", { message: "An error occurred. Please try again." });
     });
   });
 };

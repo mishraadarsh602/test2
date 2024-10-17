@@ -877,6 +877,11 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
           }
         });
       }
+
+      if(appDetails.apis.length === 0 && originalApis.length > 0){
+        appDetails.apis = originalApis;
+      }
+
       // Update app componentCode and save
       if (isStartChat || appDetails["tool_type"] === '') {
         appDetails["tool_type"] = parentResponse.ToolTYPE;
