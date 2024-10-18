@@ -28,6 +28,7 @@ module.exports={
         {
           $match: {
             app: moongooseHelper.giveMoongooseObjectId(appId),
+            type:{$nin:['Deleted']},
             createdAt: {
               $gte: new Date(startDate),
               $lte: new Date(endDate)
@@ -35,7 +36,7 @@ module.exports={
           }
         },
         {
-          $facet: {
+          $facet: {  
             visitorsData: [
               {
                 $project: {
@@ -133,7 +134,7 @@ module.exports={
         {
           $match: {
             app: moongooseHelper.giveMoongooseObjectId(appId),
-            type:{$ne:'Deleted'},
+            type:'Visitor',
             createdAt: {
               $gte: new Date(startDate),
               $lte: new Date(endDate)
@@ -224,7 +225,8 @@ module.exports={
             createdAt: {
               $gte: new Date(startDate),
               $lte: new Date(endDate)
-            }
+            },
+            type:'Lead'
           }
         },
         {
@@ -273,7 +275,7 @@ module.exports={
           }
         }
       ]);
-
+      
       let finalResponse = { columns: [], data: [], idsArray:[] };
       let columnSet = new Set(); // as coloumns have many fields depending upon lead fields
 
@@ -287,31 +289,19 @@ module.exports={
         { key: "transaction_completed", label: "Transaction Completed" },
         { key: "transactionAmount",label:"Transaction Amount" }
       ];
-      fixedColumns.forEach(entry => columnSet.add(entry.label));
-
+      
+      let maxLeadFields = [];
+      response.forEach(el => {
+        if (el.lead.fields.length > maxLeadFields.length) {
+          maxLeadFields = el.lead.fields;
+        }
+      });
+      
       response.forEach(el => {
         let fieldCount = {};
+        const dataRow=[];
         finalResponse.idsArray.push(el.lead._id);
-        const dataRow = fixedColumns.map(entry => {
-          const key =entry.key;
-          if (key === 'transactionAmount') {
-            const amount = el['amount'];
-            const currency = el['currency'];
-            return amount && currency ? `${amount} ${currency}` : 'Not Applicable';
-          }
-          if (key === 'transaction_completed') {
-             const transactionCompleted = el['transaction_completed'];
-            if (transactionCompleted === true) {
-                return 'True';
-            } else if (transactionCompleted === false) {
-                return 'False';
-            } else {
-                return 'Not Applicable';
-            }
-          }
-          return el[key] || 'Not Applicable';
-        });
-        el.lead?.fields.forEach(field => {
+        maxLeadFields.forEach(field => {
           let fieldName = field.field_name;
           fieldName = fieldName.split(' ').join('');
           // Increment the field count, defaulting to 0 if it doesn't exist for example fieldCount={} => as email does not exist -> {email:0} else {email:fieldCount[email]+1}
@@ -320,17 +310,30 @@ module.exports={
           if (fieldCount[fieldName] > 1) {
             fieldName = `${fieldName}_${fieldCount[fieldName] - 1}`;
           }
-
+          
           columnSet.add(fieldName);
-          dataRow.push(field.value);
+          dataRow.push(field.value ? field.value : 'Not Applicable');
+          
+        });
+
+      fixedColumns.forEach(entry => {
+          const key =entry.key;
+          if (key === 'transactionAmount') {
+            const amount = el['amount'];
+            const currency = el['currency'];
+            dataRow.push( amount && currency ? `${amount} ${currency}` : 'Not Applicable');
+          }
+          else{
+            dataRow.push( el[key]==""? 'Not Applicable':el[key]); 
+          }
+          
         });
 
         finalResponse.data.push(dataRow);
-      });
-
+      })
+   
+      fixedColumns.forEach(entry => columnSet.add(entry.label));
       finalResponse.columns = Array.from(columnSet);
-
-
       return res.status(200).json(
         new ApiResponse(200,'leads fetched successfully',finalResponse)
       );
@@ -379,9 +382,8 @@ module.exports={
       throw new ApiError(400, 'Lead Id not valid');
     }
 
-   await appVisitorsModel.updateMany(
-      { lead: { $in: leadsIds } },
-      { lead: null } 
+   await appVisitorsModel.deleteMany(
+      { lead: { $in: leadsIds }},
   );
   await appLeadsModel.deleteMany({ _id: { $in: leadsIds } });
   res.status(200).json(
