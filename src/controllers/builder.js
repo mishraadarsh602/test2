@@ -685,11 +685,10 @@ module.exports = {
             agentId: new mongoose.Types.ObjectId(app._id),
           });
 
-          if(oldChatSession.messages[oldChatSession.messages.length - 1].role === 'assistant'){
+          if(oldChatSession.messages.length > 2 && oldChatSession.messages[oldChatSession.messages.length - 1].role === 'assistant'){
               oldChatSession.messages[oldChatSession.messages.length - 1].code = app.componentCode;
               await oldChatSession.save();
           }
-
 
         return res.status(200).json({suggestion: response.data.content[0].text })
         } catch (error) {
