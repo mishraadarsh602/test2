@@ -526,7 +526,7 @@ module.exports = {
         const selectedOptions = req.body.selectedOptions;
         const app = await App.findOne({
           url: appUrl,
-          user: new mongoose.Types.ObjectId(data.userId),
+          user: new mongoose.Types.ObjectId(req.user.userId),
         });
         let prompt = `This is my code: ${app.componentCode}`;
         for (let i = 0; i < selectedOptions.length; i++) {
