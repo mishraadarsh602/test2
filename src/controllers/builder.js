@@ -415,8 +415,6 @@ module.exports = {
         }
     },
 
-
-
   callAPI: async (req, res) => {
     try {
       const appId = req.query.appId; // Change here to get appId from the query
@@ -522,6 +520,55 @@ module.exports = {
     }
   },
   
+  toolEnhance: async (req, res) => {
+    try {
+        const appUrl = req.body.appUrl;
+        const selectedOptions = req.body.selectedOptions;
+        const app = await App.findOne({url: appUrl, user: new mongoose.Types.ObjectId(data.userId)});
+        let prompt = ''
+        for(let i = 0; i < selectedOptions.length; i++){
+          if(selectedOptions[i] === 'enhance_UI'){
+            prompt += 'A';
+          }else if(selectedOptions[i] === 'error_handling'){
+            prompt += 'B';
+          }else if(selectedOptions[i] === 'responsiveness'){
+            prompt += 'C';
+          }else if(selectedOptions[i] === 'functional_issue'){
+            prompt += 'D';
+          }else if(selectedOptions[i] === 'enhance_contrast'){
+            prompt += 'E';
+          }else if(selectedOptions[i] === 'more_colorful'){
+            prompt += 'F';
+          }
+        }
+
+        const response = await axios.post(
+          "https://api.anthropic.com/v1/messages",
+          {
+            model: "claude-3-5-sonnet-20240620", // Using Claude model
+            max_tokens: 8000,
+            messages: [
+              {
+                role: "user",
+                content: prompt,
+              },
+            ],
+          },
+          {
+            headers: {
+              "content-type": "application/json",
+              "x-api-key": app.ai['key'],
+              "anthropic-version": "2023-06-01",
+            },
+          }
+        );
+        return res.status(200).json({suggestion: response.data.content[0].text })
+        } catch (error) {
+      console.log("erorr is ----> ",error);
+      res.send(error);
+    }
+  },
+
   checkUniqueUrl:catchAsync( async(req,res)=>{
         const url=req.body.url;
         const appId=req.body.appId;
@@ -537,6 +584,7 @@ module.exports = {
           new ApiResponse(200,"Url updated successfully")
         )
   }),
+
   createStripeCheckoutSession: async (req, res) => {
     try {
         let { amount, currency, billingAddress, shippingAddress, mobileNo, description,publicKey,secretKey } = req.body;
