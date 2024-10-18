@@ -501,7 +501,7 @@ module.exports = {
           messages: [
             {
               role: "user",
-              content: JSON.stringify(req.body),
+              content: JSON.stringify(req.body) + 'You must return email with html format only, no extra text allowed.',
             },
           ],
         },
