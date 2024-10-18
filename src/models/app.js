@@ -49,6 +49,14 @@ const appSchema = new mongoose.Schema({
         type: String,
         default: ''
     },
+    icon: {
+        type: String,
+        default: ''
+    },
+    description: {
+        type: String,
+        default: ''
+    },
     thread_id: {
         type: String,
         default: ''

@@ -25,6 +25,7 @@ router.post('/liveApp/:appId',auth,builderController.liveApp);
 router.get('/getPreviewApp/:appId', auth,builderController.getPreviewApp);
 router.post('/fixError', auth,builderController.fixError);
 router.get('/callAPI', builderController.callAPI);
+router.post('/callAI/:appId', builderController.callAI);
 router.post('/callAI', builderController.callAI);
 router.post('/tool_enhance',auth, builderController.toolEnhance)
 router.post('/brand_guide',auth, builderController.getBrandGuide);

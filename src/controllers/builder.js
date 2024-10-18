@@ -487,35 +487,35 @@ module.exports = {
 
   callAI: async (req, res) => {
     try {
-      const userPrompt = req.body.prompt; // Change here to get appId from the query
-      const appId = req.body.appId;
-      const appDetails = await App.findById(appId);
-      let prompt = `${userPrompt}`;
-
-          const response = await axios.post(
-            "https://api.anthropic.com/v1/messages",
+      const appId = req.params.appId;
+      if (!appId) {
+        return res.status(400).json({ error: 'APP ID is required' });
+      }
+      const appDetails = await App.findOne({_id: appId}, { ai: 1 });
+      const response = await axios.post(
+        "https://api.anthropic.com/v1/messages",
+        {
+          model: "claude-3-5-sonnet-20240620", // Using Claude model
+          max_tokens: 8000,
+          messages: [
             {
-              model: "claude-3-5-sonnet-20240620", // Using Claude model
-              max_tokens: 8000,
-              messages: [
-                {
-                  role: "user",
-                  content: prompt,
-                },
-              ],
+              role: "user",
+              content: JSON.stringify(req.body),
             },
-            {
-              headers: {
-                "content-type": "application/json",
-                "x-api-key": appDetails.ai['key'],
-                "anthropic-version": "2023-06-01",
-              },
-            }
-          );
-     
-          return res.status(200).json({suggestion: response.data.content[0].text })
-        } catch (error) {
-      console.log("erorr is ----> ",error);
+          ],
+        },
+        {
+          headers: {
+            "content-type": "application/json",
+            "x-api-key": appDetails.ai['key'],
+            "anthropic-version": "2023-06-01",
+          },
+        }
+      );
+
+      return res.status(200).json({ suggestion: response.data.content[0].text })
+    } catch (error) {
+      console.log("erorr is ----> ", error);
       res.send(error);
     }
   },
