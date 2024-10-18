@@ -37,6 +37,7 @@ module.exports = (server) => {
         const app = await App.findOne({
           user: new mongoose.Types.ObjectId(data.userId),
           url: data.appName,
+          status: 'dev'
         });
 
         if (!app) {
@@ -82,6 +83,7 @@ module.exports = (server) => {
         const app = await App.findOne({
           user: new mongoose.Types.ObjectId(data.userId),
           url: data.appName,
+          status: 'dev'
         });
 
         if (!app) {
@@ -126,6 +128,7 @@ module.exports = (server) => {
         const app = await App.findOne({
           user: new mongoose.Types.ObjectId(data.userId),
           url: data.appName,
+          status: 'dev'
         });
 
         if (!app) {

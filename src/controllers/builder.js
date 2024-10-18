@@ -255,7 +255,8 @@ module.exports = {
 
     fixError :async (req,res)=>{
         try {
-          let fetchedApp = await App.findOne({ url: req.body.appName });
+          let fetchedApp = await App.findOne({ url: req.body.appName,
+            status: 'dev'});
             let prompt = `This is my code : ${fetchedApp.componentCode}, This is Error: ${req.body.errorMessage}.
             You need to resolve this issue from my code without changing any UI design, API, code structure and regenerate new correct code by eliminating error.
             Follow the code pattern in terms of function usage, API calls, and element creation. 
@@ -527,6 +528,7 @@ module.exports = {
         const app = await App.findOne({
           url: appUrl,
           user: new mongoose.Types.ObjectId(req.user.userId),
+          status: 'dev'
         });
         let aiUserThreadPrompt = '';
         let prompt = '';
