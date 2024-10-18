@@ -21,9 +21,11 @@ module.exports = {
       }
 
       let app = await redisClient.get(`app-${parameter}`);
-      if (!app) {
+      let redisResponse=JSON.parse(app);
+      if (!redisResponse) {
         response = await App.findOne({ url: parameter, status: "live" }, { apis: 0, thread_id: 0 });
-
+        
+       
         // If response not found, try to fetch by _id
         if (!response && moongooseHelper.isValidMongooseId(parameter)) {
           response = await App.findOne({
@@ -33,13 +35,13 @@ module.exports = {
         }
 
         if (!response) {
-          new ApiError(404,"App Not Found" )
+         throw new ApiError(404,"App Not Found" )
         }
         await redisClient.set(`app-${parameter}`, JSON.stringify(response));
       }
 
       res.status(200).json(
-        new ApiResponse(200,"Fetched live preview successfully",app ? JSON.parse(app) : response)
+        new ApiResponse(200,"Fetched live preview successfully",app ? redisResponse : response)
       );
   }),
 };
