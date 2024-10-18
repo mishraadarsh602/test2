@@ -524,23 +524,46 @@ module.exports = {
     try {
         const appUrl = req.body.appUrl;
         const selectedOptions = req.body.selectedOptions;
-        const app = await App.findOne({url: appUrl, user: new mongoose.Types.ObjectId(data.userId)});
-        let prompt = ''
-        for(let i = 0; i < selectedOptions.length; i++){
-          if(selectedOptions[i] === 'enhance_UI'){
-            prompt += 'A';
-          }else if(selectedOptions[i] === 'error_handling'){
-            prompt += 'B';
-          }else if(selectedOptions[i] === 'responsiveness'){
-            prompt += 'C';
-          }else if(selectedOptions[i] === 'functional_issue'){
-            prompt += 'D';
-          }else if(selectedOptions[i] === 'enhance_contrast'){
-            prompt += 'E';
-          }else if(selectedOptions[i] === 'more_colorful'){
-            prompt += 'F';
+        const app = await App.findOne({
+          url: appUrl,
+          user: new mongoose.Types.ObjectId(data.userId),
+        });
+        let prompt = `This is my code: ${app.componentCode}`;
+        for (let i = 0; i < selectedOptions.length; i++) {
+          switch (selectedOptions[i]) {
+            case "enhance_UI":
+              prompt +=
+                "Please enhance the overall UI while keeping the design consistent with the current theme. Make sure the elements are visually appealing without changing the existing structure or functionality. ";
+              break;
+            case "error_handling":
+              prompt +=
+                "Improve error handling in the code, ensuring proper handling of edge cases, try-catch blocks, and meaningful error messages. ";
+              break;
+            case "responsiveness":
+              prompt +=
+                "Make the component fully responsive for various screen sizes including mobile, tablet, and desktop, ensuring that the layout adjusts gracefully across all devices. ";
+              break;
+            case "functional_issue":
+              prompt += `Resolve any functional issues or bugs present in the code without changing the UI design, API structure, or code patterns. `;
+              break;
+            case "enhance_contrast":
+              prompt +=
+                "Improve the color contrast to ensure better readability and accessibility for visually impaired users, adhering to WCAG 2.1 guidelines. ";
+              break;
+            case "more_colorful":
+              prompt +=
+                "Enhance the color scheme by adding more vibrant and engaging colors, while still maintaining a professional and consistent look. ";
+              break;
+            default:
+              prompt += "";
+              break;
           }
         }
+
+        prompt += `\nEnsure that all React hooks are written with the full 'React' prefix, e.g., React.useState(). 
+                  Create React element without any import statement. The following header is already added:
+                  import React, {useState, useEffect, useContext, useReducer, useCallback, useMemo, useRef, useImperativeHandle, useLayoutEffect, useDebugValue, useTransition, useDeferredValue, useId, useSyncExternalStore, useInsertionEffect} from 'react'; import * as LucideIcons from 'lucide-react'; import { useLocation } from 'react-router-dom'; 
+                  You must return code only, no extra text allowed.`;
 
         const response = await axios.post(
           "https://api.anthropic.com/v1/messages",
@@ -557,7 +580,7 @@ module.exports = {
           {
             headers: {
               "content-type": "application/json",
-              "x-api-key": app.ai['key'],
+              "x-api-key": app.ai["key"],
               "anthropic-version": "2023-06-01",
             },
           }
