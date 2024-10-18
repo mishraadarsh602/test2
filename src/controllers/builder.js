@@ -584,7 +584,7 @@ module.exports = {
           {
             headers: {
               "content-type": "application/json",
-            "x-api-key": app.ai["key"],
+              "x-api-key": process.env["ANTHROPIC_API_KEY"],
               "anthropic-version": "2023-06-01",
             },
           }
@@ -632,7 +632,7 @@ module.exports = {
 
             // Build a new query string with existing and new parameters
             const paramsArray = [];
-            paramsArray.push(`appId=${fetchedApp._id}`); // Ensure to append appId
+            paramsArray.push(`appId=${app._id}`); // Ensure to append appId
 
             // Preserve existing parameters, including `${city}`
             for (const [key, value] of Object.entries(existingParams)) {
@@ -685,7 +685,7 @@ module.exports = {
             agentId: new mongoose.Types.ObjectId(app._id),
           });
 
-          if(oldChatSession.messages.length > 2 && oldChatSession.messages[oldChatSession.messages.length - 1].role === 'assistant'){
+          if(oldChatSession.messages[oldChatSession.messages.length - 1].role === 'assistant'){
               oldChatSession.messages[oldChatSession.messages.length - 1].code = app.componentCode;
               await oldChatSession.save();
           }
