@@ -528,7 +528,8 @@ module.exports = {
           url: appUrl,
           user: new mongoose.Types.ObjectId(req.user.userId),
         });
-        let prompt = `This is my code: ${app.componentCode}`;
+        let aiUserThreadPrompt = '';
+        let prompt = '';
         for (let i = 0; i < selectedOptions.length; i++) {
           switch (selectedOptions[i]) {
             case "enhance_UI":
@@ -564,6 +565,9 @@ module.exports = {
                   Create React element without any import statement. The following header is already added:
                   import React, {useState, useEffect, useContext, useReducer, useCallback, useMemo, useRef, useImperativeHandle, useLayoutEffect, useDebugValue, useTransition, useDeferredValue, useId, useSyncExternalStore, useInsertionEffect} from 'react'; import * as LucideIcons from 'lucide-react'; import { useLocation } from 'react-router-dom'; 
                   You must return code only, no extra text allowed.`;
+        
+        aiUserThreadPrompt = prompt;
+        prompt += `This is my code: ${app.componentCode}`;
 
         const response = await axios.post(
           "https://api.anthropic.com/v1/messages",
@@ -580,11 +584,113 @@ module.exports = {
           {
             headers: {
               "content-type": "application/json",
-              "x-api-key": app.ai["key"],
+            "x-api-key": app.ai["key"],
               "anthropic-version": "2023-06-01",
             },
           }
         );
+
+        await openai.beta.threads.messages.create(
+          app.thread_id,
+          {
+            role: "user",
+            content: aiUserThreadPrompt,
+          },
+          {
+            role: "assistant",
+            content: response.data.content[0].text,
+          }
+        );
+
+        app.componentCode = response.data.content[0].text;
+
+        const urlRegex = /fetch\((['"`])([^'"`]+)\1\)/;
+        let originalApis = []; // Array to store original API objects
+  
+        // Replace URLs in the code while extracting them
+        app.componentCode = app.componentCode.replace(
+          urlRegex,
+          (matchedUrl) => {
+            // Extract the full URL from the matched string
+            const fullUrl = matchedUrl.match(/(['"`])([^'"`]+)\1/)[2]; // URL is in the second capture group
+            if (fullUrl.startsWith(process.env.BACKEND_URL)) {
+              originalApis = app.apis;
+              return `fetch(\`${fullUrl}\`)`;
+            }
+            // Store the matched URL as an object in the array
+            originalApis.push({ api: fullUrl });
+
+            // Use a regex to extract existing query parameters
+            const existingParams = {};
+            const paramRegex = /[?&]([^=]+)=([^&]*)/g;
+            let match;
+
+            // Find and store existing parameters
+            while ((match = paramRegex.exec(fullUrl)) !== null) {
+              existingParams[match[1]] = match[2];
+            }
+
+            // Build a new query string with existing and new parameters
+            const paramsArray = [];
+            paramsArray.push(`appId=${fetchedApp._id}`); // Ensure to append appId
+
+            // Preserve existing parameters, including `${city}`
+            for (const [key, value] of Object.entries(existingParams)) {
+              paramsArray.push(`${key}=${value}`);
+            }
+
+            // Join parameters with '&' to form the new query string
+            const newQueryString = paramsArray.join("&");
+
+            // Construct the new URL with the updated query string
+            return `fetch(\`${process.env.BACKEND_URL}/builder/callAPI?${newQueryString}\`)`;
+          }
+        );
+
+        const results = await Promise.all(
+          app.apis.map(async (fetchedApi, index) => {
+            const originalApi = originalApis[index];
+            if (
+              fetchedApi &&
+              fetchedApi.api &&
+              originalApi &&
+              originalApi.api
+            ) {
+              if (
+                extractDomain(fetchedApi.api) !== extractDomain(originalApi.api)
+              ) {
+                originalApis[index].api = fetchedApi.api; // Update originalApis
+                return { success: true, index, newApi: fetchedApi.api }; // Return a success result
+              }
+            }
+            return { success: false, index }; // Return a failure result
+          })
+        );
+
+        // Check results
+        results.forEach((result) => {
+          if (result.success) {
+              app.apis[0].api = originalApis[0].api;
+          } else {
+            console.log(`No update needed for index ${result.index}`);
+          }
+        });
+        // Update app componentCode and save
+      //   app.apis = originalApis;
+        await app.save();
+
+        // Find the existing chat session
+        let oldChatSession = await chatSession
+          .findOne({
+            agentId: new mongoose.Types.ObjectId(app._id),
+          });
+
+          if(oldChatSession.messages[oldChatSession.messages.length - 1].role === 'assistant'){
+              oldChatSession.messages[oldChatSession.messages.length - 1].code = app.componentCode;
+              await oldChatSession.save();
+          }
+
+
         return res.status(200).json({suggestion: response.data.content[0].text })
         } catch (error) {
       console.log("erorr is ----> ",error);
