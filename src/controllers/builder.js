@@ -705,7 +705,7 @@ module.exports = {
         if(!moongooseHelper.isValidMongooseId(appId)){
           throw new ApiError(404, "AppId not valid");
         }
-        let existingApp = await App.findOne({ url, _id: { $ne: appId }}).lean();
+        let existingApp = await App.findOne({ url, _id: { $ne: appId },status:'dev'}).lean();
         if (existingApp) {
             return res.status(409 ).json({ error: 'url already exists' });
         } 
