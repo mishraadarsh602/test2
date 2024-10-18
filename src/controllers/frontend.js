@@ -43,11 +43,14 @@ module.exports = {
       if (appData.agent_type !== "AI_Tool") {
         let feature = await featureListModel.findOne(
           { type: appData["agent_type"] },
-          { componentCode: 1, apis: 1 }
+          { componentCode: 1, apis: 1, tool_type: 1, icon:1, description:1 }
         );
         appData["componentCode"] = feature.componentCode;
         appData["apis"] = feature.apis || [];
-      }else{
+        appData["tool_type"] = feature.tool_type || '';
+        appData["icon"] = feature.icon || '';
+        appData["description"] = feature.description || '';
+      } else{
         appData["apis"] = [];
       }
       const user = await userService.getUserById(userId);
@@ -129,6 +132,8 @@ module.exports = {
                 status: 1,
                 visitorCount: 1,
                 type: 1,
+                icon:1,
+                description:1
               },
             },
           ],
