@@ -38,6 +38,7 @@ const corsOptions = {
       "http://localhost:4500",
       "http://localhost:4200",
       "http://localhost:3000",
+      "http://localhost:3001",
       "https://gen-purpose-builder.web.app"
     ],
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
