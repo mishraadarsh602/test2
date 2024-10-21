@@ -108,7 +108,7 @@ module.exports = {
   },
   getAllAppsOfUser:catchAsync(async(req,res)=>{
     const userId = req.user.userId;
-    const regexPattern = new RegExp(`^${req.body.name}`, 'i');
+    const regexPattern = new RegExp(`^${req.body.name}`);
     let apps = await App.aggregate([
       {
         $facet: {
@@ -117,7 +117,7 @@ module.exports = {
               $match: {
                 user: moongooseHelper.giveMoongooseObjectId(userId),
                 status: "dev",
-                name: { $regex: regexPattern },
+                name: { $regex: regexPattern , $options: 'i' }
               },
             },
             {
