@@ -12,8 +12,8 @@ updateCount=catchAsync(async (req,isIncrease=false)=>{
     if(!moongooseHelper.isValidMongooseId(req.body.app)){
       throw new ApiError(400,'AppId not valid');
     }
-    await appModel.updateOne({ _id: req.body.app,},  { $inc: { visitorCount: isIncrease? 1:-1 } });
-    await featureListModel.updateOne({ type: req.body.agent_type },  { $inc: { visitorCount: isIncrease? 1:-1 } });
+    await appModel.updateOne({ _id: req.body.app,},  { $inc: { visitorCount: isIncrease? 1:-req.body.visitorIds.length } });
+    await featureListModel.updateOne({ type: req.body.agent_type },  { $inc: { visitorCount: isIncrease? 1:-req.body.visitorIds.length } });
 })
 
 
