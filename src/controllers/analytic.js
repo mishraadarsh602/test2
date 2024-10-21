@@ -8,12 +8,12 @@ const catchAsync=require('../utils/catchAsync');
 const moongooseHelper=require('../utils/moongooseHelper');
 const ApiError=require('../utils/throwError');
 const ApiResponse = require('../utils/apiResponse');
-updateCount=catchAsync(async (req)=>{
-  if(!moongooseHelper.isValidMongooseId(req.body.app)){
-    throw new ApiError(400,'AppId not valid');
-  }
-  await appModel.updateOne({ _id: req.body.app,}, { $inc: { visitorCount: 1 } });
-  await featureListModel.updateOne({ type: req.body.agent_type }, { $inc: { visitorCount: 1 } });
+updateCount=catchAsync(async (req,isIncrease=false)=>{
+    if(!moongooseHelper.isValidMongooseId(req.body.app)){
+      throw new ApiError(400,'AppId not valid');
+    }
+    await appModel.updateOne({ _id: req.body.app,},  { $inc: { visitorCount: isIncrease? 1:-1 } });
+    await featureListModel.updateOne({ type: req.body.agent_type },  { $inc: { visitorCount: isIncrease? 1:-1 } });
 })
 
 
@@ -119,7 +119,7 @@ module.exports={
       });
       let key=visitorCreated._id;
       await visitorCreated.save();
-      updateCount(req);
+      updateCount(req,true);
       return res.status(201).json(
         new ApiResponse(201, 'Visits updated successfully',key)
     );
@@ -367,7 +367,8 @@ module.exports={
             { _id: { $in: visitorIds } },
             { type: 'Deleted' } 
         );
-
+        
+        updateCount(req);
         res.status(200).json(
           new ApiResponse(200,'Visitors deleted successfully')
          );
