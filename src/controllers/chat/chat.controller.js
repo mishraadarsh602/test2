@@ -802,17 +802,27 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
       //   }
       // );
 
+      const apiKeyRegex = /(your[_-\s]*)?api[_-\s]*key/i;
       const urlRegex = /fetch\((['"`])([^'"`]+)\1\)/;
       let originalApis = []; // Array to store original API objects
 
       // Replace URLs in the code while extracting them
       obj.code = obj.code.replace(urlRegex, (matchedUrl) => {
         // Extract the full URL from the matched string
-        const fullUrl = matchedUrl.match(/(['"`])([^'"`]+)\1/)[2]; // URL is in the second capture group
+        const fullUrl = matchedUrl.match(/(['"`])([^'"`]+)\1/)[2].replace(/\$\{encodeURIComponent\(([^)]+)\)\}/g, '${$1}'); // URL is in the second capture group
+        
+        // Check if the URL contains an API key pattern
+        if (!apiKeyRegex.test(fullUrl)) {
+          // If no API key pattern is found, return the original matched URL
+          return matchedUrl.replace(/\$\{encodeURIComponent\(([^)]+)\)\}/g, '${$1}');
+        }
+
         if (fullUrl.startsWith(process.env.BACKEND_URL)) {
           originalApis = appDetails.apis;
           return `fetch(\`${fullUrl}\`)`;
         }
+        
+        console.log("fullUrl", fullUrl)
         // Store the matched URL as an object in the array
         originalApis.push({ api: fullUrl });
 
@@ -837,10 +847,11 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
 
         // Join parameters with '&' to form the new query string
         const newQueryString = paramsArray.join("&");
+        const decodedQueryString = newQueryString.replace(/\$\{encodeURIComponent\(([^)]+)\)\}/g, '${$1}');
 
         // Construct the new URL with the updated query string
-        return `fetch(\`${process.env.BACKEND_URL}/builder/callAPI?${newQueryString}\`)`;
-      });
+        return `fetch(\`${process.env.BACKEND_URL}/builder/callAPI?${decodedQueryString}\`)`;
+     });
 
       if(obj.code.includes('Call_AI_API')){
         obj.code = obj.code.replace('Call_AI_API', `${process.env.BACKEND_URL}/builder/callAI`)

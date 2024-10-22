@@ -418,7 +418,7 @@ module.exports = {
 
   callAPI: async (req, res) => {
     try {
-      const appId = req.query.appId; // Change here to get appId from the query
+      const appId = req.query.appId;
 
       let appData = await App.findOne({
         _id: appId,
@@ -431,58 +431,45 @@ module.exports = {
 
       // Replace the placeholder with the actual API key
       api = api.replace(regex, appData.apis[0].key);
-      console.log(api)
-    //   // Create a URL object from the original API to parse query parameters
-      const originalRequestUrl = new URL(api, `http://${req.headers.host}`); // Constructing the full URL for parsing
-      const originalQueryParameters = Object.fromEntries(
-        originalRequestUrl.searchParams
-      ); // Extract query parameters
+      console.log("Api from DB", api);
 
-    //   // Log the original query parameters
-      console.log("Original Query Parameters:", originalQueryParameters);
+      const customQueryParameters = req.query;
 
-      // Create a URL object from req.url to parse query parameters
-      const customRequestUrl = new URL(req.url, `http://${req.headers.host}`); // Constructing the full URL for parsing
-      const customQueryParameters = Object.fromEntries(
-        customRequestUrl.searchParams
-      ); // Extract query parameters
-
-    //   // Log the incoming query parameters for debugging
       console.log("Incoming Query Parameters:", customQueryParameters);
+
       // Replace variables in the original API URL with actual values dynamically
-      api = api.replace(/\$\{(.*?)\}/g, (match, variableName) => {
-        let key = variableName.trim();
-        console.log(`Checking for replacement: ${key}`, match); // Debugging output
-        console.log(originalQueryParameters);
-        key = Object.keys(originalQueryParameters).find(
-          (keyName) => originalQueryParameters[keyName] === match
-        );
-        console.log(`Checking for replacement: ${key}`, match); // Debugging output
-        if (key in customQueryParameters) {
-          // Check if the key exists in incoming query parameters
-          const value = customQueryParameters[key];
-          console.log(`Replacing ${match} with ${value}`); // Debugging output
-          return value || ""; // Replace with the corresponding value from incoming query parameters
+      api = api.replace(/\$\{(.*?)\}/g, (match, expression) => {
+        const trimmedExpression = expression.trim();
+        console.log(`Checking for replacement: ${trimmedExpression}`, match);
+        
+        if (trimmedExpression.startsWith('encodeURIComponent(') && trimmedExpression.endsWith(')')) {
+          const paramName = trimmedExpression.slice(19, -1); // Extract parameter name
+          if (paramName in customQueryParameters) {
+            const encodedValue = encodeURIComponent(customQueryParameters[paramName]);
+            console.log(`Replacing ${match} with ${encodedValue}`);
+            return encodedValue;
+          }
+        } else if (trimmedExpression in customQueryParameters) {
+          console.log(`Replacing ${match} with ${customQueryParameters[trimmedExpression]}`);
+          return customQueryParameters[trimmedExpression];
         }
-        return ""; // Fallback if the key does not exist
+        
+        return match; // Keep original placeholder if no replacement found
       });
-      console.log(api);
+
+      console.log("api get hit:", api);
 
       const response = await axios.get(api, {
-        responseType: "arraybuffer", // Handle any kind of response (binary, JSON, etc.)
+        responseType: "arraybuffer",
       });
 
-      // Determine the type of content
       const contentType = response.headers["content-type"];
-
-      // Send response headers so the frontend can interpret it
       res.setHeader("Content-Type", contentType);
-
-      // Forward the data as-is (whether it's binary, JSON, or text)
+      console.log(`API Response of content Type ${contentType}`,response)
       res.send(response.data);
     } catch (error) {
-      console.log("erorr is ----> ",error);
-      res.send(error);
+      console.log("error is ----> ", error);
+      res.status(500).send(error.toString());
     }
   },
 
@@ -806,3 +793,4 @@ function extractDomain(url) {
     const domain = url.split('/')[2]; // Extracts the domain part of the URL
     return domain;
 }
+
