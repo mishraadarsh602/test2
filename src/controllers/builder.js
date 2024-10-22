@@ -89,13 +89,13 @@ module.exports = {
             }
         }, 
       getAppByUrl:catchAsync(async(req,res)=>{
-           let app = await App.findOne({url:req.params.url,user:req.user.userId}).lean();
+           let app = await App.findOne({url:req.params.url,user:req.user.userId,status:'dev'}).lean();
            if (!app) {
             throw new ApiError(404, "App not found");
           }
           let liveApp=await App.findOne({parentApp:app._id,status:'live'},{url:1,_id:0});     
           res.status(200).json(
-            new apiResponse(200, "App fetched successfully",{...app,isLive: !!liveApp,url:liveApp?liveApp.url:app.url})
+            new apiResponse(200, "App fetched successfully",{...app,isLive: !!liveApp,})
            );
         }),
   updateApp:catchAsync(async (req, res) => {
@@ -692,7 +692,7 @@ module.exports = {
         if(!moongooseHelper.isValidMongooseId(appId)){
           throw new ApiError(404, "AppId not valid");
         }
-        let existingApp = await App.findOne({ url, _id: { $ne: appId },status:'dev'}).lean();
+        let existingApp = await App.findOne({ url, _id: { $ne: appId }}).lean();
         if (existingApp) {
             return res.status(409 ).json({ error: 'url already exists' });
         } 
