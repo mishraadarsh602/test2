@@ -23,7 +23,8 @@ module.exports = {
       let app = await redisClient.get(`app-${parameter}`);
       let redisResponse=JSON.parse(app);
       if (!redisResponse) {
-        response = await App.findOne({ url: parameter, status: "live" }, { apis: 0, thread_id: 0 });
+        response = await App.findOne({ url: parameter, status: "live" }, { apis: 0, thread_id: 0 }
+        ).collation({ locale: 'en', strength: 2 });
         
        
         // If response not found, try to fetch by _id

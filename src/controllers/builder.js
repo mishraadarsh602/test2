@@ -692,13 +692,22 @@ module.exports = {
         if(!moongooseHelper.isValidMongooseId(appId)){
           throw new ApiError(404, "AppId not valid");
         }
-        let existingApp = await App.findOne({ url, _id: { $ne: appId }}).lean();
+        let existingApp = await App.findOne({ url,
+          status: {
+            $ne: 'deleted'
+        }
+         }).collation({ locale: 'en', strength: 2 }).lean();
+        if(existingApp && existingApp._id==appId){
+          return res.status(200).json(
+            new ApiResponse(200,"",{url:existingApp.url})
+          )
+        }
         if (existingApp) {
             return res.status(409 ).json({ error: 'url already exists' });
         } 
         await App.updateOne({_id:appId,user:req.user.userId},{$set:{url,changed:true}})
         return res.status(200).json(
-          new ApiResponse(200,"Url updated successfully")
+          new ApiResponse(200,"Url updated successfully",{url})
         )
   }),
 
