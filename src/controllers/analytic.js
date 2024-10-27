@@ -173,6 +173,7 @@ module.exports={
       ])
 
       const fixedColumns = [
+        { key: "date", label: "Date" },
         { key: "browser", label: "Browser" },
         { key: "device", label: "Device Type" },
         { key: "utm_source", label: "Utm Source" },
@@ -212,132 +213,120 @@ module.exports={
         new ApiResponse(200,"fetch visitors successfully",response) 
     );
   }),
-  get_leads: catchAsync(
-     async (req, res) => {
-      const { appId, startDate, endDate } = req.body;
-      if(!moongooseHelper.isValidMongooseId(appId)){
-        throw new ApiError(400,'AppId not valid')
-      }
-      const response = await appVisitorModel.aggregate([
-        {
-          $match: {
-            app: moongooseHelper.giveMoongooseObjectId(appId),
-            createdAt: {
-              $gte: new Date(startDate),
-              $lte: new Date(endDate)
-            },
-            type:'Lead'
-          }
-        },
-        {
-          $sort: {
-            updatedAt: -1,
+get_leads: catchAsync(
+  async (req, res) => {
+    const { appId, startDate, endDate } = req.body;
+    if (!moongooseHelper.isValidMongooseId(appId)) {
+      throw new ApiError(400, 'AppId not valid');
+    }
+    const response = await appVisitorModel.aggregate([
+      {
+        $match: {
+          app: moongooseHelper.giveMoongooseObjectId(appId),
+          createdAt: {
+            $gte: new Date(startDate),
+            $lte: new Date(endDate)
           },
-        },
-        {
-          $addFields: {
-            date: {
-              $dateToString: {
-                format: "%d %b %Y %H:%M:%S",
-                date: "$createdAt",
-              }
+          type: 'Lead'
+        }
+      },
+      { $sort: { updatedAt: -1 } },
+      {
+        $lookup: {
+          from: 'appleads',
+          localField: 'lead',
+          foreignField: '_id',
+          as: 'lead'
+        }
+      },
+      { $unwind: '$lead' },
+      {
+        $addFields: {
+          date: {
+            $dateToString: {
+              format: "%d %b %Y %H:%M:%S",
+              date: "$lead.createdAt"
             }
           }
-        },
-        {
-          $lookup: {
-            from: 'appleads',
-            localField: 'lead',
-            foreignField: '_id',
-            as: 'lead'
-          }
-        },
-        {
-          $unwind: {
-            path: '$lead',
-          }
-        },
-        {
-          $project: {
-            date: 1,
-            browser: 1,
-            device: 1,
-            utm_source: 1,
-            utm_medium: 1,
-            utm_campaign: 1,
-            utm_term: 1,
-            utm_content: 1,
-            transaction_completed: 1,
-            amount: 1,
-            currency: 1,
-            'lead.fields': 1,
-            'lead._id':1
-          }
         }
-      ]);
-      
-      let finalResponse = { columns: [], data: [], idsArray:[] };
-      let columnSet = new Set(); // as coloumns have many fields depending upon lead fields
-
-      const fixedColumns = [
-        { key: "browser", label: "Browser" },
-        { key: "device", label: "Device Type" },
-        { key: "utm_source", label: "Utm Source" },
-        { key: "utm_campaign", label: "Utm Campaign" },
-        { key: "utm_term", label: "Utm Term" },
-        { key: "utm_content", label: "Utm Content" },
-        { key: "transaction_completed", label: "Transaction Completed" },
-        { key: "transactionAmount",label:"Transaction Amount" }
-      ];
-      
-      let maxLeadFields = [];
-      response.forEach(el => {
-        if (el.lead.fields.length > maxLeadFields.length) {
-          maxLeadFields = el.lead.fields;
+      },
+      {
+        $project: {
+          date: 1,
+          browser: 1,
+          device: 1,
+          utm_source: 1,
+          utm_medium: 1,
+          utm_campaign: 1,
+          utm_term: 1,
+          utm_content: 1,
+          transaction_completed: 1,
+          amount: 1,
+          currency: 1,
+          'lead.fields': 1,
+          'lead._id':1
         }
+      }
+    ]);
+    let finalResponse = { columns: [], data: [], idsArray: [] };
+    const fixedColumns = [
+      { key: "browser", label: "Browser" },
+      { key: "device", label: "Device Type" },
+      { key: "utm_source", label: "Utm Source" },
+      { key: "utm_campaign", label: "Utm Campaign" },
+      { key: "utm_term", label: "Utm Term" },
+      { key: "utm_content", label: "Utm Content" },
+      { key: "transaction_completed", label: "Transaction Completed" },
+      { key: "transactionAmount", label: "Transaction Amount" }
+    ];
+    const maxLeadFields = new Set();
+    let fieldCounts;
+    response.forEach(el => {
+      fieldCounts = {};
+      el.lead.fields.forEach(field => {
+        let fieldName = field.field_name.replace(/\s+/g, ''); // replacing all spaces with ''
+        fieldCounts[fieldName] = (fieldCounts[fieldName] || 0) + 1;
+        if (fieldCounts[fieldName] > 1) {
+          fieldName = `${fieldName}_${fieldCounts[fieldName] - 1}`;
+        }
+        maxLeadFields.add(fieldName);
       });
-      
-      response.forEach(el => {
-        let fieldCount = {};
-        const dataRow=[];
-        finalResponse.idsArray.push(el.lead._id);
-        maxLeadFields.forEach(field => {
-          let fieldName = field.field_name;
-          fieldName = fieldName.split(' ').join('');
-          // Increment the field count, defaulting to 0 if it doesn't exist for example fieldCount={} => as email does not exist -> {email:0} else {email:fieldCount[email]+1}
-          fieldCount[fieldName] = (fieldCount[fieldName] || 0) + 1;
-
-          if (fieldCount[fieldName] > 1) {
-            fieldName = `${fieldName}_${fieldCount[fieldName] - 1}`;
+    });
+    let maxFieldsArray=Array.from(maxLeadFields);
+    finalResponse.columns = ["Date", ...maxFieldsArray, ...fixedColumns.map(col => col.label)];
+    
+    response.forEach(el => {
+      finalResponse.idsArray.push(el.lead._id);
+      const dataRow = [el.date];
+      maxFieldsArray.forEach(columnName => {
+        fieldCounts = {};
+        const matchingField = el.lead.fields.find(field => {
+          let fieldName = field.field_name.replace(/\s/g, '');
+          fieldCounts[fieldName] = (fieldCounts[fieldName] || 0) + 1;
+          if (fieldCounts[fieldName] > 1) {
+            fieldName = `${fieldName}_${fieldCounts[fieldName] - 1}`;
           }
-          
-          columnSet.add(fieldName);
-          dataRow.push(field.value ? field.value : 'Not Applicable');
-          
+          return fieldName === columnName;
         });
+        dataRow.push(matchingField ? matchingField.value : 'Not Applicable');
+      });
 
       fixedColumns.forEach(entry => {
-          const key =entry.key;
-          if (key === 'transactionAmount') {
-            const amount = el['amount'];
-            const currency = el['currency'];
-            dataRow.push( amount && currency ? `${amount} ${currency}` : 'Not Applicable');
-          }
-          else{
-            dataRow.push( el[key]==""? 'Not Applicable':el[key]); 
-          }
-          
-        });
+        if (entry.key === 'transactionAmount') {
+          const amount = el['amount'];
+          const currency = el['currency'];
+          dataRow.push(amount && currency ? `${amount} ${currency}` : 'Not Applicable');
+        } else {
+          dataRow.push(el[entry.key] || 'Not Applicable');
+        }
+      });
 
-        finalResponse.data.push(dataRow);
-      })
-   
-      fixedColumns.forEach(entry => columnSet.add(entry.label));
-      finalResponse.columns = Array.from(columnSet);
-      return res.status(200).json(
-        new ApiResponse(200,'leads fetched successfully',finalResponse)
-      );
-  }),
+      finalResponse.data.push(dataRow);
+    });
+    return res.status(200).json(new ApiResponse(200, 'Leads fetched successfully', finalResponse));
+  }
+)
+,
   saveLead:catchAsync(
      async(req,res)=>{
       let key=req.body.key;
