@@ -1,4 +1,4 @@
-const express = require('express');
+const express = require ('express');
 const { body, param } = require('express-validator');
 const router = express.Router();
 const userController = require('../../../controllers/admin/userController');
@@ -29,8 +29,7 @@ const updateUserValidationRules = [
   ...createUserValidationRules,
 ];
 
-// Create a new user
-router.post('/createuser', createUserValidationRules, userController.createUser);
+
 
 // Get all users
 router.get('/getusers', userController.getAllUsers);
