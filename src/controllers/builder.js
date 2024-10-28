@@ -247,7 +247,7 @@ module.exports = {
       if (!moongooseHelper.isValidMongooseId(appId)) {
         throw new ApiError(404, "AppId not valid");
       }
-      const fetchedApp=await App.findOne({_id:appId,user:req.user.userId});
+      const fetchedApp=await App.findOne({_id:appId});
       res.status(200).json(
         new apiResponse(200, "App fetched successfully",fetchedApp)
       )
@@ -705,7 +705,7 @@ module.exports = {
         if (existingApp) {
             return res.status(409 ).json({ error: 'url already exists' });
         } 
-        await App.updateOne({_id:appId,user:req.user.userId},{$set:{url,changed:true}})
+        await App.updateOne({_id:appId},{$set:{url,changed:true}})
         return res.status(200).json(
           new ApiResponse(200,"Url updated successfully",{url})
         )
@@ -777,7 +777,7 @@ module.exports = {
                         email:email,
                         id: token
                     }
-                    await appVisitorsModel.updateOne({ live_app: appId, _id: key }, { $set: { transaction_status: paymentStatus, transaction_completed: true, transaction_json: JSON.stringify(transactionObj), transaction_mode: paymentMethod, amount:isNaN(amount)?0:amount/100, currency:currency } });
+                    await appVisitorsModel.updateOne({ _id: key }, { $set: { transaction_status: paymentStatus, transaction_completed: true, transaction_json: JSON.stringify(transactionObj), transaction_mode: paymentMethod, amount:isNaN(amount)?0:amount/100, currency:currency } });
                     res.status(201).json({
                         message: "Transaction details saved successfully",
                         data: transactionObj,
@@ -785,10 +785,10 @@ module.exports = {
 
                 } 
             } catch (err) {
-                let visit = await appVisitorsModel.findOne({ live_app: req.body.appId, _id: req.body.key });
+                let visit = await appVisitorsModel.findOne({ _id: req.body.key });
                 if (!visit.transaction_completed) {
                     let payment_error = 'Payment Failed with code: ' + err.code + ' - ' + err.message;
-                    await appVisitorsModel.updateOne({ live_app: req.body.appId, _id: req.body.key }, { $set: { transaction_status: payment_error, transaction_completed: false, transaction_json: JSON.stringify(err), transaction_mode: req.body.paymentMethod } });
+                    await appVisitorsModel.updateOne({ _id: req.body.key }, { $set: { transaction_status: payment_error, transaction_completed: false, transaction_json: JSON.stringify(err), transaction_mode: req.body.paymentMethod } });
                 }
 
                 // return response.error(res, err);

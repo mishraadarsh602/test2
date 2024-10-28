@@ -6,15 +6,11 @@ const appLeadSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: 'appVisitors'
         },
-        // app: { // parentApp of status dev
-        //       type: mongoose.Schema.ObjectId,
-        //       ref: 'App',
-        //     required: true
-        // },
-        // live_app: {
-        //     type: mongoose.Schema.Types.ObjectId,
-        //     ref: 'App'
-        // },
+        app: { // parentApp of status dev
+            type: mongoose.Schema.ObjectId,
+            ref: 'App',
+            required: true
+        },
         fields: [
             {
                 field_name: {
@@ -50,5 +46,6 @@ const appLeadSchema = new mongoose.Schema(
     }
 );
 
+appLeadSchema.index({ "app": 1, "createdAt": -1, "key": 1 });
 const appVisitors = mongoose.model('appLeads', appLeadSchema);
 module.exports = appVisitors;
