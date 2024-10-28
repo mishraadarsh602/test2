@@ -20,4 +20,4 @@ router.post('/createFeatureList', adminController.createFeatureList);
 // Route to update a feature list by ID
 router.put('/updateFeatureList/:id', adminController.updateFeatureList);
 
-gmodule.exports = router;
+module.exports = router;
