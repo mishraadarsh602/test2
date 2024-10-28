@@ -108,7 +108,6 @@ module.exports = {
   },
   getAllAppsOfUser:catchAsync(async(req,res)=>{
     const userId = req.user.userId;
-    const regexPattern = new RegExp(`^${req.body.name}`);
     let apps = await App.aggregate([
       {
         $facet: {
@@ -117,7 +116,7 @@ module.exports = {
               $match: {
                 user: moongooseHelper.giveMoongooseObjectId(userId),
                 status: "dev",
-                name: { $regex: regexPattern , $options: 'i' }
+                name: { $regex: req.body.name , $options: 'i' }
               },
             },
             {
@@ -142,7 +141,7 @@ module.exports = {
               $match: {
                 user: moongooseHelper.giveMoongooseObjectId(userId),
                 status: "live",
-                name: { $regex: regexPattern },
+                name: { $regex: req.body.name, $options: 'i'},
               },
             },
             {
@@ -200,7 +199,7 @@ module.exports = {
     const appCount = await App.count({
       user: moongooseHelper.giveMoongooseObjectId(userId),
       status: "dev",
-      name: { $regex: regexPattern,$options: 'i' },
+      name: { $regex: req.body.name,$options: 'i' },
     });
     const showMore = req.body.skip + req.body.limit < appCount;
     res.status(200).json(
