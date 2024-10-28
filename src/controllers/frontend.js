@@ -200,7 +200,7 @@ module.exports = {
     const appCount = await App.count({
       user: moongooseHelper.giveMoongooseObjectId(userId),
       status: "dev",
-      name: { $regex: regexPattern },
+      name: { $regex: regexPattern,$options: 'i' },
     });
     const showMore = req.body.skip + req.body.limit < appCount;
     res.status(200).json(
