@@ -46,6 +46,7 @@ const appLeadSchema = new mongoose.Schema(
     }
 );
 
-appLeadSchema.index({ "app": 1, "createdAt": -1, "key": 1 });
+appLeadSchema.index({ "app": 1, "createdAt": -1 });
+appLeadSchema.index({ "key": 1, "createdAt": -1 });
 const appVisitors = mongoose.model('appLeads', appLeadSchema);
 module.exports = appVisitors;
