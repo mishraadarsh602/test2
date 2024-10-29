@@ -2,6 +2,7 @@ const appVisitorModel = require('../models/appVisitors');
 const appModel=require('../models/app');
 const featureListModel=require('../models/featureList');
 const Bowser = require("bowser");
+const moment = require('moment');
 const appVisitorsModel = require('../models/appVisitors');
 const appLeadsModel = require('../models/appLeads');
 const catchAsync=require('../utils/catchAsync');
@@ -130,35 +131,12 @@ module.exports={
         if(!moongooseHelper.isValidMongooseId(appId)){
           throw new ApiError(400,'AppId not valid')
         }
-        const allVisitors=await appVisitorModel.aggregate([
-        {
-          $match: {
-            app: moongooseHelper.giveMoongooseObjectId(appId),
-            type:'Visitor',
-            createdAt: {
-              $gte: new Date(startDate),
-              $lte: new Date(endDate)
-            }
-          }
-        },
-        {
-          $sort: {
-            updatedAt: -1,
-          },
-        },
-        {
-          $addFields: {
-                date:{
-              $dateToString: {
-                format: "%d %b %Y %H:%M:%S",
-                date: "$createdAt",
-              }
-            }
-          }
-        },
-        {
-          $project: {
-            date: 1,
+      const allVisitors = await appVisitorModel.find({
+        app:moongooseHelper.giveMoongooseObjectId(appId), 
+        type: 'Visitor', 
+        createdAt: { $gte: new Date(startDate), $lte: new Date(endDate) }
+      },{
+        createdAt: 1,
             browser: 1, 
             utm_source: 1,
             utm_medium: 1,
@@ -168,12 +146,10 @@ module.exports={
             transaction_completed: 1,
             amount: 1,
             currency: 1,
-          }
-        }
-      ])
-
+      })
+      .sort({ updatedAt: -1 }).lean();      
       const fixedColumns = [
-        { key: "date", label: "Date" },
+        { key: "createdAt", label: "Date" },
         { key: "browser", label: "Browser" },
         { key: "device", label: "Device Type" },
         { key: "utm_source", label: "Utm Source" },
@@ -182,7 +158,7 @@ module.exports={
         { key: "utm_content", label: "Utm Content" },
         { key: "transaction_completed", label: "Transaction Completed" },
         { key: "transactionAmount",label:"Transaction Amount" }
-      ];
+      ]; 
 
       let response = {
         columns: fixedColumns.map((entry) => entry.label),
@@ -193,6 +169,9 @@ module.exports={
               const amount = visitor['amount'];
               const currency = visitor['currency'];
               return amount && currency ? `${amount} ${currency}` : 'Not Applicable';
+            }
+            if(key=='createdAt'){
+              return moment(visitor.createdAt).format('LLL');
             }
             if (key === 'transaction_completed') {
             const transactionCompleted = visitor['transaction_completed'];
@@ -219,55 +198,18 @@ get_leads: catchAsync(
     if (!moongooseHelper.isValidMongooseId(appId)) {
       throw new ApiError(400, 'AppId not valid');
     }
-    const response = await appVisitorModel.aggregate([
-      {
-        $match: {
-          app: moongooseHelper.giveMoongooseObjectId(appId),
-          createdAt: {
-            $gte: new Date(startDate),
-            $lte: new Date(endDate)
-          },
-          type: 'Lead'
-        }
+    const response = await appVisitorModel.find({
+      app: moongooseHelper.giveMoongooseObjectId(appId),
+      createdAt: {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate)
       },
-      { $sort: { updatedAt: -1 } },
-      {
-        $lookup: {
-          from: 'appleads',
-          localField: 'lead',
-          foreignField: '_id',
-          as: 'lead'
-        }
-      },
-      { $unwind: '$lead' },
-      {
-        $addFields: {
-          date: {
-            $dateToString: {
-              format: "%d %b %Y %H:%M:%S",
-              date: "$lead.createdAt"
-            }
-          }
-        }
-      },
-      {
-        $project: {
-          date: 1,
-          browser: 1,
-          device: 1,
-          utm_source: 1,
-          utm_medium: 1,
-          utm_campaign: 1,
-          utm_term: 1,
-          utm_content: 1,
-          transaction_completed: 1,
-          amount: 1,
-          currency: 1,
-          'lead.fields': 1,
-          'lead._id':1
-        }
-      }
-    ]);
+      type: 'Lead'
+    })
+    .sort({ updatedAt: -1 })
+    .populate('lead')
+    .select('createdAt browser utm_source utm_medium utm_campaign utm_term utm_content transaction_completed amount currency')
+   
     let finalResponse = { columns: [], data: [], idsArray: [] };
     const fixedColumns = [
       { key: "browser", label: "Browser" },
@@ -297,7 +239,7 @@ get_leads: catchAsync(
     
     response.forEach(el => {
       finalResponse.idsArray.push(el.lead._id);
-      const dataRow = [el.date];
+      const dataRow = [moment(el.lead.createdAt).format('LLL')];
       maxFieldsArray.forEach(columnName => {
         fieldCounts = {};
         const matchingField = el.lead.fields.find(field => {
