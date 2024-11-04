@@ -1,4 +1,5 @@
 const { Server } = require("socket.io"); // Import the Socket.IO server class
+const { stripIndents} = require('./../../service/chat/stripIndent');
 const {
   fetchPreviousChat,
   updateAIMessageToChatSession,
@@ -48,7 +49,7 @@ module.exports = (server) => {
 
         const returnedOutput = await aiAssistantChatStart(
           data.userId,
-          data.message,
+          stripIndents(data.message),
           app,
           data.image ? data.image[0] : null,
           true,
@@ -162,7 +163,7 @@ module.exports = (server) => {
         // const returnedOutput = await continueChatSessionMessages(data.userId, data.message, appId);
         const returnedOutput = await aiAssistantChatStart(
           data.userId,
-          data.message,
+          stripIndents(data.message),
           app,
           data.image ? data.image[0] : null,
           false,
