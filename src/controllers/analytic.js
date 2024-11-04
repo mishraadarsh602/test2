@@ -258,6 +258,16 @@ get_leads: catchAsync(
           const amount = el['amount'];
           const currency = el['currency'];
           dataRow.push(amount && currency ? `${amount} ${currency}` : 'Not Applicable');
+        } 
+        else if (entry.key === 'transaction_completed') {
+          const transactionCompleted = el['transaction_completed'];
+          if (transactionCompleted === true) {
+            dataRow.push('True');
+          } else if (transactionCompleted === false) {
+            dataRow.push('False');
+          } else {
+            dataRow.push('Not Applicable');
+          }
         } else {
           dataRow.push(el[entry.key] || 'Not Applicable');
         }
