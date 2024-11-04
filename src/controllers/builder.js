@@ -200,7 +200,7 @@ module.exports = {
             const {file} = req;
 
             let result =  await  dashboardHelper.uploadToAWS(file);           
-            res.status(201).json({
+          res.status(201).json({
                data: result,
                message: "File uploaded successfully",
                });
@@ -550,12 +550,18 @@ module.exports = {
           }
         }
 
+        
+        aiUserThreadPrompt = prompt;
         prompt += `\nEnsure that all React hooks are written with the full 'React' prefix, e.g., React.useState(). 
                   Create React element without any import statement. The following header is already added:
                   import React, {useState, useEffect, useContext, useReducer, useCallback, useMemo, useRef, useImperativeHandle, useLayoutEffect, useDebugValue, useTransition, useDeferredValue, useId, useSyncExternalStore, useInsertionEffect} from 'react'; import * as LucideIcons from 'lucide-react'; import { useLocation } from 'react-router-dom'; 
-                  You must return code only, no extra text allowed.`;
-        
-        aiUserThreadPrompt = prompt;
+                  You must return code only, no extra text allowed. like this 
+                   Output structure:
+                    function AppName(){
+                        ...
+                    }
+                    return AppName;
+                  `;
         prompt += `This is my code: ${app.componentCode}`;
 
         const response = await axios.post(

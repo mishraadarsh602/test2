@@ -654,6 +654,7 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
                 fullChatResponse: chatResponse,
                 streaming: true,
                 code: "",
+                codeFound: false
               });
             } else {
               codeBlockBuffer = part;
@@ -902,14 +903,14 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
       // This can be done asynchronously
       appDetails.save().catch(error => console.error("Error saving app details:", error));
       // Call the callback to stream partial responses
-      onPartialResponse({
-        message: chatResponse,
-        fullChatResponse: chatResponse,
-        streaming: false,
-        code: obj.code,
-        codeFound: false,
-      });
     }
+    onPartialResponse({
+      message: chatResponse,
+      fullChatResponse: chatResponse,
+      streaming: false,
+      code: obj.code,
+      codeFound: false,
+    });
     obj.code = appDetails.componentCode;
     // Final return after the streaming is done
     return obj;

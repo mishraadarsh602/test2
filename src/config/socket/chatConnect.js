@@ -175,7 +175,7 @@ module.exports = (server) => {
               fullChatResponse: partialResponse.fullChatResponse,
               streaming: partialResponse.streaming,
               code: partialResponse.code,
-              codeFound: partialResponse.codeFound,
+              codeFound: partialResponse.codeFound || false,
             });
           }
         );
