@@ -29,7 +29,7 @@ const appSchema = new mongoose.Schema({
             },
             size: {
                 type: String,
-                default: ''
+                default: '45'
             },
             url: {
                 type: String,
