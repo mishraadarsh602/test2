@@ -11,5 +11,5 @@ module.exports = router;
 router.get('/getfeatureList/:id', adminController.getFeatureListById);
 router.post('/createFeatureList', adminController.createFeatureList);
 router.put('/updateFeatureList/:id', adminController.updateFeatureList);
-
+router.patch('/updateActiveStatus/:id', adminController.toggleActiveStatus);
 module.exports = router;

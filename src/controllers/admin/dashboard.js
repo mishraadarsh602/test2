@@ -96,10 +96,33 @@ const updateFeatureList = catchAsync(async (req, res) => {
     );
 });
 
+// Controller for toggling the active status of a feature list
+const toggleActiveStatus = catchAsync(async (req, res) => {
+    const { id } = req.params;
+
+    // Find the feature list by id
+    const featureList = await featureListModel.findById(id);
+    if (!featureList) {
+        return res.status(404).json(
+            new apiResponse(404, "Feature list not found")
+        );
+    }
+
+    // Toggle the active status
+    featureList.active = !featureList.active;
+
+    // Save the updated feature list
+    await featureList.save();
+
+    res.status(200).json(
+        new apiResponse(200, "Feature list active status toggled successfully", featureList)
+    );
+});
 // Exporting the controllers as variables
 module.exports = {
     getFeatureLists,
     getFeatureListById,
     createFeatureList,
-    updateFeatureList
+    updateFeatureList,
+    toggleActiveStatus, 
 };
