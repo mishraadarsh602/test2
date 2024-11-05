@@ -89,7 +89,7 @@ module.exports={
           : conversionPercentage.toFixed(2);
       }
       visitors.forEach(({ createdAt, browser, device }) => {
-        const formattedDate = moment(createdAt).format('LLL')
+        const formattedDate = moment(createdAt).format("DD/MM/YYYY")
 
         response.trafficStats[formattedDate] = (response.trafficStats[formattedDate] || 0) + 1;
 
