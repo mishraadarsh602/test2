@@ -32,6 +32,8 @@ module.exports = {
     try {
       let appData = req.body;
       appData['appUUID'] = uuidv4();
+      delete appData['_id'];
+      delete appData['parentApp'];
       appData.name = appData.agent_type + '-' + appData['appUUID'].substring(0, 7);
       appData.url=appData.name;
       const userId = req.user ? req.user.userId : null;
@@ -101,8 +103,7 @@ module.exports = {
         message: "App created successfully",
         data: savedApp,
       });
-    } catch (error) {
-      await createLog({ userId: req.user.userId, error: error.message });
+    } catch (error) { 
       res.status(500).json({ error: error.message });
     }
   },
