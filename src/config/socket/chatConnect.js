@@ -62,9 +62,23 @@ module.exports = (server) => {
               streaming: partialResponse.streaming,
               code: partialResponse.code,
               codeFound: partialResponse.codeFound,
+              // demo: partialResponse.demo
             });
           }
         );
+
+        console.log(returnedOutput)
+
+         // Emit each partial response as it's received
+         socket.emit("partialResponse", {
+          text: '',
+          fullChatResponse: returnedOutput.message,
+          streaming: false,
+          code: returnedOutput.code,
+          codeFound: false,
+          streamingStatus: 'completed'
+          // demo: 'bjbdf'
+        });
 
         await updateAIMessageToChatSession(
           data.userId,
@@ -176,9 +190,23 @@ module.exports = (server) => {
               streaming: partialResponse.streaming,
               code: partialResponse.code,
               codeFound: partialResponse.codeFound || false,
+              // demo: partialResponse.demo
             });
           }
         );
+
+        console.log(returnedOutput);
+
+        // Emit each partial response as it's received
+        socket.emit("partialResponse", {
+          text: '',
+          fullChatResponse: returnedOutput.message,
+          streaming: false,
+          code: returnedOutput.code,
+          codeFound: false,
+          streamingStatus: 'completed'
+          // demo:"mjsfmbdsfb"
+        });
 
         await updateAIMessageToChatSession(
           data.userId,

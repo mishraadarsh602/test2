@@ -634,6 +634,7 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
               streaming: true,
               code: obj.code,
               codeFound: true,
+              // demo: 'h'
             });
             if (index % 2 !== 0) {
               // console.log(
@@ -654,7 +655,8 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
                 fullChatResponse: chatResponse,
                 streaming: true,
                 code: "",
-                codeFound: false
+                codeFound: false,
+                // demo: 'e'
               });
             } else {
               codeBlockBuffer = part;
@@ -666,6 +668,7 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
                 streaming: true,
                 code: obj.code,
                 codeFound: true,
+                // demo: 'l'
               });
             }
           }
@@ -691,20 +694,20 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
         // console.log(isInsideCodeBlock, parts.length, "............................");
       });
 
-    if (chatResponse.trim() === "") {
-      for await (const event of run) {
-        // onEvent(event, onPartialResponse);
-        if (event.event === "thread.run.requires_action") {
-          await handleRequiresAction(
-            event.data,
-            event.data.id,
-            event.data.thread_id,
-            onPartialResponse,
-            app
-          );
-        }
-      }
-    }
+    // if (chatResponse.trim() === "") {
+    //   for await (const event of run) {
+    //     // onEvent(event, onPartialResponse);
+    //     if (event.event === "thread.run.requires_action") {
+    //       await handleRequiresAction(
+    //         event.data,
+    //         event.data.id,
+    //         event.data.thread_id,
+    //         onPartialResponse,
+    //         app
+    //       );
+    //     }
+    //   }
+    // }
 
     const finalFunctionCall = await run.finalMessages();
     console.log("Run end:", finalFunctionCall, chatResponse);
@@ -904,13 +907,6 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
       appDetails.save().catch(error => console.error("Error saving app details:", error));
       // Call the callback to stream partial responses
     }
-    onPartialResponse({
-      message: chatResponse,
-      fullChatResponse: chatResponse,
-      streaming: false,
-      code: obj.code,
-      codeFound: false,
-    });
     obj.code = appDetails.componentCode;
     // Final return after the streaming is done
     return obj;
