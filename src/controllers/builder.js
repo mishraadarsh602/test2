@@ -122,6 +122,9 @@ module.exports = {
                 }
             }
             delete updateData['visitorCount']; // as user may increase the visitors by visiting live app and but update the previous data in builder  so visitor count again set to previous
+            if(updateData.isLive){
+              updateData['changed']=true;
+            }
             await App.updateOne({ _id: req.params.id,user: req.user.userId}, updateData,).lean();
             res.status(200).json(
               new apiResponse(200, "App updated successfully")
