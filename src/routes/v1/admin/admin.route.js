@@ -11,10 +11,6 @@ router.get('/getfeatureList/:id', adminController.getFeatureListById);
 router.post('/createFeatureList', adminController.createFeatureList);
 router.put('/updateFeatureList/:id', adminController.updateFeatureList);
 router.patch('/updateActiveStatus/:id', adminController.toggleActiveStatus);
-router.get('/getUsersCount', adminController.getUsersCount);
-router.get('/getFeaturesCount', adminController.getFeaturesCount);
-router.get('/getLeadsCount', adminController.getLeadsCount);
-router.get('/getVisitorsCount', adminController.getVisitorsCount);
-router.get('/getAppsCount', adminController.getAppsCount);
+router.get('/getAllCounts', adminController.getAllCounts);
 
 module.exports = router;
