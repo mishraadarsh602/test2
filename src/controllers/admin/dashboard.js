@@ -1,6 +1,10 @@
 const featureListModel = require('../../models/featureList');
 const catchAsync = require('../../utils/catchAsync');
 const apiResponse = require('../../utils/apiResponse');
+const userModel = require('../../models/user.model');
+const appModel = require('../../models/app');
+const appLeadsModel = require('../../models/appLeads');
+const appVisitorsModel = require('../../models/appVisitors');
 
 // Controller for getting all feature lists
 const getFeatureLists = catchAsync(async (req, res) => {
@@ -118,11 +122,55 @@ const toggleActiveStatus = catchAsync(async (req, res) => {
         new apiResponse(200, "Feature list active status toggled successfully", featureList)
     );
 });
-// Exporting the controllers as variables
+
+const getUsersCount = catchAsync(async (req, res) => {
+    const userCount = await userModel.countDocuments({});
+    res.status(200).json(
+        new apiResponse(200, "User count fetched successfully", userCount)
+    );
+});
+
+const getFeaturesCount = catchAsync(async (req, res) => {
+    const featureListCount = await featureListModel.countDocuments({});
+    res.status(200).json(
+        new apiResponse(200, "Feature list count fetched successfully", featureListCount)
+    );
+});
+
+
+const getLeadsCount = catchAsync(async (req, res) => {
+    const leadCount = await appLeadsModel.countDocuments({});
+    res.status(200).json(
+        new apiResponse(200, "Lead count fetched successfully", leadCount)
+    );
+
+});
+
+const getVisitorsCount = catchAsync(async (req, res) => {
+    const visitorCount = await appVisitorsModel.countDocuments({});
+    res.status(200).json(
+        new apiResponse(200, "Visitor count fetched successfully", visitorCount)
+    );
+});
+
+const getAppsCount = catchAsync(async (req, res) => {
+    const appCount = await appModel.countDocuments({});
+    res.status(200).json(
+        new apiResponse(200, "App count fetched successfully", appCount)
+    );
+});
+
+
+
 module.exports = {
     getFeatureLists,
     getFeatureListById,
     createFeatureList,
     updateFeatureList,
     toggleActiveStatus, 
+    getUsersCount,
+    getFeaturesCount,
+    getAppsCount,
+    getLeadsCount,
+    getVisitorsCount
 };

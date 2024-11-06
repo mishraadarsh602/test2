@@ -235,6 +235,9 @@ async function extractFavicon($, url) {
     faviconLink = $('link[rel="apple-touch-icon"]').attr('href'); 
   }
 
+  if (faviconLink && !faviconLink.includes('http')) {
+    faviconLink = url + faviconLink;
+  }
   if (faviconLink) {
      return  await functions.uploadFaviconToS3(faviconLink,url,BASE_S3_URL);
   } else {
