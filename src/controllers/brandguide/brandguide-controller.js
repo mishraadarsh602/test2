@@ -49,8 +49,6 @@ const controller = {
       }
 
     } catch (error) {
-      // console.log("Error during brand extraction:", error.message);
-      // console.log("Fetching data from Brand Fetch..");
       let result = await functions.runBrandFetch(url, BASE_S3_URL);
       return result;
     }
@@ -231,12 +229,14 @@ async function extractFavicon($, url) {
   if(!faviconLink){
     faviconLink = $('link[rel="icon"]').attr('href'); 
   }
+
   if(!faviconLink){
     faviconLink = $('link[rel="apple-touch-icon"]').attr('href'); 
   }
 
+  //add check if dont have http or https add it to url
   if (faviconLink && !faviconLink.includes('http')) {
-    faviconLink = url + faviconLink;
+    faviconLink = url +'/' + faviconLink;
   }
   if (faviconLink) {
      return  await functions.uploadFaviconToS3(faviconLink,url,BASE_S3_URL);
