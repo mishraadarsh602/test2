@@ -142,10 +142,7 @@ module.exports={
             utm_medium: 1,
             utm_campaign: 1,
             utm_term: 1,
-            utm_content: 1,
-            transaction_completed: 1,
-            amount: 1,
-            currency: 1,
+            utm_content: 1
       })
       .sort({ updatedAt: -1 }).lean();      
       const fixedColumns = [
@@ -156,8 +153,6 @@ module.exports={
         { key: "utm_campaign", label: "Utm Campaign" },
         { key: "utm_term", label: "Utm Term" },
         { key: "utm_content", label: "Utm Content" },
-        { key: "transaction_completed", label: "Transaction Completed" },
-        { key: "transactionAmount",label:"Transaction Amount" }
       ]; 
 
       let response = {
@@ -165,23 +160,9 @@ module.exports={
         data: allVisitors.map((visitor) => {
           return fixedColumns.map(entry => {
             const key = entry.key;
-            if (key === 'transactionAmount') {
-              const amount = visitor['amount'];
-              const currency = visitor['currency'];
-              return amount && currency ? `${amount} ${currency}` : 'Not Applicable';
-            }
+           
             if(key=='createdAt'){
               return moment(visitor.createdAt).format('LLL');
-            }
-            if (key === 'transaction_completed') {
-            const transactionCompleted = visitor['transaction_completed'];
-            if (transactionCompleted === true) {
-                return 'True';
-            } else if (transactionCompleted === false) {
-                return 'False';
-            } else {
-                return 'Not Applicable';
-            }
             }
             return visitor[key] ? visitor[key] : 'Not Applicable'
           })
