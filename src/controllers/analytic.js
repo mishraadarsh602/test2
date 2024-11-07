@@ -13,8 +13,8 @@ updateCount=catchAsync(async (req,isIncrease=false)=>{
     if(!moongooseHelper.isValidMongooseId(req.body.app)){
       throw new ApiError(400,'AppId not valid');
     }
-    await appModel.updateOne({ _id: req.body.app,},  { $inc: { visitorCount: isIncrease? 1:-req.body.visitorIds.length } });
-    await featureListModel.updateOne({ type: req.body.agent_type },  { $inc: { visitorCount: isIncrease? 1:-req.body.visitorIds.length } });
+    await appModel.updateOne({ _id: req.body.app,},  { $inc: { visitorCount: isIncrease? 1:-req.body[req.path=='/delete_leads'?'leadsIds':'visitorIds'].length } });
+    await featureListModel.updateOne({ type: req.body.agent_type },  { $inc: { visitorCount: isIncrease? 1:-req.body[req.path=='/delete_leads'?'leadsIds':'visitorIds'].length  } });
 })
 
 
@@ -309,6 +309,7 @@ get_leads: catchAsync(
       { lead: { $in: leadsIds }},
   );
   await appLeadsModel.deleteMany({ _id: { $in: leadsIds } });
+  updateCount(req);
   res.status(200).json(
     new ApiResponse(200,'Leads deleted successfully')
    );
