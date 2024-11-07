@@ -494,17 +494,20 @@ async function fetchAndResizeImageAsBase64(imageUrl) {
 }
 
 const aiAssistantChatStart = async (userId, userMessage, app, image = null, isStartChat, onPartialResponse) => {
-  const prompts = await systemPromptSession.findOne({});
-  let parentPrompt = prompts?.parentPrompt;
-  parentPrompt = parentPrompt.replace("{userInput}", userMessage);
-  console.log("parentPrompt", parentPrompt);
-  const message = await client.messages.create({
-    max_tokens: 1024,
-    messages: [{ role: "user", content: parentPrompt }],
-    model: "claude-3-5-sonnet-20240620",
-  });
-  let parentResponse = JSON.parse(message.content[0].text.trim());
-  console.log(parentResponse);
+  let parentResponse = '';
+  if(isStartChat){
+    const prompts = await systemPromptSession.findOne({});
+    let parentPrompt = prompts?.parentPrompt;
+    parentPrompt = parentPrompt.replace("{userInput}", userMessage);
+    console.log("parentPrompt", parentPrompt);
+    const message = await client.messages.create({
+      max_tokens: 1024,
+      messages: [{ role: "user", content: parentPrompt }],
+      model: "claude-3-5-sonnet-20240620",
+    });
+    parentResponse = JSON.parse(message.content[0].text.trim());
+    console.log(parentResponse);
+  }
 
   const thread_id = app.thread_id;
 
@@ -572,7 +575,7 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
   }
   console.log("additional_instructions", additional_instructions);
 
-  if((parentResponse.ToolTYPE === 'AIBASED' || app.tool_type === 'AIBASED') && app.agent_type === "AI_Tool"){
+  if(app.tool_type === 'AIBASED' && app.agent_type === "AI_Tool"){
     assistantObj = {
       assistant_id:
         process.env.NODE_ENV == "staging" ||
@@ -898,7 +901,7 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
       }
 
       // Update app componentCode and save
-      if (isStartChat || appDetails["tool_type"] === '') {
+      if (isStartChat && appDetails["tool_type"] === '') {
         appDetails["tool_type"] = parentResponse.ToolTYPE;
       }
       // appDetails.apis = originalApis;
