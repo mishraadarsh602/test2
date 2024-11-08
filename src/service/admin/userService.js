@@ -1,22 +1,17 @@
 const User = require('../../models/user.model');
 
-// Create a new user
-exports.createUser = async (userData) => {
-  const user = new User(userData);
-  return await user.save();
+exports.getAllUsers = async (searchCriteria, skip, limit) => {
+  return await User.find(searchCriteria).skip(skip).limit(limit);
 };
 
-// Get all users
-exports.getAllUsers = async () => {
-  return await User.find();
+exports.countUsers = async (searchCriteria) => {
+  return await User.countDocuments(searchCriteria);
 };
 
-// Get user by ID
 exports.getUserById = async (id) => {
   return await User.findById(id);
 };
 
-// Update user by ID
 exports.updateUserById = async (id, updateData) => {
   return await User.findByIdAndUpdate(id, updateData, { new: true });
 };

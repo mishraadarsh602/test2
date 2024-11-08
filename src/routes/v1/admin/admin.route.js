@@ -4,7 +4,8 @@ const adminController = require('../../../controllers/admin/dashboard');
 const adminUserController = require('../../../controllers/admin/user');
 const adminAuth = require('../../../middleware/adminauth');
 router.get('/getfeatureLists', adminController.getFeatureLists);
-router.get('/getfeatureLists',adminController.getFeatureLists);
+router.get('/getfeatureListtsTypes',adminController.getFeatureTypes);
+
 router.post('/login',adminUserController.loginUser);
 router.get('/checkUser',adminAuth,adminUserController.checkUser);
 router.get('/getfeatureList/:id', adminController.getFeatureListById);

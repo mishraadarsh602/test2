@@ -7,9 +7,59 @@ const appLeadsModel = require('../../models/appLeads');
 const appVisitorsModel = require('../../models/appVisitors');
 
 const getFeatureLists = catchAsync(async (req, res) => {
-    const allFeatureLists = await featureListModel.find({});
+ 
+    const { search = '', type = '', page = 1, limit = 10 } = req.query;
+
+    const searchQuery = {
+        $or: [
+            { title: { $regex: search, $options: 'i' } },
+            { description: { $regex: search, $options: 'i' } },
+            { type: { $regex: search, $options: 'i' } },
+        ]
+    };
+
+   
+    if (type) {
+        searchQuery.type = type; 
+    }
+
+  
+    const pageNum = parseInt(page, 10);
+    const pageLimit = parseInt(limit, 10);
+
+
+    const skip = (pageNum - 1) * pageLimit;
+
+
+    const totalCount = await featureListModel.countDocuments(searchQuery);
+
+  
+    const allFeatureLists = await featureListModel.find(searchQuery)
+        .skip(skip)
+        .limit(pageLimit)
+        .sort({ createdAt: -1 });  // 
+    const pagination = {
+        totalCount,
+        currentPage: pageNum,
+        totalPages: Math.ceil(totalCount / pageLimit),
+        pageSize: pageLimit
+    };
+
     res.status(200).json(
-        new apiResponse(200, "All feature lists fetched successfully", allFeatureLists)
+        new apiResponse(200, "Feature lists fetched successfully", {
+            featureLists: allFeatureLists,
+            pagination
+        })
+    );
+});
+
+const getFeatureTypes = catchAsync(async (req, res) => {
+  
+    const featureTypes = await featureListModel.distinct('type');
+    
+   
+    res.status(200).json(
+        new apiResponse(200, 'Feature types fetched successfully', { types: featureTypes })
     );
 });
 
@@ -133,6 +183,7 @@ const getAllCounts = catchAsync(async (req, res) => {
 module.exports = {
     getFeatureLists,
     getFeatureListById,
+    getFeatureTypes,
     createFeatureList,
     updateFeatureList,
     toggleActiveStatus, 

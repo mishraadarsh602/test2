@@ -3,17 +3,40 @@ const UserService = require('../../service/admin/userService');
 
 
 
-// Get all users
+
 exports.getAllUsers = async (req, res) => {
   try {
-    const users = await UserService.getAllUsers();
-    res.status(200).json(users);
+    const { name, email, page = 1, limit = 10 } = req.query;
+
+   
+    const searchCriteria = {};
+    if (name) {
+      searchCriteria.name = new RegExp(name, 'i'); 
+    }
+    if (email) {
+      searchCriteria.email = new RegExp(email, 'i');
+    }
+
+    
+    const skip = (page - 1) * limit;
+    const users = await UserService.getAllUsers(searchCriteria, skip, parseInt(limit));
+
+    
+    const totalUsers = await UserService.countUsers(searchCriteria);
+    const totalPages = Math.ceil(totalUsers / limit);
+
+    res.status(200).json({
+      users,
+      totalPages,
+      currentPage: parseInt(page),
+      totalUsers,
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
-// Get user by ID
+
 exports.getUserById = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -29,7 +52,7 @@ exports.getUserById = async (req, res) => {
   }
 };
 
-// Update user by ID
+
 exports.updateUserById = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
