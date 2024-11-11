@@ -139,6 +139,10 @@ const appSchema = new mongoose.Schema({
             type: String,
             default: 'How can we get in touch?'
         },
+        description:{
+            type:String,
+            default:'Receive new articles and resources directly on your inbox. Fill your email below to join our email newsletter today.',
+        },
         thankYouMessage: {
             type: String,
             default: "Thank you for your interest! We'll be in touch soon."
