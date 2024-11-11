@@ -7,7 +7,9 @@ router.get('/getfeatureLists', adminController.getFeatureLists);
 router.get('/getfeatureListtsTypes',adminController.getFeatureTypes);
 
 router.post('/login',adminUserController.loginUser);
-router.get('/checkUser',adminAuth,adminUserController.checkUser);
+router.get('/checkUser', adminAuth, adminUserController.checkUser);
+router.post("/logout", adminAuth, adminUserController.logoutUser);
+
 router.get('/getfeatureList/:id', adminController.getFeatureListById);
 router.post('/createFeatureList', adminController.createFeatureList);
 router.put('/updateFeatureList/:id', adminController.updateFeatureList);
