@@ -138,6 +138,7 @@ module.exports={
       },{
         createdAt: 1,
             browser: 1, 
+            device:1,
             utm_source: 1,
             utm_medium: 1,
             utm_campaign: 1,
@@ -154,13 +155,13 @@ module.exports={
         { key: "utm_term", label: "Utm Term" },
         { key: "utm_content", label: "Utm Content" },
       ]; 
-
+      
       let response = {
         columns: fixedColumns.map((entry) => entry.label),
         data: allVisitors.map((visitor) => {
           return fixedColumns.map(entry => {
             const key = entry.key;
-           
+            
             if(key=='createdAt'){
               return moment(visitor.createdAt).format('LLL');
             }
@@ -189,7 +190,7 @@ get_leads: catchAsync(
     })
     .sort({ updatedAt: -1 })
     .populate('lead')
-    .select('createdAt browser utm_source utm_medium utm_campaign utm_term utm_content transaction_completed amount currency')
+    .select('createdAt browser utm_source device utm_medium utm_campaign utm_term utm_content transaction_completed amount currency')
    
     let finalResponse = { columns: [], data: [], idsArray: [] };
     const fixedColumns = [
