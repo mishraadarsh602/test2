@@ -526,21 +526,13 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
     isStartChat = false; // Existing chat session found
   }
   let theme = ``;
-  if (app.agent_type !== "AI_Tool") {
-    if (app.header.logo.enabled && app.header.logo.url) {
-      theme += ` add this logo as header ${app.header.logo.url} at ${app.header.logo.alignment}, when asked to add logo.`
-    }
-    if (app.theme) {
-      theme += ` use this color while generating code for primary ${app.theme.primaryColor}, for secondary ${app.theme.secondaryColor}, for background color ${app.theme.backgroundColor} using inline style, when asked to change color or theme inhancement.`
-    }
-  } else {
-    if (app.header.logo.enabled && app.header.logo.url) {
-      theme += ` add this logo as header ${app.header.logo.url} at ${app.header.logo.alignment}`
-    }
-    if (app.theme) {
-      theme += ` use this color while generating code for primary ${app.theme.primaryColor}, for secondary ${app.theme.secondaryColor}, for background color ${app.theme.backgroundColor} using inline style.`
-    }
+  if (app.header.logo.enabled && app.header.logo.url) {
+    theme += ` Add this logo as header ${app.header.logo.url} at ${app.header.logo.alignment}, when asked to add logo.`
   }
+  if (app.theme) {
+    theme += ` Use this color while generating code for primary ${app.theme.primaryColor}, for secondary ${app.theme.secondaryColor}, for background color ${app.theme.backgroundColor} using inline style, when asked to change color or theme inhancement.`
+  }
+
 
 
   let assistantObj = {};
