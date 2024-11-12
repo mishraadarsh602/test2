@@ -64,6 +64,9 @@ module.exports = {
                     const newurl = `https://${domain}`;
                     url=newurl;                    
                 }
+                if (brandGuideResult?.logo && brandGuideResult?.favicon && brandGuideResult.logo === brandGuideResult.favicon) {
+                    brandGuideResult.favicon = "";
+                }  
                 let res = await User.findOneAndUpdate(
                     { email },
                     { 
