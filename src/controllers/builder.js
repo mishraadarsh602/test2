@@ -607,11 +607,11 @@ module.exports = {
           app.thread_id,
           {
             role: "user",
-            content: aiUserThreadPrompt,
+            content: `This was my requirement ${aiUserThreadPrompt}, And this is the latest code output: ${response.data.content[0].text} `,
           },
           {
             role: "assistant",
-            content: response.data.content[0].text,
+            content: 'Ok, thanks for the update. I have got the current code.',
           }
         );
 
