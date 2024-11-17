@@ -313,11 +313,11 @@ module.exports = {
             fetchedApp.thread_id,
             {
               role: "user",
-              content: `resolve this issue in my code : ${req.body.errorMessage}`,
+              content: `This was my requirement- resolve this issue from my code : ${req.body.errorMessage}, And this is the latest code output: ${response.data.content[0].text} `,
             },
             {
               role: "assistant",
-              content: response.data.content[0].text,
+              content: 'Ok, thanks for the update. I have got the current code.',
             }
           );
 
