@@ -469,7 +469,7 @@ module.exports = {
         if (trimmedExpression.startsWith('encodeURIComponent(') && trimmedExpression.endsWith(')')) {
           const paramName = trimmedExpression.slice(19, -1); // Extract parameter name
           const key = Object.keys(originalQueryParameters).find(
-            (keyName) => originalQueryParameters[keyName] === `\${${paramName}}`
+            (keyName) => originalQueryParameters[keyName] === `\${encodeURIComponent(${paramName})}`
           );
           if (key && key in customQueryParameters) {
             const encodedValue = encodeURIComponent(customQueryParameters[key]);
