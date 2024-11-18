@@ -313,11 +313,11 @@ module.exports = {
             fetchedApp.thread_id,
             {
               role: "user",
-              content: `resolve this issue in my code : ${req.body.errorMessage}`,
+              content: `This was my requirement- resolve this issue from my code : ${req.body.errorMessage}, And this is the latest code output: ${response.data.content[0].text} `,
             },
             {
               role: "assistant",
-              content: response.data.content[0].text,
+              content: 'Ok, thanks for the update. I have got the current code.',
             }
           );
 
@@ -445,34 +445,50 @@ module.exports = {
       let api = appData.apis[0].api;
 
       // Regular expression to match variations of 'YOUR_API_KEY' or 'API_KEY'
-      const regex = /(your[_-\s]*)?api[_-\s]*key/i;
+      const regex = /(YOUR[-_]?API[-_]?KEY|ENTER[-_]?API[-_]?KEY|<API[-_]?KEY>)/i;
 
       // Replace the placeholder with the actual API key
       api = api.replace(regex, appData.apis[0].key);
-      console.log("Api from DB", api);
 
-      const customQueryParameters = req.query;
+      // Parse original API URL
+      const originalRequestUrl = new URL(api, `http://${req.headers.host}`);
+      const originalQueryParameters = Object.fromEntries(originalRequestUrl.searchParams);
+      console.log("Original Query Parameters:", originalQueryParameters);
 
+      // Parse incoming request URL
+      const customRequestUrl = new URL(req.url, `http://${req.headers.host}`);
+      const customQueryParameters = Object.fromEntries(customRequestUrl.searchParams);
       console.log("Incoming Query Parameters:", customQueryParameters);
 
       // Replace variables in the original API URL with actual values dynamically
       api = api.replace(/\$\{(.*?)\}/g, (match, expression) => {
         const trimmedExpression = expression.trim();
         console.log(`Checking for replacement: ${trimmedExpression}`, match);
-        
+
+        // Handle encodeURIComponent cases
         if (trimmedExpression.startsWith('encodeURIComponent(') && trimmedExpression.endsWith(')')) {
           const paramName = trimmedExpression.slice(19, -1); // Extract parameter name
-          if (paramName in customQueryParameters) {
-            const encodedValue = encodeURIComponent(customQueryParameters[paramName]);
-            console.log(`Replacing ${match} with ${encodedValue}`);
+          const key = Object.keys(originalQueryParameters).find(
+            (keyName) => originalQueryParameters[keyName] === `\${encodeURIComponent(${paramName})}`
+          );
+          if (key && key in customQueryParameters) {
+            const encodedValue = encodeURIComponent(customQueryParameters[key]);
+            console.log(`Replacing ${match} with encoded value: ${encodedValue}`);
             return encodedValue;
           }
-        } else if (trimmedExpression in customQueryParameters) {
-          console.log(`Replacing ${match} with ${customQueryParameters[trimmedExpression]}`);
-          return customQueryParameters[trimmedExpression];
+        } else {
+          // Handle regular parameter replacement
+          const key = Object.keys(originalQueryParameters).find(
+            (keyName) => originalQueryParameters[keyName] === match
+          );
+          if (key && key in customQueryParameters) {
+            const value = customQueryParameters[key];
+            console.log(`Replacing ${match} with ${value}`);
+            return value || "";
+          }
         }
-        
-        return match; // Keep original placeholder if no replacement found
+
+        return ""; // Fallback if no replacement found
       });
 
       console.log("api get hit:", api);
@@ -483,7 +499,7 @@ module.exports = {
 
       const contentType = response.headers["content-type"];
       res.setHeader("Content-Type", contentType);
-      console.log(`API Response of content Type ${contentType}`,response)
+      console.log(`API Response of content Type ${contentType}`, response)
       res.send(response.data);
     } catch (error) {
       console.log("error is ----> ", error);
@@ -607,11 +623,11 @@ module.exports = {
           app.thread_id,
           {
             role: "user",
-            content: aiUserThreadPrompt,
+            content: `This was my requirement ${aiUserThreadPrompt}, And this is the latest code output: ${response.data.content[0].text} `,
           },
           {
             role: "assistant",
-            content: response.data.content[0].text,
+            content: 'Ok, thanks for the update. I have got the current code.',
           }
         );
 

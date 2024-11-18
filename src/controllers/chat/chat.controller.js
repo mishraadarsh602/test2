@@ -506,7 +506,7 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
       model: "claude-3-5-sonnet-20240620",
     });
     parentResponse = JSON.parse(message.content[0].text.trim());
-    console.log(parentResponse);
+    console.log("parentPrompt response",parentResponse);
   }
 
   const thread_id = app.thread_id;
@@ -526,12 +526,24 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
     isStartChat = false; // Existing chat session found
   }
   let theme = ``;
-  if (app.header.logo.enabled && app.header.logo.url) {
-    theme += ` Add this logo as header ${app.header.logo.url} at ${app.header.logo.alignment}, when asked to add logo.`
+  console.log("Agent Type: ", app.agent_type)
+  if (app.agent_type !== "AI_Tool") {
+    if (app.header.logo.enabled && app.header.logo.url) {
+      theme += ` add this logo as header ${app.header.logo.url} at ${app.header.logo.alignment}, when asked to add logo.`
+    }
+    if (app.theme) {
+      theme += ` use this color while generating code for primary ${app.theme.primaryColor}, for secondary ${app.theme.secondaryColor}, for background color ${app.theme.backgroundColor} using inline style, when asked to change color or theme inhancement.`
+    }
+  } else {
+    if (app.header.logo.enabled && app.header.logo.url) {
+      theme += ` add this logo as header ${app.header.logo.url} at ${app.header.logo.alignment}. `
+    }
+    if (app.theme) {
+      theme += ` use this color while generating code for primary ${app.theme.primaryColor}, for secondary ${app.theme.secondaryColor}, for background color ${app.theme.backgroundColor} using inline style.`
+    }
   }
-  if (app.theme) {
-    theme += ` Use this color while generating code for primary ${app.theme.primaryColor}, for secondary ${app.theme.secondaryColor}, for background color ${app.theme.backgroundColor} using inline style, when asked to change color or theme inhancement.`
-  }
+
+  console.log(" Applied theme: ",theme)
 
 
 
@@ -576,6 +588,8 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
           : process.env.DEV_AI_ASSISTANT_ID,
     };
   }
+
+  console.log("Assistant Obj: ",assistantObj)
 
   if (image) {
     try {

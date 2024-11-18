@@ -117,7 +117,10 @@ module.exports = {
               $match: {
                 user: moongooseHelper.giveMoongooseObjectId(userId),
                 status: "dev",
-                name: { $regex: req.body.name , $options: 'i' }
+                $or: [
+                  { name: { $regex: req.body.searchParameter, $options: 'i' } },
+                  { url: { $regex: req.body.searchParameter, $options: 'i' } }
+                ]
               },
             },
             {
@@ -142,7 +145,10 @@ module.exports = {
               $match: {
                 user: moongooseHelper.giveMoongooseObjectId(userId),
                 status: "live",
-                name: { $regex: req.body.name, $options: 'i'},
+                $or: [
+                  { name: { $regex: req.body.searchParameter, $options: 'i' } },
+                  { url: { $regex: req.body.searchParameter, $options: 'i' } }
+                ]
               },
             },
             {
@@ -200,7 +206,10 @@ module.exports = {
     const appCount = await App.count({
       user: moongooseHelper.giveMoongooseObjectId(userId),
       status: "dev",
-      name: { $regex: req.body.name,$options: 'i' },
+      $or: [
+        { name: { $regex: req.body.searchParameter, $options: 'i' } },
+        { url: { $regex: req.body.searchParameter, $options: 'i' } }
+      ]
     });
     const showMore = req.body.skip + req.body.limit < appCount;
     res.status(200).json(

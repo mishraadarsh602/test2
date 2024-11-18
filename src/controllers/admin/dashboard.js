@@ -7,61 +7,60 @@ const appLeadsModel = require('../../models/appLeads');
 const appVisitorsModel = require('../../models/appVisitors');
 
 const getFeatureLists = catchAsync(async (req, res) => {
- 
-    const { search = '', type = '', page = 1, limit = 10 } = req.query;
+  const { search = "", type = "", page = 1, limit = 10 } = req.query;
 
-    const searchQuery = {
-        $or: [
-            { title: { $regex: search, $options: 'i' } },
-            { description: { $regex: search, $options: 'i' } },
-            { type: { $regex: search, $options: 'i' } },
-        ]
-    };
+  // Create a search query for filtering feature lists based on search keywords
+  const searchQuery = {
+    $or: [
+      { title: { $regex: search, $options: "i" } },
+      { description: { $regex: search, $options: "i" } },
+      { type: { $regex: search, $options: "i" } },
+    ],
+  };
 
-   
-    if (type) {
-        searchQuery.type = type; 
-    }
+  // If a type filter is provided, add it to the search query
+  if (type) {
+    searchQuery.type = type;
+  }
 
-  
-    const pageNum = parseInt(page, 10);
-    const pageLimit = parseInt(limit, 10);
+  // Convert pagination parameters to integers
+  const pageNum = parseInt(page, 10);
+  const pageLimit = parseInt(limit, 10);
+  const skip = (pageNum - 1) * pageLimit;
 
+  // Get the total count of matching documents
+  const totalCount = await featureListModel.countDocuments(searchQuery);
 
-    const skip = (pageNum - 1) * pageLimit;
+  // Fetch paginated feature lists with sorting by creation date
+  const allFeatureLists = await featureListModel
+    .find(searchQuery)
+    .skip(skip)
+    .limit(pageLimit)
+    .sort({ createdAt: -1 });
 
+  // Fetch all distinct types of features from the feature list model
+  const featureAllListTypes = await featureListModel.distinct("type");
 
-    const totalCount = await featureListModel.countDocuments(searchQuery);
+  // Create a pagination object for easier frontend usage
+  const pagination = {
+    totalCount,
+    currentPage: pageNum,
+    totalPages: Math.ceil(totalCount / pageLimit),
+    pageSize: pageLimit,
+  };
 
-  
-    const allFeatureLists = await featureListModel.find(searchQuery)
-        .skip(skip)
-        .limit(pageLimit)
-        .sort({ createdAt: -1 });  // 
-    const pagination = {
-        totalCount,
-        currentPage: pageNum,
-        totalPages: Math.ceil(totalCount / pageLimit),
-        pageSize: pageLimit
-    };
-
-    res.status(200).json(
-        new apiResponse(200, "Feature lists fetched successfully", {
-            featureLists: allFeatureLists,
-            pagination
-        })
-    );
+  // Send the response with paginated feature lists and distinct feature types
+  res.status(200).json(
+    new apiResponse(200, "Feature lists fetched successfully", {
+      featureLists: allFeatureLists,
+      pagination,
+      featureAllListTypes,
+    })
+  );
 });
 
-const getFeatureTypes = catchAsync(async (req, res) => {
-  
-    const featureTypes = await featureListModel.distinct('type');
-    
-   
-    res.status(200).json(
-        new apiResponse(200, 'Feature types fetched successfully', { types: featureTypes })
-    );
-});
+
+
 
 const getFeatureListById = catchAsync(async (req, res) => {
     const { id } = req.params;
@@ -183,7 +182,6 @@ const getAllCounts = catchAsync(async (req, res) => {
 module.exports = {
     getFeatureLists,
     getFeatureListById,
-    getFeatureTypes,
     createFeatureList,
     updateFeatureList,
     toggleActiveStatus, 

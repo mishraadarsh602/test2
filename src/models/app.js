@@ -8,6 +8,11 @@ const appSchema = new mongoose.Schema({
         required: true,
         // unique: true
     },
+    localeCode: {
+        type: String,
+        default: 'en',
+        trim: true
+    },
     url: {
         type: String,
         required: true,
@@ -119,6 +124,10 @@ const appSchema = new mongoose.Schema({
     },
     leadForm: {
         enabled: {
+            type: Boolean,
+            default: false
+        },
+        showSubTitle:{
             type: Boolean,
             default: false
         },
