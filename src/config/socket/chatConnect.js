@@ -34,7 +34,7 @@ module.exports = (server) => {
     // Listen for the 'startChat' event from the client
     socket.on("startChat", async (data) => {
       try {
-        console.log(data);
+        // console.log(data);
         const app = await App.findOne({
           user: new mongoose.Types.ObjectId(data.userId),
           url: data.appName,
@@ -67,7 +67,7 @@ module.exports = (server) => {
           }
         );
 
-        console.log(returnedOutput)
+        // console.log(returnedOutput)
 
          // Emit each partial response as it's received
          socket.emit("partialResponse", {
@@ -93,7 +93,7 @@ module.exports = (server) => {
 
     socket.on("fetchPreviousChat", async (data) => {
       try {
-        console.log(data);
+        // console.log(data);
 
         const app = await App.findOne({
           user: new mongoose.Types.ObjectId(data.userId),
@@ -138,7 +138,7 @@ module.exports = (server) => {
 
     socket.on("continueChat", async (data) => {
       // console.log("Chat Continued by user:", data);
-      console.log(data);
+      // console.log(data);
       try {
         const app = await App.findOne({
           user: new mongoose.Types.ObjectId(data.userId),
@@ -195,7 +195,7 @@ module.exports = (server) => {
           }
         );
 
-        console.log(returnedOutput);
+        // console.log(returnedOutput);
 
         // Emit each partial response as it's received
         socket.emit("partialResponse", {
