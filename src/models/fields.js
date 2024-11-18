@@ -96,6 +96,19 @@ const fieldsSchema = new mongoose.Schema(
             trim: true,
             default: ''
         },
+        showConnect:{
+            type:Boolean,
+            default:false
+        },
+        connectArray: [ {
+            type: String,
+            trim: true,
+            default: ''
+        }],
+        fileExt:{
+            type: Object,
+            default: {'Doc': false, 'Excel': false, 'Image': true, 'Pdf': false, 'Vector Graphics': false,'Video': false}
+        },
     }, { usePushEach: true }
 );
 

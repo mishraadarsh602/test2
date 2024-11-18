@@ -23,21 +23,21 @@ const appLeadSchema = new mongoose.Schema(
                     trim: true,
                     default: ''
                 },
-                title: {
-                    type: String,
-                    trim: true,
-                    default: ''
-                },
+                // title: {
+                //     type: String,
+                //     trim: true,
+                //     default: ''
+                // },
                 subtype: {
                     type: String,
                     trim: true,
                     default: ''
                 },
-                placeholder: {
-                    type: String,
-                    trim: true,
-                    default: ''
-                }
+                // placeholder: {
+                //     type: String,
+                //     trim: true,
+                //     default: ''
+                // }
             }
         ],
     },
