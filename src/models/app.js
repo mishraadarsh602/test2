@@ -127,6 +127,10 @@ const appSchema = new mongoose.Schema({
             type: Boolean,
             default: false
         },
+        showSubTitle:{
+            type: Boolean,
+            default: false
+        },
         buttonText:{
             type:String,
             default:'Submit'
