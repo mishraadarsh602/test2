@@ -4,7 +4,7 @@ const errorLogsSchema = new mongoose.Schema(
   {
     userId: { 
       type: mongoose.Schema.ObjectId, 
-      ref: "User",
+      ref: "user",
     },
     error: {
       type: String,

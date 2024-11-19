@@ -1,4 +1,4 @@
-const { validationResult } = require('express-validator');
+
 const UserService = require('../../service/admin/userService');
 
 

@@ -3,6 +3,7 @@ const router = express.Router();
 const adminController = require('../../../controllers/admin/dashboard');
 const adminUserController = require('../../../controllers/admin/user');
 const adminAuth = require('../../../middleware/adminauth');
+
 router.get('/getfeatureLists', adminController.getFeatureLists);
 
 
@@ -15,5 +16,8 @@ router.post('/createFeatureList', adminController.createFeatureList);
 router.put('/updateFeatureList/:id', adminController.updateFeatureList);
 router.patch('/updateActiveStatus/:id', adminController.toggleActiveStatus);
 router.get('/getAllCounts', adminController.getAllCounts);
+
+
+
 
 module.exports = router;

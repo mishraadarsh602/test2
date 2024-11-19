@@ -1,16 +1,17 @@
 const express = require('express');
 const router = express.Router(); 
-const { v1Route,builderRoute,frontendRoute,liveRoute,analytic,adminRoute,userRoute ,localeRoute} = require("./v1");
+const { v1Route,builderRoute,frontendRoute,liveRoute,analytic,adminRoute,userRoute ,localeRoute,errorLogRoute} = require("./v1");
 
 const defaultRoute = [
-    { path: "/v1/agents", route: v1Route },
-    { path: "/v1/builder", route: builderRoute },
-    { path: "/v1/frontend", route: frontendRoute },
-    { path: "/v1/live", route: liveRoute },
-    {path:'/v1/analytic',route:analytic},
-    {path:'/v1/admin',route:adminRoute},
-    {path:'/v1/admin',route:userRoute},
-    {path:'/v1/locale',route:localeRoute}
+  { path: "/v1/agents", route: v1Route },
+  { path: "/v1/builder", route: builderRoute },
+  { path: "/v1/frontend", route: frontendRoute },
+  { path: "/v1/live", route: liveRoute },
+  { path: "/v1/analytic", route: analytic },
+  { path: "/v1/admin", route: adminRoute },
+  { path: "/v1/admin", route: userRoute },
+  { path: "/v1/admin", route: errorLogRoute },
+  { path: "/v1/locale", route: localeRoute },
 ];
 
 defaultRoute.forEach((link) => {
