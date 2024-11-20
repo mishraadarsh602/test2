@@ -1,28 +1,22 @@
-
-const UserService = require('../../service/admin/userService');
-
-
+const UserService = require("../../service/admin/userService");
 
 exports.getAllUsers = async (req, res) => {
   try {
     const { name, email, ogCompanyName, page = 1, limit = 10 } = req.query;
 
-    
     const searchCriteria = {};
     if (name) {
-      searchCriteria.name = new RegExp(name, "i"); 
+      searchCriteria.name = new RegExp(name, "i");
     }
     if (email) {
-      searchCriteria.email = new RegExp(email, "i"); 
+      searchCriteria.email = new RegExp(email, "i");
     }
     if (ogCompanyName) {
-      searchCriteria.ogCompanyName = new RegExp(ogCompanyName, "i"); 
+      searchCriteria.ogCompanyName = new RegExp(ogCompanyName, "i");
     }
 
-   
     const skip = (page - 1) * limit;
 
- 
     const users = await UserService.getAllUsers(
       searchCriteria,
       skip,
@@ -30,10 +24,8 @@ exports.getAllUsers = async (req, res) => {
     );
     const totalUsers = await UserService.countUsers(searchCriteria);
 
-  
     const totalPages = Math.ceil(totalUsers / limit);
 
-  
     res.status(200).json({
       users,
       totalPages,
@@ -45,34 +37,24 @@ exports.getAllUsers = async (req, res) => {
   }
 };
 
-
-
 exports.getUserById = async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
   try {
     const user = await UserService.getUserById(req.params.id);
-    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (!user) return res.status(404).json({ error: "User not found" });
     res.status(200).json(user);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
-
 exports.updateUserById = async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
   try {
-    const updatedUser = await UserService.updateUserById(req.params.id, req.body);
-    if (!updatedUser) return res.status(404).json({ error: 'User not found' });
-    res.status(200).json({ message: 'User updated successfully', updatedUser });
+    const updatedUser = await UserService.updateUserById(
+      req.params.id,
+      req.body
+    );
+    if (!updatedUser) return res.status(404).json({ error: "User not found" });
+    res.status(200).json({ message: "User updated successfully", updatedUser });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
