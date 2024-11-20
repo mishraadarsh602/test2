@@ -208,12 +208,11 @@ get_leads: catchAsync(
     response.forEach(el => {
       fieldCounts = {};
       el.lead.fields.forEach(field => {
-        let fieldName = field.field_name.replace(/\s+/g, ''); // replacing all spaces with ''
-        fieldCounts[fieldName] = (fieldCounts[fieldName] || 0) + 1;
-        if (fieldCounts[fieldName] > 1) {
-          fieldName = `${fieldName}_${fieldCounts[fieldName] - 1}`;
+        let columnName=field.field_name;
+        if(field.subtype){
+          columnName=`${field.subtype} (${field.field_name} ${field.subtype})`
         }
-        maxLeadFields.add(fieldName);
+        maxLeadFields.add(columnName);
       });
     });
     let maxFieldsArray=Array.from(maxLeadFields);
@@ -225,12 +224,11 @@ get_leads: catchAsync(
       maxFieldsArray.forEach(columnName => {
         fieldCounts = {};
         const matchingField = el.lead.fields.find(field => {
-          let fieldName = field.field_name.replace(/\s/g, '');
-          fieldCounts[fieldName] = (fieldCounts[fieldName] || 0) + 1;
-          if (fieldCounts[fieldName] > 1) {
-            fieldName = `${fieldName}_${fieldCounts[fieldName] - 1}`;
+          let columnNameGiven=field.field_name;
+          if(field.subtype){
+            columnNameGiven=`${field.subtype} (${field.field_name} ${field.subtype})`
           }
-          return fieldName === columnName;
+          return columnNameGiven === columnName;
         });
         dataRow.push(matchingField ? matchingField.value : 'Not Applicable');
       });
