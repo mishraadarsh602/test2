@@ -281,6 +281,9 @@ module.exports = {
             **Ensure that all React hooks are written with the full 'React' prefix, e.g., React.useState().** 
             Create React element without any import statement. I have this header added already import React, {useState, useEffect, useContext, useReducer, useCallback, useMemo, useRef, useImperativeHandle, useLayoutEffect, useDebugValue, useTransition, useDeferredValue, useId, useSyncExternalStore, useInsertionEffect} from 'react'; import * as LucideIcons from 'lucide-react'; import { useLocation } from 'react-router-dom'; 
             Note: Input is code and output will be only one code file which will run as JSX. You must return code only no extra text allowed.
+            ${fetchedApp.theme ? `Use this color while generating code for primary ${fetchedApp.theme.primaryColor}, for secondary ${fetchedApp.theme.secondaryColor}, for background color ${fetchedApp.theme.backgroundColor} using inline style, when asked to change color or theme inhancement.` : ''}
+            ${fetchedApp.header.logo.enabled && fetchedApp.header.logo.url ? `Add this logo as header ${fetchedApp.header.logo.url} at ${fetchedApp.header.logo.alignment}, when asked to add logo.` : ''}
+            ${!fetchedApp.header.logo.enabled || !fetchedApp.header.logo.url ? `Do not add any logo. Remove any logo if already added.` : ''}
             Output structure:
                 function AppName(){
                     ...
@@ -551,6 +554,16 @@ module.exports = {
           user: new mongoose.Types.ObjectId(req.user.userId),
           status: 'dev'
         });
+        let theme = ``;
+        if (app.header.logo.enabled && app.header.logo.url) {
+          theme += ` Add this logo as header ${app.header.logo.url} at ${app.header.logo.alignment}, when asked to add logo.`
+        }
+        if (app.theme) {
+          theme += ` Use this color while generating code for primary ${app.theme.primaryColor}, for secondary ${app.theme.secondaryColor}, for background color ${app.theme.backgroundColor} using inline style, when asked to change color or theme inhancement.`
+        }
+        if (!app.header.logo.enabled || !app.header.logo.url) {
+          theme += ` Do not add any logo. Remove any logo if already added.`
+        }
         let aiUserThreadPrompt = '';
         let prompt = '';
         for (let i = 0; i < selectedOptions.length; i++) {
@@ -586,7 +599,7 @@ module.exports = {
 
         
         aiUserThreadPrompt = prompt;
-        prompt += `\nEnsure that all React hooks are written with the full 'React' prefix, e.g., React.useState(). 
+        prompt += `${theme} \nEnsure that all React hooks are written with the full 'React' prefix, e.g., React.useState(). 
                   Create React element without any import statement. The following header is already added:
                   import React, {useState, useEffect, useContext, useReducer, useCallback, useMemo, useRef, useImperativeHandle, useLayoutEffect, useDebugValue, useTransition, useDeferredValue, useId, useSyncExternalStore, useInsertionEffect} from 'react'; import * as LucideIcons from 'lucide-react'; import { useLocation } from 'react-router-dom'; 
                   You must return code only, no extra text allowed. like this 

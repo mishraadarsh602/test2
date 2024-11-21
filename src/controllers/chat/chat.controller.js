@@ -534,12 +534,18 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
     if (app.theme) {
       theme += ` use this color while generating code for primary ${app.theme.primaryColor}, for secondary ${app.theme.secondaryColor}, for background color ${app.theme.backgroundColor} using inline style, when asked to change color or theme inhancement.`
     }
+    if (!app.header.logo.enabled || !app.header.logo.url) {
+      theme += ` do not add any logo. Remove any logo if already added.`
+    }
   } else {
     if (app.header.logo.enabled && app.header.logo.url) {
       theme += ` add this logo as header ${app.header.logo.url} at ${app.header.logo.alignment}. `
     }
     if (app.theme) {
       theme += ` use this color while generating code for primary ${app.theme.primaryColor}, for secondary ${app.theme.secondaryColor}, for background color ${app.theme.backgroundColor} using inline style.`
+    }
+    if (!app.header.logo.enabled || !app.header.logo.url) {
+      theme += ` do not add any logo. Remove any logo if already added.`
     }
   }
 
@@ -573,9 +579,9 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
           ? process.env.ASSISTANT_ID
           : process.env.DEV_ASSISTANT_ID,
     };
-    if (isStartChat) {
+    // if (isStartChat) {
       assistantObj.additional_instructions = `${theme}`;
-    }
+    // }
   }
   console.log("additional_instructions", additional_instructions);
 
@@ -587,6 +593,7 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
           ? process.env.AI_ASSISTANT_ID
           : process.env.DEV_AI_ASSISTANT_ID,
     };
+    assistantObj.additional_instructions = `${theme}`;
   }
 
   console.log("Assistant Obj: ",assistantObj)
