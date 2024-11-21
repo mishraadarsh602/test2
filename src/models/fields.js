@@ -109,6 +109,18 @@ const fieldsSchema = new mongoose.Schema(
             type: Object,
             default: {'Doc': false, 'Excel': false, 'Image': true, 'Pdf': false, 'Vector Graphics': false,'Video': false}
         },
+        errorInUploading: {
+            type:Boolean,
+            default:false
+        },
+        uploadErr:{
+            type:String,
+            default:''
+        },
+        inProgress:  {
+            type:Boolean,
+            default:false
+        },   
     }, { usePushEach: true }
 );
 
