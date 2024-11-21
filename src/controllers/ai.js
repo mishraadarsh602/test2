@@ -373,6 +373,48 @@ module.exports = {
       console.error("Error calling Anthropic API:", error);
     }
   },
+  enhancePrompt: async (req, res) => {
+    try {
+      let prompt = req.body.prompt;
+      
+      const message = await client.messages.create({
+        max_tokens: 1024,
+        messages: [{ 
+          role: "user", 
+          content: `I want you to improve the user prompt that is wrapped in \`<original_prompt>\` tags.
+                    Context: This prompt will be used to create and configure AI-powered tools. 
+                    Our system turns ideas into functional tools in seconds.
+                    
+                    IMPORTANT: 
+                    - Only respond with the improved prompt and nothing else!
+                    - Write in clear, flowing sentences (not bullet points)
+                    - Focus on tool creation and configuration
+                    - Be specific but concise
+           
+                    <original_prompt>
+                      ${prompt}
+                    </original_prompt>      
+  
+                    Keep the enhanced prompt clear, focused and actionable for tool creation.`
+        }],
+        model: "claude-3-5-sonnet-20240620",
+      });
+    
+      res.status(200).json({
+        enhenced: true,
+        message: "Prompt enhanced successfully",
+        enhancedPrompt: message.content[0].text.trim()
+      });
+      
+    } catch (error) {
+      res.status(400).json({ 
+        enhenced: false,
+        error: error.message,
+        message: "Failed to enhance prompt" 
+      });
+    }
+  }
+
 };
 
 const chartGenerationTool = {

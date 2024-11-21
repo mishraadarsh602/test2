@@ -17,6 +17,7 @@ router.get('/create_assistant', aiController.createAssistant);
 router.get('/get_assistant_conversatation', aiController.runAssistantConversation);
 router.get('/generate_graph', aiController.tryGraphMaking);
 router.get('/returnCode',aiController.returnCode);
+router.post('/enhance_prompt',aiController.enhancePrompt);
 router.get('/get_app/:url',auth, builderController.getAppByUrl);
 router.post('/update_app/:id',auth, builderController.updateApp);
 router.post('/check_unique_app_name',auth, builderController.checkUniqueAppName);
