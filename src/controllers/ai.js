@@ -7,6 +7,7 @@ const path = require('path');
 const { z } = require("zod");
 const { ChatAnthropic } = require('@langchain/anthropic');
 const { default: axios } = require('axios');
+const { stripIndents} = require('../service/chat/stripIndent');
 const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY });
 const client = new Anthropic({
   apiKey: process.env['ANTHROPIC_API_KEY'],
@@ -376,26 +377,18 @@ module.exports = {
   enhancePrompt: async (req, res) => {
     try {
       let prompt = req.body.prompt;
-      
       const message = await client.messages.create({
         max_tokens: 1024,
         messages: [{ 
           role: "user", 
-          content: `I want you to improve the user prompt that is wrapped in \`<original_prompt>\` tags.
-                    Context: This prompt will be used to create and configure AI-powered tools. 
-                    Our system turns ideas into functional tools in seconds.
+          content: stripIndents`I want you to improve the user prompt that is wrapped in \`<original_prompt>\` tags.
+                    This prompt will be used to create a tool(small app). 
                     
-                    IMPORTANT: 
-                    - Only respond with the improved prompt and nothing else!
-                    - Write in clear, flowing sentences (not bullet points)
-                    - Focus on tool creation and configuration
-                    - Be specific but concise
+                    IMPORTANT: Only respond with the improved prompt and nothing else!
            
                     <original_prompt>
                       ${prompt}
-                    </original_prompt>      
-  
-                    Keep the enhanced prompt clear, focused and actionable for tool creation.`
+                    </original_prompt>`
         }],
         model: "claude-3-5-sonnet-20240620",
       });
