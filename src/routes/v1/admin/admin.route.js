@@ -16,6 +16,7 @@ router.post('/createFeatureList', adminController.createFeatureList);
 router.put('/updateFeatureList/:id', adminController.updateFeatureList);
 router.patch('/updateActiveStatus/:id', adminController.toggleActiveStatus);
 router.get('/getAllCounts', adminController.getAllCounts);
+router.get('/getCreationStats', adminController.getCreationStats);
 
 
 

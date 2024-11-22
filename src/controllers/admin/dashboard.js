@@ -179,11 +179,97 @@ const getAllCounts = catchAsync(async (req, res) => {
     );
 });
 
+
+
+const getCreationStats = catchAsync(async (req, res) => {
+    console.log("req.query:",req.query)
+    const { startDate, endDate } = req.query;
+    const end = endDate ? new Date(endDate) : new Date();
+    const start = startDate ? new Date(startDate) : new Date(end - 30 * 24 * 60 * 60 * 1000);
+    const userStats = await userModel.aggregate([
+        {
+            $match: {
+                createdAt: { $gte: start, $lte: end }
+            }
+        },
+        {
+            $group: {
+                _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                count: { $sum: 1 },
+                companies: { $addToSet: "$ogCompanyId" }
+            }
+        },
+        {
+            $project: {
+                date: "$_id",
+                userCount: "$count",
+                companyCount: { $size: "$companies" },
+                _id: 0
+            }
+        },
+        { $sort: { date: 1 } }
+    ]);
+
+    const appStats = await appModel.aggregate([
+        {
+            $match: {
+                createdAt: { $gte: start, $lte: end }
+            }
+        },
+        {
+            $group: {
+                _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                count: { $sum: 1 }
+            }
+        },
+        {
+            $project: {
+                date: "$_id",
+                appCount: "$count",
+                _id: 0
+            }
+        },
+        { $sort: { date: 1 } }
+    ]);
+
+    const dateMap = new Map();
+    userStats.forEach(stat => {
+        dateMap.set(stat.date, {
+            date: stat.date,
+            userCount: stat.userCount,
+            companyCount: stat.companyCount,
+            appCount: 0
+        });
+    });
+
+    appStats.forEach(stat => {
+        if (dateMap.has(stat.date)) {
+            dateMap.get(stat.date).appCount = stat.appCount;
+        } else {
+            dateMap.set(stat.date, {
+                date: stat.date,
+                userCount: 0,
+                companyCount: 0,
+                appCount: stat.appCount
+            });
+        }
+    });
+
+    const combinedStats = Array.from(dateMap.values());
+    res.status(200).json(
+        new apiResponse(200, "Creation statistics fetched successfully", {
+            stats: combinedStats
+        })
+    );
+});
+
+
 module.exports = {
     getFeatureLists,
     getFeatureListById,
     createFeatureList,
     updateFeatureList,
     toggleActiveStatus, 
-    getAllCounts
+    getAllCounts,
+    getCreationStats
 };
