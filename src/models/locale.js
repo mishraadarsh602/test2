@@ -3,22 +3,24 @@ const mongoose = require('mongoose');
 const calcLocales = require('./calc-locales');
 
 const localeSchema = new mongoose.Schema(
-    {
-        langCode: {
-            type: String,
-            trim: true,
-            default: ''
-        },
-        language: {
-            type: String,
-            trim: true,
-            default: ''
-        },
-        fields: calcLocales
+  {
+    langCode: {
+      type: String,
+      trim: true,
+     
+      required: true,
     },
-    {
-        timestamps: true,
-    }
+    language: {
+      type: String,
+      trim: true,
+      
+      required: true,
+    },
+    fields: calcLocales,
+  },
+  {
+    timestamps: true,
+  }
 );
 
 
