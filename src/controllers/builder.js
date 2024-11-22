@@ -16,8 +16,12 @@ const ApiError=require('../utils/throwError');
 const { default: axios } = require('axios');
 const chatSession = require('../models/chat/chatSession.model');
 const ApiResponse = require('../utils/apiResponse');
+const { stripIndents} = require('../service/chat/stripIndent');
 const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY });
-
+const { Anthropic } = require('@anthropic-ai/sdk');
+const client = new Anthropic({
+  apiKey: process.env['ANTHROPIC_API_KEY'],
+});
 
 
 module.exports = {
@@ -763,6 +767,39 @@ module.exports = {
           new ApiResponse(200,"Url updated successfully",{url})
         )
   }),
+  enhancePrompt: async (req, res) => {
+    try {
+      let prompt = req.body.prompt;
+      const message = await client.messages.create({
+        max_tokens: 1024,
+        messages: [{ 
+          role: "user", 
+          content: stripIndents`I want you to improve the user prompt that is wrapped in \`<original_prompt>\` tags.
+                    This prompt will be used to create a tool(small app). 
+                    
+                    IMPORTANT: Only respond with the improved prompt and nothing else!
+           
+                    <original_prompt>
+                      ${prompt}
+                    </original_prompt>`
+        }],
+        model: "claude-3-5-sonnet-20240620",
+      });
+    
+      res.status(200).json({
+        enhenced: true,
+        message: "Prompt enhanced successfully",
+        enhancedPrompt: message.content[0].text.trim()
+      });
+      
+    } catch (error) {
+      res.status(400).json({ 
+        enhenced: false,
+        error: error.message,
+        message: "Failed to enhance prompt" 
+      });
+    }
+  },
 
   createStripeCheckoutSession: async (req, res) => {
     try {
