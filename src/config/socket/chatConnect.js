@@ -72,7 +72,7 @@ module.exports = (server) => {
          // Emit each partial response as it's received
          socket.emit("partialResponse", {
           text: '',
-          fullChatResponse: returnedOutput.message,
+          fullChatResponse: returnedOutput.message === '' ? returnedOutput.code === '' ? 'No code found' : 'Here is Our AI Assistant Message' : returnedOutput.message,
           streaming: false,
           code: returnedOutput.code,
           codeFound: false,
@@ -200,7 +200,7 @@ module.exports = (server) => {
         // Emit each partial response as it's received
         socket.emit("partialResponse", {
           text: '',
-          fullChatResponse: returnedOutput.message,
+          fullChatResponse: returnedOutput.message === '' ? returnedOutput.code === '' ? 'No code found' : 'Here is Our AI Assistant Message' : returnedOutput.message,
           streaming: false,
           code: returnedOutput.code,
           codeFound: false,

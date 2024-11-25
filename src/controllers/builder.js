@@ -287,6 +287,8 @@ module.exports = {
             Note: Input is code and output will be only one code file which will run as JSX. You must return code only no extra text allowed.
             ${fetchedApp.theme ? `Use this color while generating code for primary ${fetchedApp.theme.primaryColor}, for secondary ${fetchedApp.theme.secondaryColor}, for background color ${fetchedApp.theme.backgroundColor} using inline style, when asked to change color or theme inhancement.` : ''}
             ${fetchedApp.header.logo.enabled && fetchedApp.header.logo.url ? `Add this logo as header ${fetchedApp.header.logo.url} at ${fetchedApp.header.logo.alignment}, when asked to add logo.` : ''}
+            ${fetchedApp.header.logo.enabled && fetchedApp.header.logo.url ? ` The logo should have an alt text "${fetchedApp.header.logo.altText}" and link to ${fetchedApp.header.logo.link}. ` : ''}
+            ${fetchedApp.header.logo.enabled && fetchedApp.header.logo.url ? ` The logo size should be ${fetchedApp.header.logo.size}. ` : ''}
             ${!fetchedApp.header.logo.enabled || !fetchedApp.header.logo.url ? `Do not add any logo. Remove any logo if already added.` : ''}
             Output structure:
                 function AppName(){
@@ -560,7 +562,11 @@ module.exports = {
         });
         let theme = ``;
         if (app.header.logo.enabled && app.header.logo.url) {
-          theme += ` Add this logo as header ${app.header.logo.url} at ${app.header.logo.alignment}, when asked to add logo.`
+          theme += ` Add this logo as header ${app.header.logo.url} at ${app.header.logo.alignment}, when asked to add logo.`;
+          theme += ` The logo should have an alt text "${app.header.logo.altText}" and link to ${app.header.logo.link}.`;
+          if (app.header.logo.size) {
+            theme += ` The logo size should be ${app.header.logo.size}.`;
+          }
         }
         if (app.theme) {
           theme += ` Use this color while generating code for primary ${app.theme.primaryColor}, for secondary ${app.theme.secondaryColor}, for background color ${app.theme.backgroundColor} using inline style, when asked to change color or theme inhancement.`

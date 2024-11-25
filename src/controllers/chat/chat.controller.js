@@ -529,7 +529,11 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
   console.log("Agent Type: ", app.agent_type)
   if (app.agent_type !== "AI_Tool") {
     if (app.header.logo.enabled && app.header.logo.url) {
-      theme += ` add this logo as header ${app.header.logo.url} at ${app.header.logo.alignment}, when asked to add logo.`
+      theme += ` add this logo as header ${app.header.logo.url} at ${app.header.logo.alignment}, when asked to add logo. `;
+      theme += ` The logo should have an alt text "${app.header.logo.altText}" and link to ${app.header.logo.link}. `;
+      if (app.header.logo.size) {
+        theme += ` The logo size should be ${app.header.logo.size}. `;
+      }
     }
     if (app.theme) {
       theme += ` use this color while generating code for primary ${app.theme.primaryColor}, for secondary ${app.theme.secondaryColor}, for background color ${app.theme.backgroundColor} using inline style, when asked to change color or theme inhancement.`
@@ -539,7 +543,11 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
     }
   } else {
     if (app.header.logo.enabled && app.header.logo.url) {
-      theme += ` add this logo as header ${app.header.logo.url} at ${app.header.logo.alignment}. `
+      theme += ` add this logo as header ${app.header.logo.url} at ${app.header.logo.alignment}, when asked to add logo. `;
+      theme += ` The logo should have an alt text "${app.header.logo.altText}" and link to ${app.header.logo.link}. `;
+      if (app.header.logo.size) {
+        theme += ` The logo size should be ${app.header.logo.size}. `;
+      }
     }
     if (app.theme) {
       theme += ` use this color while generating code for primary ${app.theme.primaryColor}, for secondary ${app.theme.secondaryColor}, for background color ${app.theme.backgroundColor} using inline style.`
