@@ -19,6 +19,7 @@ const ApiResponse = require('../utils/apiResponse');
 const { stripIndents} = require('../service/chat/stripIndent');
 const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY });
 const { Anthropic } = require('@anthropic-ai/sdk');
+const sharp = require('sharp');
 const client = new Anthropic({
   apiKey: process.env['ANTHROPIC_API_KEY'],
 });
@@ -560,6 +561,22 @@ module.exports = {
           user: new mongoose.Types.ObjectId(req.user.userId),
           status: 'dev'
         });
+        // Find Chat Session
+        const chatSessionValue = await chatSession.findOne({agentId: app._id});
+        // get last message content and its image of user
+        let lastMessageContent = '';
+        let lastMessageImage = '';
+        if(chatSessionValue){
+          // get last message content and its image of user
+          let lastMessage = '';
+          if(chatSessionValue.messages.length > 1){ 
+            lastMessage = chatSessionValue.messages[chatSessionValue.messages.length - 2];
+          }else{
+            lastMessage = chatSessionValue.messages[chatSessionValue.messages.length - 1];
+          }
+          lastMessageContent = lastMessage.content;
+          lastMessageImage = lastMessage.image[0];
+        }
         let theme = ``;
         if (app.header.logo.enabled && app.header.logo.url) {
           theme += ` Add this logo as header ${app.header.logo.url} at ${app.header.logo.alignment}, when asked to add logo.`;
@@ -609,7 +626,7 @@ module.exports = {
 
         
         aiUserThreadPrompt = prompt;
-        prompt += `${theme} \nEnsure that all React hooks are written with the full 'React' prefix, e.g., React.useState(). 
+        prompt += `${theme} This is my last message: ${lastMessageContent}. \nEnsure that all React hooks are written with the full 'React' prefix, e.g., React.useState(). 
                   Create React element without any import statement. The following header is already added:
                   import React, {useState, useEffect, useContext, useReducer, useCallback, useMemo, useRef, useImperativeHandle, useLayoutEffect, useDebugValue, useTransition, useDeferredValue, useId, useSyncExternalStore, useInsertionEffect} from 'react'; import * as LucideIcons from 'lucide-react'; import { useLocation } from 'react-router-dom'; 
                   You must return code only, no extra text allowed. like this 
@@ -621,32 +638,43 @@ module.exports = {
                   `;
         prompt += `This is my code: ${app.componentCode}`;
 
-        const response = await axios.post(
-          "https://api.anthropic.com/v1/messages",
+        let content = [
+            {
+              type: "text",
+              text: prompt,
+            },
+          ];
+          if (lastMessageImage) {
+            content.push({
+              type: "image",
+              source: {
+                type: "base64",
+                media_type: await getMediaType(lastMessageImage),
+                data: await fetchAndResizeImageAsBase64(lastMessageImage)
+              },
+            });
+          }
+
+        const response = await client.messages.create(
           {
-            model: "claude-3-5-sonnet-20240620", // Using Claude model
+            model: "claude-3-5-sonnet-20241022", // Using Claude model
             max_tokens: 8000,
             messages: [
               {
                 role: "user",
-                content: prompt,
+                content: content
               },
             ],
-          },
-          {
-            headers: {
-              "content-type": "application/json",
-              "x-api-key": process.env["ANTHROPIC_API_KEY"],
-              "anthropic-version": "2023-06-01",
-            },
           }
         );
+
+        app.componentCode = response.content[0].text;
 
         await openai.beta.threads.messages.create(
           app.thread_id,
           {
             role: "user",
-            content: `This was my requirement ${aiUserThreadPrompt}, And this is the latest code output: ${response.data.content[0].text} `,
+            content: `This was my requirement ${aiUserThreadPrompt}, And this is the latest code output: ${response.content[0].text } `,
           },
           {
             role: "assistant",
@@ -654,7 +682,6 @@ module.exports = {
           }
         );
 
-        app.componentCode = response.data.content[0].text;
 
         const urlRegex = /fetch\((['"`])([^'"`]+)\1\)/;
         let originalApis = []; // Array to store original API objects
@@ -742,7 +769,7 @@ module.exports = {
               await oldChatSession.save();
           }
 
-        return res.status(200).json({suggestion: response.data.content[0].text })
+        return res.status(200).json({suggestion: response.content[0].text })
         } catch (error) {
       console.log("erorr is ----> ",error);
       res.send(error);
@@ -899,3 +926,30 @@ function extractDomain(url) {
     return domain;
 }
 
+async function getMediaType(url) {
+  try {
+      const response = await axios.head(url);
+      return response.headers['content-type'];
+  } catch (error) {
+      console.error('Error:', error.message);
+  }
+}
+
+// Helper function to fetch image as base64 and reduce resolution
+async function fetchAndResizeImageAsBase64(imageUrl) {
+  try {
+    // Fetch the image and reduce its resolution to 500X500 (or any desired dimensions)
+    const imageBuffer = await axios.get(imageUrl, { responseType: "arraybuffer" });
+    
+    // Resize the image using sharp
+    const resizedImageBuffer = await sharp(imageBuffer.data)
+      .resize(500, 500) // You can adjust the width and height as needed
+      .toBuffer();
+    
+    // Convert resized image to base64
+    return resizedImageBuffer.toString('base64');
+  } catch (error) {
+    console.error("Error fetching and resizing image:", error);
+    return null;
+  }
+}

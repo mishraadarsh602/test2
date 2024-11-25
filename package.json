@@ -11,8 +11,8 @@
     "start:prod": "NODE_ENV=production node src/server/init.js"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.27.3",
-    "@langchain/anthropic": "^0.2.16",
+    "@anthropic-ai/sdk": "^0.32.1",
+    "@langchain/anthropic": "^0.3.8",
     "aws-sdk": "^2.1691.0",
     "axios": "^1.7.5",
     "body-parser": "^1.19.0",
