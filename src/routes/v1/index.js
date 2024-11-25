@@ -4,6 +4,5 @@ module.exports.frontendRoute=require("./frontend.route")
 module.exports.liveRoute=require("./live.route")
 module.exports.analytic=require("./analytic.route")
 module.exports.adminRoute=require("./admin/admin.route")
-module.exports.userRoute = require("./admin/user.route")
-module.exports.errorLogRoute = require("./admin/errorLog.route");
-module.exports.localeRoute=require("./locale.route")
+
+

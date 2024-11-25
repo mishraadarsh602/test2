@@ -3,7 +3,15 @@ const router = express.Router();
 const adminController = require('../../../controllers/admin/dashboard');
 const adminUserController = require('../../../controllers/admin/user');
 const adminAuth = require('../../../middleware/adminauth');
-
+const userController = require("../../../controllers/admin/userController");
+const adminErrorLogsController = require("../../../controllers/admin/errorlog");
+const { getApps } = require("../../../controllers/admin/searchAppController");
+const {
+  getLocale,
+  createLocale,
+  updateLocale,
+  deleteLocale,
+} = require("../../../controllers/localeController");
 router.get('/getfeatureLists', adminController.getFeatureLists);
 
 
@@ -20,5 +28,24 @@ router.get('/getCreationStats', adminController.getCreationStats);
 
 
 
+router.get("/getusers", userController.getAllUsers);
 
+router.get("/getusers/:id", userController.getUserById);
+
+router.put("/updateusers/:id", userController.updateUserById);
+
+
+router.get("/getErrorLogs", adminErrorLogsController.getErrorLogs);
+
+
+
+router.post("/locale", createLocale);
+
+router.get("/locale/:langCode?", getLocale);
+
+router.put("/locale/:langCode", updateLocale);
+
+router.delete("/locale/:langCode", deleteLocale);
+
+router.get("/getsearchapp", getApps);
 module.exports = router;
