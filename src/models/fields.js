@@ -120,7 +120,11 @@ const fieldsSchema = new mongoose.Schema(
         inProgress:  {
             type:Boolean,
             default:false
-        },   
+        },  
+        steps:{
+            type:Number,
+            default:0
+        } 
     }, { usePushEach: true }
 );
 
