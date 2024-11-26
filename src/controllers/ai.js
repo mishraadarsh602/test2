@@ -265,6 +265,54 @@ module.exports = {
     }
   },
 
+  getAssistantAI: async (req, res) => {
+    try{
+      // const myAssistant = await openai.beta.assistants.retrieve(
+      //   "asst_M2KQmzzSVCrDBe3AbEXiTYru"
+      // );
+      console.log('start');
+      const myAssistant = await openai.beta.assistants.update(
+        "asst_M2KQmzzSVCrDBe3AbEXiTYru",
+        {
+          tools: [
+            {
+              type: "function",
+              function: {
+                name: "search_from_internet",
+                description:
+                  "Perform a search on Google based on the user's query and return the raw search results.",
+                parameters: {
+                  type: "object",
+                  properties: {
+                    query: {
+                      type: "string",
+                      description:
+                        "The user's search query to perform on Google.",
+                    },
+                    numResults: {
+                      type: "integer",
+                      description: "The number of search results to return",
+                      default: 5,
+                    },
+                  },
+                  required: ["query"],
+                },
+              },
+            },
+          ],
+        }
+      );
+      console.log('end')
+      return res.status(200).json({
+        assistant: myAssistant,
+      });
+    }catch(error){
+      return res.status(500).json({
+        error
+      });
+    }
+  },
+
   tryGraphMaking: async () => {
     try {
       let userPrompt =

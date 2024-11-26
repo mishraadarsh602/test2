@@ -17,6 +17,7 @@ router.get('/create_assistant', aiController.createAssistant);
 router.get('/get_assistant_conversatation', aiController.runAssistantConversation);
 router.get('/generate_graph', aiController.tryGraphMaking);
 router.get('/returnCode',aiController.returnCode);
+router.get('/fetchAssistant', aiController.getAssistantAI);
 router.post('/enhance_prompt',builderController.enhancePrompt);
 router.get('/get_app/:url',auth, builderController.getAppByUrl);
 router.post('/update_app/:id',auth, builderController.updateApp);
