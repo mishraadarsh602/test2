@@ -597,7 +597,7 @@ module.exports = {
           switch (selectedOptions[i]) {
             case "enhance_UI":
               prompt +=
-                "Please enhance the overall UI while keeping the design consistent with the current theme. Make sure the elements are visually appealing without changing the existing structure or functionality. ";
+                "Please enhance the overall UI while keeping the design consistent with the current theme. Make sure the elements are visually appealing without changing the existing structure or functionality. Use shadcn UI as max possible for better Output. And further enhance it wih custom and taiwind CSS.";
               break;
             case "error_handling":
               prompt +=
@@ -626,9 +626,11 @@ module.exports = {
 
         
         aiUserThreadPrompt = prompt;
-        prompt += `${theme} This is my last message: ${lastMessageContent}. \nEnsure that all React hooks are written with the full 'React' prefix, e.g., React.useState(). 
+        prompt += `${theme} This is my last message: ${lastMessageContent}.
+        Ensure that all React hooks are written with the full 'React' prefix, e.g., React.useState(). 
                   Create React element without any import statement. The following header is already added:
                   import React, {useState, useEffect, useContext, useReducer, useCallback, useMemo, useRef, useImperativeHandle, useLayoutEffect, useDebugValue, useTransition, useDeferredValue, useId, useSyncExternalStore, useInsertionEffect} from 'react'; import * as LucideIcons from 'lucide-react'; import { useLocation } from 'react-router-dom'; 
+                  Button, Input, Separator from "@/components/ui/...".
                   You must return code only, no extra text allowed. like this 
                    Output structure:
                     function AppName(){
