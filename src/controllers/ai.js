@@ -103,8 +103,30 @@ module.exports = {
         temperature: 0.1,
         top_p: 0.9,
         response_format: "auto",
-        tools:[],
-        tool_resources: {}
+        tools:[{
+          type: "function",
+          function: {
+            name: 'search_from_internet',
+            description: "Perform a search on Google based on the user's query and return the raw search results.",
+            parameters: {
+              type: "object",
+              properties: {
+                query: {
+                  type: "string",
+                  description: "The user's search query to perform on Google.",
+                },
+                numResults: {
+                  type: "integer",
+                  description: "The number of search results to return",
+                  default: 5,
+                },
+              },
+              required: ["query"],
+            },
+          },
+        }
+ ],
+        // tool_resources: {"file_search": {"vector_store_ids":[]}}
         // response_format:{ type: "json_schema", json_schema: {"strict": true,"name": "chat_response", "schema": {
         //     "type": "object",
         //     "properties": {
