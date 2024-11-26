@@ -83,101 +83,18 @@ module.exports = {
 
   createAssistant: async (req, res) => {
     try {
-      let reactCode = `function SolarEnergyApp() {
-        const [latitude, setLatitude] = React.useState('');
-        const [longitude, setLongitude] = React.useState('');
-        const [startDate, setStartDate] = React.useState('');
-        const [endDate, setEndDate] = React.useState('');
-        const [solarData, setSolarData] = React.useState(null);
-        const [loading, setLoading] = React.useState(false);
-        const [error, setError] = React.useState(null);
-      
-        const fetchSolarData = async () => {
-          setLoading(true);
-          setError(null);
-          try {
-            const response = await fetch(\`https://api.solcast.com.au/world_solar_radiation/estimated_actuals?latitude=\${latitude}&longitude=\${longitude}&start=\${startDate}&end=\${endDate}&api_key=YOUR_API_KEY\`);
-            if (!response.ok) {
-              throw new Error('Failed to fetch solar energy data');
-            }
-            const data = await response.json();
-            setSolarData(data);
-          } catch (err) {
-            setError('Failed to fetch solar energy data');
-          } finally {
-            setLoading(false);
-          }
-        };
-      
-        return React.createElement('div', { className: 'min-h-screen bg-gradient-to-br from-green-400 to-blue-500 flex flex-col items-center justify-center p-4' },
-          React.createElement('div', { className: 'bg-white rounded-lg shadow-2xl p-8 w-full max-w-md' },
-            React.createElement('header', { className: 'flex items-center justify-between mb-6' },
-              React.createElement('h1', { className: 'text-3xl font-bold text-gray-800' }, 'Solar Energy Data'),
-              React.createElement(LucideIcons.Sun, { className: 'w-10 h-10 text-yellow-500' })
-            ),
-            React.createElement('div', { className: 'space-y-4' },
-              React.createElement('div', { className: 'relative' },
-                React.createElement(LucideIcons.MapPin, { className: 'absolute top-3 left-3 text-gray-400' }),
-                React.createElement('input', {
-                  type: 'text',
-                  value: latitude,
-                  onChange: (e) => setLatitude(e.target.value),
-                  placeholder: 'Latitude',
-                  className: 'w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
-                })
-              ),
-              React.createElement('div', { className: 'relative' },
-                React.createElement(LucideIcons.MapPin, { className: 'absolute top-3 left-3 text-gray-400' }),
-                React.createElement('input', {
-                  type: 'text',
-                  value: longitude,
-                  onChange: (e) => setLongitude(e.target.value),
-                  placeholder: 'Longitude',
-                  className: 'w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
-                })
-              ),
-              React.createElement('div', { className: 'relative' },
-                React.createElement(LucideIcons.Calendar, { className: 'absolute top-3 left-3 text-gray-400' }),
-                React.createElement('input', {
-                  type: 'date',
-                  value: startDate,
-                  onChange: (e) => setStartDate(e.target.value),
-                  className: 'w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
-                })
-              ),
-              React.createElement('div', { className: 'relative' },
-                React.createElement(LucideIcons.Calendar, { className: 'absolute top-3 left-3 text-gray-400' }),
-                React.createElement('input', {
-                  type: 'date',
-                  value: endDate,
-                  onChange: (e) => setEndDate(e.target.value),
-                  className: 'w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
-                })
-              ),
-              React.createElement('button', {
-                onClick: fetchSolarData,
-                className: 'w-full bg-blue-500 text-white rounded-md py-3 font-semibold hover:bg-blue-600 transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50'
-              }, 'Get Solar Data')
-            )
-          ),
-          solarData && React.createElement('div', { className: 'mt-8 bg-white rounded-lg shadow-2xl p-6 w-full max-w-md' },
-            React.createElement('h2', { className: 'text-2xl font-bold mb-4 text-gray-800' }, 'Solar Energy Output'),
-            React.createElement('pre', { className: 'bg-gray-100 p-4 rounded-md overflow-auto max-h-60 text-sm' },
-              JSON.stringify(solarData, null, 2)
-            )
-          ),
-          error && React.createElement('div', { className: 'mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative', role: 'alert' },
-            React.createElement('strong', { className: 'font-bold' }, 'Error: '),
-            React.createElement('span', { className: 'block sm:inline' }, error)
-          ),
-          loading && React.createElement('div', { className: 'mt-4 flex items-center justify-center' },
-            React.createElement('div', { className: 'animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500' })
-          )
-        );
-      }
-      return SolarEnergyApp;`;
-      let instructions = `You are an AI assistant who generates both conversational responses and code when necessary. Generate code in a string format. We were going to work on a React-based Javascript App, and your role is to assist with creating, editing and improving React codebases with the tailwind, custom CSS and Javascript only, based on my requests. Our app relies heavily on third-party API integration. Avoid fetching the API on load. Instead, fetch the API when the button is clicked. Additionally, handle API errors properly to ensure the app doesn't crash. \n Before generating any code, ensure you fully understand my requirements. Take the time to clarify anything necessary until you have complete clarity. Once you're certain about my instructions, proceed to create the code.\n Ask for a specific API If API is required: "Do you have a specific API in mind, or would you like us to recommend one?" Confirm if sure: "If you're sure about the API, would you like to proceed with this one?" Respond options: If the user confirms: "Great! Let's proceed with this API." If the user denies: "No worries, would you like us to recommend another one?" If the user is unsure: "That's fine! We'll go with our best recommendation."\nProvide non-technical conversational responses along with code in the proper format. Maintain the best UI practices, colours, responsiveness, and functionality.\n If I provide you with any media or media link, please use it as a reference for what I want to create. Feel free to ask for clarification if you're unsure about the media or its relevance.\n Always ensure the final output contains the correct code.\n Maintain contrasting colours of buttons, and icons properly and don’t add any out-of-scope elements or icons. \nAssume that we have all other files and the environment setup is done and only requires one code file which will run as jsx. I am providing you with a sample JSX code purely as a syntax and reference guide:{reactCode}\ Please note that this code is only for reference, and you're free to modify the structure, style, and functionality. Follow the pattern in terms of function usage, API calls, and element creation without any import statements. However, feel free to enhance the code with best practices, improve UI/UX, and optimize functionality as needed. I have this header added already import React, {useState, useEffect, useContext, useReducer, useCallback, useMemo, useRef, useImperativeHandle, useLayoutEffect, useDebugValue, useTransition, useDeferredValue, useId, useSyncExternalStore, useInsertionEffect} from 'react'; import * as LucideIcons from 'lucide-react'; import { useLocation } from 'react-router-dom'; \n If the generated code includes any new third-party API call, insert the following trigger keyword at the beginning of the ‘message’:‘[THIRD_PARTY_API_TRIGGER]’. For example, ‘[THIRD_PARTY_API_TRIGGER] This code uses the OpenWeather API for fetching weather data.’\n Keep the generated message simple and conversational, Do not include any phrases like "Here's the code for your web app… or Here is the implementation etc" as the code is for internal purposes only. Do not add any instructions or unnecessary text or code in "message". And place the react code in "react_code". Do not include react code in the "message". Ensure that the "message" contains only plain conversation text, while "react_code" contains the react code only.`;
-      instructions = instructions.replace('{reactCode}', reactCode);
+
+      // const myAssistant = await openai.beta.assistants.retrieve(
+      //   process.env.DEV_PREMADE_ASSISTANT_ID
+      // );
+    
+      // console.log(myAssistant);
+      // res.status(200).json({
+      //   assistant: myAssistant,
+      // });
+
+
+
       const assistant = await openai.beta.assistants.update(process.env.DEV_ASSISTANT_ID,{
         name: "AI Assistant",
         instructions,
