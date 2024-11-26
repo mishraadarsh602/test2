@@ -14,7 +14,6 @@ router.post('/create_user', builderController.createUser);
 router.get('/get_user',auth, builderController.getUserDetail);
 router.post('/create_app_by_AI', aiController.createAppByAI);
 router.get('/create_assistant', aiController.createAssistant);
-router.get('/get_assistant_conversatation', aiController.runAssistantConversation);
 router.get('/generate_graph', aiController.tryGraphMaking);
 router.get('/returnCode',aiController.returnCode);
 router.get('/fetchAssistant', aiController.getAssistantAI);
