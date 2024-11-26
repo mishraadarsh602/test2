@@ -659,7 +659,7 @@ module.exports = {
             });
           }
 
-        const response = await client.messages.create(
+        let response = await client.messages.create(
           {
             model: "claude-3-5-sonnet-20241022", // Using Claude model
             max_tokens: 8000,
