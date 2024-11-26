@@ -196,7 +196,7 @@ async function search_from_internet({ query, numResults = 5 }) {
         q: query,                      // Search query
         num: numResults,               // Number of results
         google_domain: "google.com",    // Google domain
-        api_key: '82c9a514bf856c3104747d3117c65ffae63156134332cb35265088a7a8c43f52',               // Your SerpAPI key
+        api_key: apiKey,               // Your SerpAPI key
       },
     });
     console.log("Called.......", response)
