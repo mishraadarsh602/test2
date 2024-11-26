@@ -811,7 +811,17 @@ module.exports = {
           }
         );
 
-        app.componentCode = response.content[0].text;
+        // app.componentCode = response.content[0].text;
+        if(response.content[0].text.startsWith('`')){
+          const codeBlockRegex = /```(?:\w+)?\n([\s\S]*?)\n```/g;
+          let match;
+          if ((match = codeBlockRegex.exec(response.content[0].text)) !== null) {
+            const extractedCode = match[1];
+            app.componentCode += extractedCode.replace(/tsx/g, "");
+          }
+        }else{
+          app.componentCode = response.content[0].text;
+        }
 
         await openai.beta.threads.messages.create(
           app.thread_id,
