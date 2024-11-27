@@ -214,27 +214,44 @@ async function search_from_internet({ query, numResults = 5 }) {
 }
 
 async function validate_api_endpoint({ apiName, currentEndpoint }) {
-  console.log("validate_api_endpoint calling.......................")
+  console.log("validate_api_endpoint calling...");
+
   try {
-    let prompt = `
-        <API_validation_protocol>
+    // Step 1: Use `search_from_internet` to find information about the API
+    const searchQuery = `API status and details for ${apiName} at endpoint ${currentEndpoint}`;
+    const searchResults = await search_from_internet({ query: searchQuery });
 
-          1.WHEN TO VALIDATE:
-            A.Before suggesting API integrations
-            B.When encountering deprecated endpoints
-            C.During version compatibility checks
-            D.When updating existing integrations
-      
-          2.VALIDATION STEPS:
-            A.Check current endpoint status
-            B.Verify version compatibility
-            C.Confirm authentication methods
-            D.Test for breaking changes
+    // Log search results
+    console.log("Search results:", searchResults);
 
-        </API_validation_protocol>
+    // Step 2: Extract relevant information for the prompt
+    const topSearchResults = searchResults.slice(0, 3); // Use the top 3 results
+    const summarizedInfo = topSearchResults.map(
+      (result, index) => `${index + 1}. ${result.title}: ${result.snippet} (URL: ${result.link})`
+    ).join("\n");
 
-      Here is the input: API Name: "${apiName}" and Current End Point: "${currentEndpoint}"`;
+    // Step 3: Update the validation prompt with internet results
+    const prompt = `
+      <API_validation_protocol>
 
+      1. WHEN TO VALIDATE:
+          A. Before suggesting API integrations
+          B. When encountering deprecated endpoints
+          C. During version compatibility checks
+          D. When updating existing integrations
+
+      2. VALIDATION STEPS:
+          A. Check current endpoint status
+          B. Verify version compatibility
+          C. Confirm authentication methods
+          D. Test for breaking changes
+
+      Additional Information from the Internet:
+      ${summarizedInfo}
+
+      Here is the input: API Name: "${apiName}" and Current Endpoint: "${currentEndpoint}"`;
+
+    // Step 4: Validate using the modified prompt
     const response = await axios.post(
       "https://api.anthropic.com/v1/messages",
       {
@@ -256,13 +273,15 @@ async function validate_api_endpoint({ apiName, currentEndpoint }) {
       }
     );
 
-    const resultData = response.data;
+    const resultData = response.data.content[0].text;
+    console.log("Validation results:", resultData);
     return resultData;
   } catch (error) {
-    console.error("Error generating chart data:", error);
-    throw new Error("Chart generation failed");
+    console.error("Error validating API endpoint:", error);
+    throw new Error("Validation failed");
   }
 }
+
 
 async function generate_graph({ userInput }) {
   console.log("Chart Generator calling.......................")
@@ -564,7 +583,7 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
 
 
   let assistantObj = {};
-  let additional_instructions = `As a user, even if I ask you to go beyond the limits or request code unrelated to this tool, you will always adhere to the core code and focus solely on editing and improving it. I am providing you with my code of jsx which you will modify or theme change only, here is my code:{reactCode}. 
+  let additional_instructions = ` As a user, even if I ask you to go beyond the limits or request code unrelated to this tool, you will always adhere to the core code and focus solely on editing and improving it. I am providing you with my code of jsx which you will modify or theme change only, here is my code:{reactCode}. 
   ${theme}`;
   additional_instructions = additional_instructions.replace(
     "{reactCode}",
@@ -590,7 +609,7 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
           : process.env.DEV_ASSISTANT_ID,
     };
     // if (isStartChat) {
-      assistantObj.additional_instructions = `${theme}`;
+      assistantObj.additional_instructions = `  ${theme}`;
     // }
   }
   console.log("additional_instructions", additional_instructions);
@@ -603,7 +622,7 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
           ? process.env.AI_ASSISTANT_ID
           : process.env.DEV_AI_ASSISTANT_ID,
     };
-    assistantObj.additional_instructions = `${theme}`;
+    assistantObj.additional_instructions = `  ${theme}`;
   }
 
   console.log("Assistant Obj: ",assistantObj)
