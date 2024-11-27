@@ -124,7 +124,11 @@ const fieldsSchema = new mongoose.Schema(
         steps:{
             type:Number,
             default:0
-        } 
+        },
+        uniquedpValue:{
+            type:String,
+            default:''
+        }
     }, { usePushEach: true }
 );
 
