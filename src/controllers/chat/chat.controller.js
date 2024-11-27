@@ -213,6 +213,57 @@ async function search_from_internet({ query, numResults = 5 }) {
   }
 }
 
+async function validate_api_endpoint({ apiName, currentEndpoint }) {
+  console.log("validate_api_endpoint calling.......................")
+  try {
+    let prompt = `
+        <API_validation_protocol>
+
+          1.WHEN TO VALIDATE:
+            A.Before suggesting API integrations
+            B.When encountering deprecated endpoints
+            C.During version compatibility checks
+            D.When updating existing integrations
+      
+          2.VALIDATION STEPS:
+            A.Check current endpoint status
+            B.Verify version compatibility
+            C.Confirm authentication methods
+            D.Test for breaking changes
+
+        </API_validation_protocol>
+
+      Here is the input: API Name: "${apiName}" and Current End Point: "${currentEndpoint}"`;
+
+    const response = await axios.post(
+      "https://api.anthropic.com/v1/messages",
+      {
+        model: "claude-3-5-sonnet-20240620", // Using Claude model
+        max_tokens: 8000,
+        messages: [
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+      },
+      {
+        headers: {
+          "content-type": "application/json",
+          "x-api-key": process.env["ANTHROPIC_API_KEY"],
+          "anthropic-version": "2023-06-01",
+        },
+      }
+    );
+
+    const resultData = response.data;
+    return resultData;
+  } catch (error) {
+    console.error("Error generating chart data:", error);
+    throw new Error("Chart generation failed");
+  }
+}
+
 async function generate_graph({ userInput }) {
   console.log("Chart Generator calling.......................")
   try {
@@ -310,6 +361,14 @@ const handleRequiresAction = async (data, runId, threadId, onPartialResponse, ap
       if (toolCall.function.name === "search_from_internet") {
         const { query, numResults } = JSON.parse(toolCall.function.arguments);
         const results = await search_from_internet({ query, numResults });
+        return {
+          tool_call_id: toolCall.id,
+          output: JSON.stringify(results),
+        };
+      } 
+      else if (toolCall.function.name === "validate_api_endpoint") {
+        const { apiName, currentEndpoint } = JSON.parse(toolCall.function.arguments);
+        const results = await validate_api_endpoint({ apiName, currentEndpoint });
         return {
           tool_call_id: toolCall.id,
           output: JSON.stringify(results),
