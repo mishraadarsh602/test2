@@ -169,6 +169,52 @@ const appSchema = new mongoose.Schema({
         //     required: false
         // }
     },
+    visuals: {
+        graph: {
+         type:Object,
+         default:null
+        },
+        table:{
+            type:Object,
+            default:null
+        },
+        visible: {
+            type: Boolean,
+            default: true
+        },
+        type: {
+            type: String,
+            default: 'image'
+        },
+        videoLink: {
+            type: String,
+            default: 'https://www.youtube.com/embed/PmN_MY5kNrE'
+        },
+        imageLink: {
+            type: String,
+            default: 'https://dlvkyia8i4zmz.cloudfront.net/DcgzVVEJTPaZYy1WF9s5_img.gif'
+        },
+        imageSize: {
+            type: Number,
+            default: 1572000
+        },
+        imageFit: {
+            type: String,
+            default: 'cover'
+        },
+        imageName: {
+            type: String,
+            default: 'default.jpg'
+        },
+        imageAlt: {
+            type: String,
+            default: '',
+        },
+        videoType: {
+            type: String,
+            default: 'youTube'
+        }
+    },
     payments:{
         enabled: {
             type: Boolean,
