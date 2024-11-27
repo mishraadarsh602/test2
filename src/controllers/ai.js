@@ -98,7 +98,7 @@ module.exports = {
       const assistant = await openai.beta.assistants.update(process.env.DEV_ASSISTANT_ID,{
         name: "AI Assistant",
         instructions,
-        description: 'You are an AI assistant who assist with create, editing and improving React codebases with tailwind, custom CSS and Javascript only',
+        description: 'You are an AI assistant who assist with create, editing and improving React codebases with tailwind, custom CSS and Javascript only. And capable of real-time API validation.',
         model: "gpt-4o-mini",
         temperature: 0.1,
         top_p: 0.9,
@@ -107,24 +107,56 @@ module.exports = {
           type: "function",
           function: {
             name: 'search_from_internet',
-            description: "Perform a search on Google based on the user's query and return the raw search results.",
+            description: "Perform real-time internet searches for latest information and API documentation",
             parameters: {
               type: "object",
               properties: {
                 query: {
                   type: "string",
-                  description: "The user's search query to perform on Google.",
+                  description: "Search query for finding specific information or documentation",
                 },
                 numResults: {
                   type: "integer",
-                  description: "The number of search results to return",
+                  description: "Number of search results to return",
                   default: 5,
                 },
+                searchType: {
+                  type: "string",
+                  enum: ["api_docs", "latest_news", "technical_info", "general"],
+                  description: "Type of search to perform",
+                  default: "api_docs"
+                }
               },
               required: ["query"],
             },
           },
-        }
+        },
+        {
+          type: "function",
+          function: {
+            name: "validate_api_endpoint",
+            description: "Validate and verify API endpoints against latest documentation",
+            parameters: {
+              type: "object",
+              properties: {
+                apiName: {
+                  type: "string",
+                  description: "Name of the API to validate"
+                },
+                currentEndpoint: {
+                  type: "string",
+                  description: "Current endpoint URL to verify"
+                },
+                version: {
+                  type: "string",
+                  description: "Current API version",
+                  default: "latest"
+                }
+              },
+              required: ["apiName", "currentEndpoint"]
+            }
+          }
+      }
  ],
         // tool_resources: {"file_search": {"vector_store_ids":[]}}
         // response_format:{ type: "json_schema", json_schema: {"strict": true,"name": "chat_response", "schema": {
