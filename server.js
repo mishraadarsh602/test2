@@ -40,7 +40,9 @@ const corsOptions = {
       "http://localhost:3000",
       "http://localhost:3001",
       "https://gen-purpose-builder.web.app",
-      "https://gen-ai-admin.firebaseapp.com"
+      "https://gen-ai-admin.firebaseapp.com",
+      "https://toolbuilder-9d47d.web.app",
+      "https://toolbuilder-9d47d.firebaseapp.com"
     ],
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
     allowedHeaders: ["Content-Type", "x-refresh-token", "Authorization"],

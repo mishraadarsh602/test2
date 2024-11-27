@@ -19,7 +19,9 @@ module.exports = (server) => {
         "http://localhost:4500",
         "http://localhost:4200",
         "http://localhost:3000",
-        "https://gen-purpose-builder.web.app"
+        "https://gen-purpose-builder.web.app",
+        "https://toolbuilder-9d47d.web.app",
+        "https://toolbuilder-9d47d.firebaseapp.com"
       ],
       methods: ["GET", "POST"],
     },
