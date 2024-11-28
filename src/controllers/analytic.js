@@ -262,12 +262,8 @@ get_leads: catchAsync(
 ,
   saveLead:catchAsync(
      async(req,res)=>{
-      let key=req.body.key;
-      if(!moongooseHelper.isValidMongooseId(key)){
-        throw new ApiError(400,'Key Not Valid')
-      }
-    await appVisitorModel.updateOne(
-        { app: moongooseHelper.giveMoongooseObjectId( req.body.app) },             
+     await appVisitorModel.updateOne(
+        { _id: moongooseHelper.giveMoongooseObjectId( req.body.visitorId) },             
         { $set: { lead_fields: req.body.fields } } 
       );
         return res.status(201).json(
