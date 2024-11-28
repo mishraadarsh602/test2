@@ -1,9 +1,10 @@
 const App = require("../../models/app");
 const ApiResponse = require("../../utils/apiResponse");
 const catchAsync = require("../../utils/catchAsync");
+const mongoose = require("mongoose");
 
 exports.getApps = catchAsync(async (req, res) => {
-  const { page = 1, limit = 10, name = "", id = "", url = "" } = req.query;
+  const { page = 1, limit = 10, name = "", user = "", url = "" } = req.query;
 
   const pageNum = parseInt(page, 10) || 1;
   const limitNum = parseInt(limit, 10) || 10;
@@ -11,16 +12,20 @@ exports.getApps = catchAsync(async (req, res) => {
 
   let searchQuery = {};
 
-  if (id) {
-   
-    searchQuery = { _id: id };
-  } else if (name) {
 
+  if (user) {
+    if (!mongoose.Types.ObjectId.isValid(user)) {
+      
+      searchQuery = { _id: { $exists: false } }; 
+    } else {
+      searchQuery = { user };
+    }
+  } else if (name) {
     searchQuery = { name: { $regex: name, $options: "i" } };
   } else if (url) {
-  
     searchQuery = { url: { $regex: url, $options: "i" } };
   }
+
 
   const apps = await App.find(searchQuery)
     .sort({ updatedAt: -1 })
@@ -36,12 +41,10 @@ exports.getApps = catchAsync(async (req, res) => {
     totalPages: Math.ceil(total / limitNum),
   };
 
-  res
-    .status(200)
-    .json(
-      new ApiResponse(200, "Apps fetched successfully", { apps, pagination })
-    );
+  res.status(200).json(
+    new ApiResponse(200, "Apps fetched successfully", {
+      apps,
+      pagination,
+    })
+  );
 });
-
-
-
