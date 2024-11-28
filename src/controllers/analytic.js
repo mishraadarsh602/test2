@@ -4,7 +4,6 @@ const featureListModel=require('../models/featureList');
 const Bowser = require("bowser");
 const moment = require('moment');
 const appVisitorsModel = require('../models/appVisitors');
-const appLeadsModel = require('../models/appLeads');
 const catchAsync=require('../utils/catchAsync');
 const moongooseHelper=require('../utils/moongooseHelper');
 const ApiError=require('../utils/throwError');
@@ -184,14 +183,17 @@ get_leads: catchAsync(
       app: moongooseHelper.giveMoongooseObjectId(appId),
       createdAt: {
         $gte: new Date(startDate),
-        $lte: new Date(endDate)
+        $lte: new Date(endDate),
       },
-      type: 'Lead'
+      $expr: {
+        $gt: [{ $size: "$lead_fields" }, 0],
+      },
     })
-    .sort({ updatedAt: -1 })
-    .populate('lead')
-    .select('createdAt browser utm_source device utm_medium utm_campaign utm_term utm_content transaction_completed amount currency')
-   
+      .sort({ updatedAt: -1 })
+      .select(
+        "createdAt lead_fields browser utm_source device utm_medium utm_campaign utm_term utm_content transaction_completed amount currency"
+      );
+    
     let finalResponse = { columns: [], data: [], idsArray: [] };
     const fixedColumns = [
       { key: "browser", label: "Browser" },
@@ -204,10 +206,9 @@ get_leads: catchAsync(
       { key: "transactionAmount", label: "Transaction Amount" }
     ];
     const maxLeadFields = new Set();
-    let fieldCounts;
     response.forEach(el => {
       fieldCounts = {};
-      el.lead.fields.forEach(field => {
+      el.lead_fields.forEach(field => {
         let columnName=field.field_name;
         if(field.subtype){
           columnName=`${field.subtype} (${field.field_name} ${field.subtype})`
@@ -217,13 +218,13 @@ get_leads: catchAsync(
     });
     let maxFieldsArray=Array.from(maxLeadFields);
     finalResponse.columns = ["Date", ...maxFieldsArray, ...fixedColumns.map(col => col.label)];
-    
+
     response.forEach(el => {
-      finalResponse.idsArray.push(el.lead._id);
-      const dataRow = [moment(el.lead.createdAt).format('LLL')];
+      finalResponse.idsArray.push(el._id);
+      const dataRow = [moment(el.updatedAt).format('LLL')];
       maxFieldsArray.forEach(columnName => {
         fieldCounts = {};
-        const matchingField = el.lead.fields.find(field => {
+        const matchingField = el.lead_fields.find(field => {
           let columnNameGiven=field.field_name;
           if(field.subtype){
             columnNameGiven=`${field.subtype} (${field.field_name} ${field.subtype})`
@@ -265,11 +266,10 @@ get_leads: catchAsync(
       if(!moongooseHelper.isValidMongooseId(key)){
         throw new ApiError(400,'Key Not Valid')
       }
-      const leadCreated = new appLeadsModel({
-        ...req.body,
-      });
-      await leadCreated.save();
-       await appVisitorModel.updateOne({ _id:req.body.key},{lead:leadCreated._id,type:'Lead'});
+    await appVisitorModel.updateOne(
+        { app: moongooseHelper.giveMoongooseObjectId( req.body.app) },             
+        { $set: { lead_fields: req.body.fields } } 
+      );
         return res.status(201).json(
               new ApiResponse(201,'Lead created successfully')
             );
@@ -304,10 +304,10 @@ get_leads: catchAsync(
       throw new ApiError(400, 'Lead Id not valid');
     }
 
-   await appVisitorsModel.deleteMany(
-      { lead: { $in: leadsIds }},
-  );
-  await appLeadsModel.deleteMany({ _id: { $in: leadsIds } });
+    await appVisitorsModel.updateMany(
+      { _id: { $in: leadsIds } }, 
+      { $set: { lead_fields: [] } } 
+    );
   updateCount(req);
   res.status(200).json(
     new ApiResponse(200,'Leads deleted successfully')

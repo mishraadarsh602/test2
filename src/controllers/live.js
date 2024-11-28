@@ -3,7 +3,6 @@ const appVisitorModel = require('../models/appVisitors');
 const appModel=require('../models/app');
 const featureListModel=require('../models/featureList');
 const redisClient=require('../utils/redisClient');
-const appLeadsModel=require('../models/appLeads');
 const  mongoose = require('mongoose');
 const catchAsync=require('../utils/catchAsync');
 const moongooseHelper=require('../utils/moongooseHelper');

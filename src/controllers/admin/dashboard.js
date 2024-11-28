@@ -3,7 +3,6 @@ const catchAsync = require('../../utils/catchAsync');
 const apiResponse = require('../../utils/apiResponse');
 const userModel = require('../../models/user.model');
 const appModel = require('../../models/app');
-const appLeadsModel = require('../../models/appLeads');
 const appVisitorsModel = require('../../models/appVisitors');
 
 const getFeatureLists = catchAsync(async (req, res) => {
@@ -162,7 +161,7 @@ const getAllCounts = catchAsync(async (req, res) => {
     const [userCount, featureListCount, leadCount, visitorCount, appCount] = await Promise.all([
         userModel.countDocuments({}),
         featureListModel.countDocuments({}),
-        appLeadsModel.countDocuments({}),
+        // appLeadsModel.countDocuments({}),
         appVisitorsModel.countDocuments({}),
         appModel.countDocuments({})
     ]);

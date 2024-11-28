@@ -29,7 +29,7 @@ const appVisitorSchema = new mongoose.Schema(
         },
         type:{
             type: String,
-            enum: ['Visitor', 'Lead', 'Engagement', 'Deleted'],
+            enum: ['Visitor', 'Engagement', 'Deleted'],
             default: 'Visitor'
         },
         utm_source: {
@@ -57,10 +57,25 @@ const appVisitorSchema = new mongoose.Schema(
             trim: true,
             default: ''
         },
-        lead:{
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'appLeads',
+        lead_fields: [
+            {
+            field_name: {
+                type: String,
+                trim: true,
+                default: '',
+            },
+            value: {
+                type: String,
+                trim: true,
+                default: '',
+            },
+            subtype: {
+                type: String,
+                trim: true,
+                default: '',
+            },
         },
+    ],
         transaction_mode: {
             type: String,
             trim: true,
