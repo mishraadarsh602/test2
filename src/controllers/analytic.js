@@ -50,7 +50,7 @@ module.exports={
             leadsCount: [
               {
                 $match: {
-                  type: 'Lead'
+                 lead_fields: { $not: { $size: 0 } }
                 }
               },
               {
@@ -133,6 +133,7 @@ module.exports={
       const allVisitors = await appVisitorModel.find({
         app:moongooseHelper.giveMoongooseObjectId(appId), 
         type: 'Visitor', 
+        lead_fields: { $size: 0 },
         createdAt: { $gte: new Date(startDate), $lte: new Date(endDate) }
       },{
         createdAt: 1,
