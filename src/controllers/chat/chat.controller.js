@@ -517,10 +517,38 @@ async function fetchAndResizeImageAsBase64(imageUrl) {
 const aiAssistantChatStart = async (userId, userMessage, app, image = null, isStartChat, onPartialResponse) => {
   let parentResponse = '';
   if(isStartChat){
-    const prompts = await systemPromptSession.findOne({});
-    let parentPrompt = prompts?.parentPrompt;
-    parentPrompt = parentPrompt.replace("{userInput}", userMessage);
-    console.log("parentPrompt", parentPrompt);
+    // const prompts = await systemPromptSession.findOne({});
+    let parentPrompt = `I want you to act as a technical advisor for tool development. Based on user requirements, classify whether the tool needs:
+
+    1. API-BASED implementation: Tools that primarily require third-party APIs, data processing, or standard programming logic
+    2. AI-BASED implementation: Tools that require machine learning, natural language processing, computer vision, or other AI capabilities
+    
+    Guidelines:
+    - Return 'ToolTYPE': 'APIBASED' for tools requiring APIs or general programming
+    - Return 'ToolTYPE': 'AIBASED' for tools requiring AI/ML capabilities
+    
+    Your response should follow this JSON structure: {\"ToolTYPE\": \"\"}
+    
+    Reference Examples:
+    API-BASED Tools:
+    - Weather apps (uses weather APIs)
+    - Calculator tools (mathematical logic)
+    - QR code generators (encoding algorithms)
+    - URL converters (string manipulation)
+    - Form validators (data validation)
+    - Page speed analyzers (performance metrics)
+    
+    AI-BASED Tools:
+    - Text generators/editors
+    - Image analyzers/generators
+    - Chatbots
+    - Content recommenders
+    - Language translators
+    - Design suggestion systems
+    
+    Input: ${userMessage}`;
+    // parentPrompt = parentPrompt.replace("{userInput}", userMessage);
+    // console.log("parentPrompt", parentPrompt);
     const message = await client.messages.create({
       max_tokens: 1024,
       messages: [{ role: "user", content: parentPrompt }],
