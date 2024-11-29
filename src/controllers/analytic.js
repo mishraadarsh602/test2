@@ -50,7 +50,7 @@ module.exports={
             leadsCount: [
               {
                 $match: {
-                 lead_fields: { $not: { $size: 0 } }
+                 type: 'Lead'
                 }
               },
               {
@@ -133,7 +133,6 @@ module.exports={
       const allVisitors = await appVisitorModel.find({
         app:moongooseHelper.giveMoongooseObjectId(appId), 
         type: 'Visitor', 
-        lead_fields: { $size: 0 },
         createdAt: { $gte: new Date(startDate), $lte: new Date(endDate) }
       },{
         createdAt: 1,
@@ -186,9 +185,7 @@ get_leads: catchAsync(
         $gte: new Date(startDate),
         $lte: new Date(endDate),
       },
-      $expr: {
-        $gt: [{ $size: "$lead_fields" }, 0],
-      },
+      type:'Lead',
     })
       .sort({ updatedAt: -1 })
       .select(
@@ -265,7 +262,7 @@ get_leads: catchAsync(
      async(req,res)=>{
      await appVisitorModel.updateOne(
         { _id: moongooseHelper.giveMoongooseObjectId( req.body.visitorId) },             
-        { $set: { lead_fields: req.body.fields } } 
+        { $set: { lead_fields: req.body.fields,type:'Lead'} } 
       );
         return res.status(201).json(
               new ApiResponse(201,'Lead created successfully')
@@ -282,7 +279,7 @@ get_leads: catchAsync(
           throw new ApiError(400, 'Visitor Id not valid');
         }
         await appVisitorsModel.updateMany(
-            { _id: { $in: visitorIds } },
+            {type:'Visitor',_id: { $in: visitorIds } },
             { type: 'Deleted' } 
         );
         
@@ -302,8 +299,8 @@ get_leads: catchAsync(
     }
 
     await appVisitorsModel.updateMany(
-      { _id: { $in: leadsIds } }, 
-      { $set: { lead_fields: [] } } 
+      { type:'Lead',_id: { $in: leadsIds } }, 
+      { $set: { lead_fields: [] ,type:'Deleted'} } 
     );
   updateCount(req);
   res.status(200).json(

@@ -29,7 +29,7 @@ const appVisitorSchema = new mongoose.Schema(
         },
         type:{
             type: String,
-            enum: ['Visitor', 'Engagement', 'Deleted'],
+            enum: ['Visitor','Lead', 'Engagement', 'Deleted'],
             default: 'Visitor'
         },
         utm_source: {
