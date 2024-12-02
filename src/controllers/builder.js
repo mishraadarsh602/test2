@@ -839,7 +839,45 @@ module.exports = {
       });
     }
   },
+  validatePrompt: async (req, res) => {
+    try {
+      let prompt = req.body.prompt;
+      if (!prompt || typeof prompt !== 'string') {
+        return res.status(400).json({
+          message: "Invalid prompt format",
+          data: { valid: false }
+        });
+      }
+  
+      const message = await client.messages.create({
+        max_tokens: 1024,
+        messages: [{ 
+          role: "user", 
+          content: `Is this a valid prompt for creating a tool/small app? Only respond with "true" or "false": "${prompt}"`
+        }],
+        model: "claude-3-5-sonnet-20240620",
+      });
+  
+      const validBoolean = message.content[0].text.trim().toLowerCase();
+  
+      res.status(200).json({
+        message: validBoolean ? "Prompt validated successfully" : "Invalid prompt",
+        data:  {   
+          valid: validBoolean
+        }
+      });
+  
+    } catch (error) {
+      res.status(400).json({
+        error: error.message,
+        message: "Failed to validate prompt",
+        data:  {   
+          valid: false
+        }
 
+      });
+    }
+  },
   createStripeCheckoutSession: async (req, res) => {
     try {
         let { amount, currency, billingAddress, shippingAddress, mobileNo, description,publicKey,secretKey } = req.body;
