@@ -861,7 +861,7 @@ module.exports = {
           2. Technically infeasible or impossible requests
           3. Meaningless terms (words/phrases without clear meaning or relevance)
           4. Non-implementable or overly simplistic statements that:
-             - Lack actionable functionality (e.g. "dog color is black")
+             - Lack actionable functionality (e.g. "dog color is black", "what is the weather in new york","maggie recipe")
              - Don't describe any user interaction or purpose
              - Are just factual statements without tool/application context
              - Miss critical details needed for implementation
