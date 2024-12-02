@@ -853,31 +853,47 @@ module.exports = {
         max_tokens: 1024,
         messages: [{ 
           role: "user", 
-          content: `Is this a valid prompt for creating a tool/small app? Only respond with "true" or "false": "${prompt}"`
+          content: `
+           Analyze if this prompt contains any invalidating factors and respond only with "true" if it contains ANY invalidating factors, or "false" if it doesn't.
+
+          Invalidating factors include:
+          1. Abusive, offensive, or unethical content
+          2. Technically infeasible or impossible requests
+          3. Meaningless terms (words/phrases without clear meaning or relevance)
+          4. Non-implementable or overly simplistic statements that:
+             - Lack actionable functionality (e.g. "dog color is black")
+             - Don't describe any user interaction or purpose
+             - Are just factual statements without tool/application context
+             - Miss critical details needed for implementation
+          5. Vague or incomplete requirements that cannot be turned into a functional tool
+
+           Valid prompts can be:
+           - Short but clear tool requests (e.g. "tic tac toe game", "recipe finder")
+           - Basic feature descriptions
+           - Simple tool names that imply clear functionality
+           
+          Prompt to analyze: "${prompt}"
+          Remember: Respond only with "true" if the prompt contains ANY invalidating factors as outlined above, or "false" if it does not.
+          `
         }],
         model: "claude-3-5-sonnet-20240620",
       });
   
-      const validBoolean = message.content[0].text.trim().toLowerCase();
+      const invalidBoolean = message.content[0].text.trim().toLowerCase() === 'true';
   
       res.status(200).json({
-        message: validBoolean ? "Prompt validated successfully" : "Invalid prompt",
-        data:  {   
-          valid: validBoolean
-        }
+        message: !invalidBoolean ? "Prompt validated successfully" : "Invalid prompt",
+        data: { valid: !invalidBoolean }
       });
   
     } catch (error) {
       res.status(400).json({
         error: error.message,
         message: "Failed to validate prompt",
-        data:  {   
-          valid: false
-        }
-
+        data: { valid: false }
       });
     }
-  },
+},
   createStripeCheckoutSession: async (req, res) => {
     try {
         let { amount, currency, billingAddress, shippingAddress, mobileNo, description,publicKey,secretKey } = req.body;
