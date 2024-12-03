@@ -34,7 +34,7 @@ const getFeatureLists = catchAsync(async (req, res) => {
     .find(searchQuery)
     .skip(skip)
     .limit(pageLimit)
-    .sort({ createdAt: -1 });
+    .sort({ _id: 1} );
 
  
   const featureAllListTypes = await featureListModel.distinct("type");
