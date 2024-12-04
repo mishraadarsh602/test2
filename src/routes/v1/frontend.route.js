@@ -11,6 +11,6 @@ router.post('/create_app',auth, frontendController.createApp);
 router.get('/get_user',auth, frontendController.getUserDetail);
 router.delete('/delete_app/:appId', auth,frontendController.deleteApp);
 router.post('/get_all_apps',auth, frontendController.getAllAppsOfUser);
-router.get('/getfeatureLists',frontendController.getFeatureLists);
+router.get('/getfeatureLists',auth,frontendController.getFeatureLists);
 
 module.exports = router;

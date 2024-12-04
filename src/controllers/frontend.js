@@ -11,6 +11,9 @@ const userService = new UserService();
 const moongooseHelper=require('../utils/moongooseHelper');
 const apiResponse=require('../utils/apiResponse');
 const ApiError=require('../utils/throwError')
+const userModel=require('../models/user.model');
+const appModel=require('../models/app');
+const planModel=require('../models/plan.model');
 module.exports = {
 
   getUserDetail: async (req, res) => {
@@ -227,13 +230,47 @@ module.exports = {
     });
     res.status(200).json(new apiResponse(200, "All Apps fetched successfully"));
   }),
-  getFeatureLists:catchAsync(async(req,res)=>{
-    const allFeatureLists = await featureListModel.find({ active: true }, { type: 1, icon: 1, visitorCount: 1, title: 1, description: 1, comingSoon: 1 }, { sort: { rank: 1 } });
+  getFeatureLists: catchAsync(async (req, res) => {
+    const { ogSubscriptionId } = await userModel.findOne(
+        { _id: req.user.userId },
+        { ogSubscriptionId: 1, _id: 0 }
+    );
+    const { agent } = await planModel
+        .findOne({ _id: ogSubscriptionId.split('_')[0] }, { agent: 1 })
+        .lean(); // as we need to access property inside agent arrray for that we use lean method
+  
+    const allFeatureLists = await featureListModel
+        .find(
+            { active: true },
+            { type: 1, icon: 1, visitorCount: 1, title: 1, description: 1, comingSoon: 1 },
+        )
+        .lean();
+  
+        const allFeatureTypes=allFeatureLists.map((feature) => feature.type);
+    const appUsageCounts = await appModel
+        .aggregate([
+            { $match: { user: req.user.userId, agent_type: { $in: allFeatureTypes } } },
+            { $group: { _id: "$agent_type", count: { $sum: 1 } } },
+        ]);
+  
+    const appUsageMap = new Map();
+    appUsageCounts.forEach((item) => appUsageMap.set(item._id,item.count))
+   
+    const agentMap = new Map();
+    agent.map((el) => agentMap.set(el.type, el.totalCount))
+
+
+    const updatedFeatureLists = allFeatureLists.map((feature) => {
+        const appUsedCount = appUsageMap.get(feature.type) || 0;
+        const planTotalCount = agentMap.get(feature.type) || 0;
+        feature.lock = appUsedCount >= planTotalCount;
+        return feature;
+    });
+    
     res.status(200).json(
-      new apiResponse(200, "All featureLists fetched successfully",allFeatureLists)
-)
-}
-)
+        new apiResponse(200, "All featureLists fetched successfully", updatedFeatureLists)
+    );
+  })
 }
 
 async function createThread() {
