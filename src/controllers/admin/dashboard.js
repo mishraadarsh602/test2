@@ -262,55 +262,48 @@ const getCreationStats = catchAsync(async (req, res) => {
     );
 });
 
+const findTargetUser = async (data) => {
+    if (mongoose.Types.ObjectId.isValid(data)) {
+        return await userModel.findOne({ _id: data }).lean();
+    }
+    return await userModel.findOne({ ogCompanyName: data }).lean();
+};
+
 const duplicateApp = catchAsync(async (req, res) => {
+    const { appId, data } = req.body;
+    if (!appId || !data) {
+        return res.status(400).json(
+            new apiResponse(400, "App ID and user data are required")
+        );
+    }
     try {
-        console.log("req.body:",req.body)
-        const { appId, data } = req.body;
-
-        if (!appId || !data) {
-            return res.status(400).json(
-                new apiResponse(400, "No data found")
-            );
-        }
-        let targetUser;
-
-        if (mongoose.Types.ObjectId.isValid(data)) {
-            targetUser = await userModel.findOne({ _id: data }).lean();
-        }
-
-        if (!targetUser) {
-            targetUser = await userModel.findOne({ ogCompanyName: data }).lean();
-        }
+        const targetUser = await findTargetUser(data);
         if (!targetUser) {
             return res.status(404).json(
-                new apiResponse(404, "Sorry no data found")
+                new apiResponse(404, "Target user or company not found")
             );
         }
-
         const originalApp = await appModel.findById(appId).lean();
         if (!originalApp) {
             return res.status(404).json(
                 new apiResponse(404, "Original app not found")
             );
         }
-
-        const duplicatedApp = new appModel({
+        const duplicatedAppData = {
             ...originalApp,
-            _id: undefined,
+            _id: undefined, 
             user: targetUser._id, 
             url: `Copy-of-${originalApp.url}`,
             createdAt: new Date(),
             updatedAt: new Date(),
-        });
-
-        await duplicatedApp.save();
-
-        res.status(201).json(
+        };
+        const duplicatedApp = await appModel.create(duplicatedAppData);
+        return res.status(201).json(
             new apiResponse(201, "App duplicated successfully", duplicatedApp)
         );
     } catch (error) {
-        console.error("Error duplicating app:", error);
-        res.status(500).json(
+        console.error("Error duplicating app:", { appId, data, error });
+        return res.status(500).json(
             new apiResponse(500, "An error occurred while duplicating the app", error.message)
         );
     }
