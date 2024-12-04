@@ -8,6 +8,7 @@ const catchAsync=require('../utils/catchAsync');
 const moongooseHelper=require('../utils/moongooseHelper');
 const ApiError=require('../utils/throwError');
 const ApiResponse = require('../utils/apiResponse');
+const userModel=require('../models/user.model');
 updateCount=catchAsync(async (req,isIncrease=false)=>{
     if(!moongooseHelper.isValidMongooseId(req.body.app)){
       throw new ApiError(400,'AppId not valid');
@@ -179,6 +180,17 @@ get_leads: catchAsync(
     if (!moongooseHelper.isValidMongooseId(appId)) {
       throw new ApiError(400, 'AppId not valid');
     }
+    const countUserCreatedLeads = await appVisitorModel.countDocuments({
+      app: moongooseHelper.giveMoongooseObjectId(appId), type: 'Lead',
+      createdAt: {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate),
+      },
+    });
+    const plan = await userModel
+    .findOne({_id:req.user.userId},{ogSubscriptionId:1,_id:0})
+    .populate({path:'ogSubscriptionId',select:'totalLeads'}).lean();
+
     const response = await appVisitorModel.find({
       app: moongooseHelper.giveMoongooseObjectId(appId),
       createdAt: {
@@ -187,7 +199,8 @@ get_leads: catchAsync(
       },
       type:'Lead',
     })
-      .sort({ updatedAt: -1 })
+    .limit(plan.ogSubscriptionId.totalLeads)
+    .sort({ updatedAt: -1 })
       .select(
         "createdAt lead_fields browser utm_source device utm_medium utm_campaign utm_term utm_content transaction_completed amount currency"
       );
@@ -254,6 +267,12 @@ get_leads: catchAsync(
 
       finalResponse.data.push(dataRow);
     });
+    if(finalResponse.data.length<countUserCreatedLeads){
+      const newArray = Array(finalResponse.columns.length).fill({})
+      while(finalResponse.data.length<countUserCreatedLeads){
+        finalResponse.data.unshift(newArray);
+      }
+    }
     return res.status(200).json(new ApiResponse(200, 'Leads fetched successfully', finalResponse));
   }
 )

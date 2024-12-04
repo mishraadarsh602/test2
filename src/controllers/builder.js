@@ -20,6 +20,7 @@ const { stripIndents} = require('../service/chat/stripIndent');
 const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY });
 const { Anthropic } = require('@anthropic-ai/sdk');
 const sharp = require('sharp');
+const planModel=require('../models/plan.model');
 const client = new Anthropic({
   apiKey: process.env['ANTHROPIC_API_KEY'],
 });
@@ -39,6 +40,7 @@ module.exports = {
             if (!exp || exp < Date.now()) {
                 return res.status(401).json({ error: 'Token expired' });
             }
+            const {_id}=await planModel.findOne({planName:planId.split('_')[0]},{_id:1}).lean();
             let userExist = await userService.findUserByEmail(email);
             if (userExist) {
                 const token = await userExist.generateToken();
@@ -48,7 +50,7 @@ module.exports = {
                     sameSite: 'none', 
                     secure: true 
                 });               
-                userExist.ogSubscriptionId=planId;
+                userExist.ogSubscriptionId=_id;
                 await userExist.save();
 
                 return res.status(201).json({
@@ -58,7 +60,7 @@ module.exports = {
                     }
                 });
             }
-            const userCreated = await userService.createUser({ name: name, email: email, ogUserId: userId, ogCompanyId: companyId, ogCompanyName: companyName, ogSubscriptionId: planId });    
+            const userCreated = await userService.createUser({ name: name, email: email, ogUserId: userId, ogCompanyId: companyId, ogCompanyName: companyName, ogSubscriptionId: _id  });    
             const token = await userCreated.generateToken();
     
             res.cookie('token', token, {

@@ -28,8 +28,9 @@ const userSchema = new mongoose.Schema(
       default:""
     },
     ogSubscriptionId:{
-      type:String,
-      default:""
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'plan',
+      required: true
     },
     brandDetails: {
       enabled:{
