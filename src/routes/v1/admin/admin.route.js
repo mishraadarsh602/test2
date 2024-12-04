@@ -25,6 +25,7 @@ router.put('/updateFeatureList/:id', adminController.updateFeatureList);
 router.patch('/updateActiveStatus/:id', adminController.toggleActiveStatus);
 router.get('/getAllCounts', adminController.getAllCounts);
 router.get('/getCreationStats', adminController.getCreationStats);
+router.post("/duplicateapp", adminController.duplicateApp);
 
 
 
@@ -48,4 +49,6 @@ router.put("/locale/:langCode", updateLocale);
 router.delete("/locale/:langCode", deleteLocale);
 
 router.get("/getsearchapp", getApps);
+
+
 module.exports = router;

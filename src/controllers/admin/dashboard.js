@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const featureListModel = require('../../models/featureList');
 const catchAsync = require('../../utils/catchAsync');
 const apiResponse = require('../../utils/apiResponse');
@@ -261,6 +262,62 @@ const getCreationStats = catchAsync(async (req, res) => {
     );
 });
 
+const duplicateApp = catchAsync(async (req, res) => {
+    try {
+        console.log("req.body:",req.body)
+        const { appId, data } = req.body;
+
+        if (!appId || !data) {
+            return res.status(400).json(
+                new apiResponse(400, "No data found")
+            );
+        }
+        let targetUser;
+
+        if (mongoose.Types.ObjectId.isValid(data)) {
+            targetUser = await userModel.findOne({ _id: data }).lean();
+        }
+
+        if (!targetUser) {
+            targetUser = await userModel.findOne({ ogCompanyName: data }).lean();
+        }
+        if (!targetUser) {
+            return res.status(404).json(
+                new apiResponse(404, "Sorry no data found")
+            );
+        }
+
+        const originalApp = await appModel.findById(appId).lean();
+        if (!originalApp) {
+            return res.status(404).json(
+                new apiResponse(404, "Original app not found")
+            );
+        }
+
+        const duplicatedApp = new appModel({
+            ...originalApp,
+            _id: undefined,
+            user: targetUser._id, 
+            url: `Copy-of-${originalApp.url}`,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        });
+
+        await duplicatedApp.save();
+
+        res.status(201).json(
+            new apiResponse(201, "App duplicated successfully", duplicatedApp)
+        );
+    } catch (error) {
+        console.error("Error duplicating app:", error);
+        res.status(500).json(
+            new apiResponse(500, "An error occurred while duplicating the app", error.message)
+        );
+    }
+});
+
+
+
 
 module.exports = {
     getFeatureLists,
@@ -269,5 +326,6 @@ module.exports = {
     updateFeatureList,
     toggleActiveStatus, 
     getAllCounts,
-    getCreationStats
+    getCreationStats,
+    duplicateApp
 };
