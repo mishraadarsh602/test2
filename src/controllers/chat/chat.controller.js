@@ -581,7 +581,7 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
       theme += ` add this logo as header ${app.header.logo.url} at ${app.header.logo.alignment}, when asked to add logo. `;
       theme += ` The logo should have an alt text "${app.header.logo.altText}" and link to ${app.header.logo.link}. `;
       if (app.header.logo.size) {
-        theme += ` The logo size should be ${app.header.logo.size}. `;
+        theme += ` The logo size should be ${app.header.logo.size}%. `;
       }
     }
     if (app.theme) {
@@ -595,7 +595,7 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
       theme += ` add this logo as header ${app.header.logo.url} at ${app.header.logo.alignment}, when asked to add logo. `;
       theme += ` The logo should have an alt text "${app.header.logo.altText}" and link to ${app.header.logo.link}. `;
       if (app.header.logo.size) {
-        theme += ` The logo size should be ${app.header.logo.size}. `;
+        theme += ` The logo size should be ${app.header.logo.size}%. `;
       }
     }
     if (app.theme) {
