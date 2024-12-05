@@ -2,22 +2,15 @@ const mongoose = require('mongoose');
 
 const planSchema = new mongoose.Schema(
     {
-        _id: {
-            type: String,
-            trim: true
+        totalAppsCount:{
+            type:Number,
         },
-        agent: [
-            {
-                type: {
-                    type: String, 
-                },
-                allowedCount: {
-                    type: Number
-                }
-            }
-        ],
         totalLeads: {
             type: Number
+        },
+        planName:{
+            type:String,
+            unique:true,
         }
     },
     {
@@ -26,4 +19,4 @@ const planSchema = new mongoose.Schema(
     }
 );
 
-module.exports = mongoose.model('Plan', planSchema);
+module.exports = mongoose.model('plan', planSchema);

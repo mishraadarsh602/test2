@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const featureListModel = require('../../models/featureList');
 const catchAsync = require('../../utils/catchAsync');
 const apiResponse = require('../../utils/apiResponse');
@@ -261,6 +262,68 @@ const getCreationStats = catchAsync(async (req, res) => {
     );
 });
 
+const findTargetUser = async (data) => {
+    if (mongoose.Types.ObjectId.isValid(data)) {
+        return await userModel.findOne({ _id: data }).lean();
+    }
+    return await userModel.findOne({ ogCompanyName: data }).lean();
+};
+
+const duplicateApp = catchAsync(async (req, res) => {
+    const { appId, data } = req.body;
+    if (!appId || !data) {
+        return res.status(400).json(
+            new apiResponse(400, "App ID and user data are required")
+        );
+    }
+    try {
+        const targetUser = await findTargetUser(data);
+        if (!targetUser) {
+            return res.status(404).json(
+                new apiResponse(404, "Target user or company not found")
+            );
+        }
+        const originalApp = await appModel.findById(appId).lean();
+        if (!originalApp) {
+            return res.status(404).json(
+                new apiResponse(404, "Original app not found")
+            );
+        }
+        const duplicatedAppData = {
+            ...originalApp,
+            _id: undefined, 
+            user: targetUser._id, 
+            url: `Copy-of-${originalApp.url}`,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        };
+        const duplicatedApp = await appModel.create(duplicatedAppData);
+
+        if (originalApp.componentCode) {
+            const updatedComponentCode = originalApp.componentCode.replace(
+                new RegExp(appId, "g"), 
+                duplicatedApp._id.toString() 
+            );
+            await appModel.findByIdAndUpdate(duplicatedApp._id, {
+                componentCode: updatedComponentCode,
+            });
+
+            duplicatedApp.componentCode = updatedComponentCode; 
+        }
+        return res.status(201).json(
+            new apiResponse(201, "App duplicated successfully", duplicatedApp)
+        );
+    } catch (error) {
+        console.error("Error duplicating app:", { appId, data, error });
+        return res.status(500).json(
+            new apiResponse(500, "An error occurred while duplicating the app", error.message)
+        );
+    }
+});
+
+
+
+
 
 module.exports = {
     getFeatureLists,
@@ -269,5 +332,6 @@ module.exports = {
     updateFeatureList,
     toggleActiveStatus, 
     getAllCounts,
-    getCreationStats
+    getCreationStats,
+    duplicateApp
 };
