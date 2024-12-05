@@ -12,6 +12,7 @@ const {
   updateLocale,
   deleteLocale,
 } = require("../../../controllers/localeController");
+const plansController = require("../../../controllers/admin/plans");
 router.get('/getfeatureLists', adminController.getFeatureLists);
 
 
@@ -50,5 +51,7 @@ router.delete("/locale/:langCode", deleteLocale);
 
 router.get("/getsearchapp", getApps);
 
-
+router.get('/plans',plansController.getPlans);
+router.get('/plan/:id',plansController.getPlansById);
+router.put('/plan/:id',plansController.updatePlanById);
 module.exports = router;

@@ -59,8 +59,8 @@ module.exports = {
                         user: userExist
                     }
                 });
-            }
-            const userCreated = await userService.createUser({ name: name, email: email, ogUserId: userId, ogCompanyId: companyId, ogCompanyName: companyName, ogSubscriptionId: _id  });    
+            } 
+            const userCreated = await userService.createUser({ name: name, email: email, ogUserId: userId, ogCompanyId: companyId, ogCompanyName: companyName, ogSubscriptionId: _id,totalAppsCount:null,totalLeadsCount:null  });    
             const token = await userCreated.generateToken();
     
             res.cookie('token', token, {

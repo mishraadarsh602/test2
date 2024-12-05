@@ -37,11 +37,10 @@ module.exports = {
       delete appData['_id'];
       delete appData['parentApp'];
      const countUserCreatedApps=await userModel.countDocuments({_id:req.user.userId});
-      const plan = await userModel
-      .findOne({_id:req.user.userId},{ogSubscriptionId:1,_id:0})
-      .populate({path:'ogSubscriptionId',select:'totalApps'}).lean();
+      const {totalAppsCount} = await userModel
+      .findOne({_id:req.user.userId},{totalAppsCount:1,_id:0})
       
-    if(plan.ogSubscriptionId.totalApps<=countUserCreatedApps){
+    if(totalAppsCount<=countUserCreatedApps){
       throw new ApiError(400, "Sorry You have already Exhausted your app limit");
     }
       appData.name = appData.agent_type + '-' + appData['appUUID'].substring(0, 7);

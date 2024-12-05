@@ -187,9 +187,8 @@ get_leads: catchAsync(
         $lte: new Date(endDate),
       },
     });
-    const plan = await userModel
-    .findOne({_id:req.user.userId},{ogSubscriptionId:1,_id:0})
-    .populate({path:'ogSubscriptionId',select:'totalLeads'}).lean();
+    const {totalLeadsCount} = await userModel
+    .findOne({_id:req.user.userId},{totalLeadsCount:1,_id:0})
 
     const response = await appVisitorModel.find({
       app: moongooseHelper.giveMoongooseObjectId(appId),
@@ -199,7 +198,7 @@ get_leads: catchAsync(
       },
       type:'Lead',
     })
-    .limit(plan.ogSubscriptionId.totalLeads)
+    .limit(totalLeadsCount)
     .sort({ updatedAt: -1 })
       .select(
         "createdAt lead_fields browser utm_source device utm_medium utm_campaign utm_term utm_content transaction_completed amount currency"

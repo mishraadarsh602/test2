@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
+const planModel=require('../models/plan.model');
+const ApiError=require('../utils/throwError');
 
 const userSchema = new mongoose.Schema(
   {
@@ -32,6 +34,13 @@ const userSchema = new mongoose.Schema(
       ref: 'plan',
       required: true
     },
+    totalAppsCount: {
+      type: Number,
+    },
+    totalLeadsCount: {
+      type: Number,
+    },
+
     brandDetails: {
       enabled:{
         type:Boolean,
@@ -103,6 +112,20 @@ userSchema.methods.generateToken = async function () {
  console.log(error);
  }
 }
+userSchema.pre('save',
+  async function(next) {
+    const plan = await planModel.findById(this.ogSubscriptionId);
+    if (!plan) {
+      throw new ApiError(400, "Invalid plan ID provided. Please select a valid plan.");
+    }
+    if (this.totalAppsCount == null) {
+      this.totalAppsCount = plan.totalAppsCount;
+    }
+    if (this.totalLeadsCount == null) {
+      this.totalLeadsCount = plan.totalLeadsCount;
+    }
+    next();
+  });
 
 const User = mongoose.model("user", userSchema, "users");
 

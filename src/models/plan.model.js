@@ -5,7 +5,7 @@ const planSchema = new mongoose.Schema(
         totalAppsCount:{
             type:Number,
         },
-        totalLeads: {
+        totalLeadsCount: {
             type: Number
         },
         planName:{
