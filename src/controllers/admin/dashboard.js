@@ -298,6 +298,18 @@ const duplicateApp = catchAsync(async (req, res) => {
             updatedAt: new Date(),
         };
         const duplicatedApp = await appModel.create(duplicatedAppData);
+
+        if (originalApp.componentCode) {
+            const updatedComponentCode = originalApp.componentCode.replace(
+                new RegExp(appId, "g"), 
+                duplicatedApp._id.toString() 
+            );
+            await appModel.findByIdAndUpdate(duplicatedApp._id, {
+                componentCode: updatedComponentCode,
+            });
+
+            duplicatedApp.componentCode = updatedComponentCode; 
+        }
         return res.status(201).json(
             new apiResponse(201, "App duplicated successfully", duplicatedApp)
         );
@@ -308,6 +320,7 @@ const duplicateApp = catchAsync(async (req, res) => {
         );
     }
 });
+
 
 
 
