@@ -205,7 +205,7 @@ get_leads: catchAsync(
         "createdAt lead_fields browser utm_source device utm_medium utm_campaign utm_term utm_content transaction_completed amount currency"
       );
     
-    let finalResponse = { columns: [], data: [], idsArray: [] };
+    let finalResponse = { columns: [], data: [], idsArray: [],limitExceed:false };
     const fixedColumns = [
       { key: "browser", label: "Browser" },
       { key: "device", label: "Device Type" },
@@ -268,7 +268,8 @@ get_leads: catchAsync(
       finalResponse.data.push(dataRow);
     });
     if(finalResponse.data.length<countUserCreatedLeads){
-      const newArray = Array(finalResponse.columns.length).fill({})
+      const newArray = Array(finalResponse.columns.length).fill({});
+      finalResponse.limitExceed=true;
       while(finalResponse.data.length<countUserCreatedLeads){
         finalResponse.data.unshift(newArray);
       }
