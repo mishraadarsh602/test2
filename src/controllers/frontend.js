@@ -237,14 +237,12 @@ module.exports = {
     });
     res.status(200).json(new apiResponse(200, "All Apps fetched successfully"));
   }),
+  
   getFeatureLists: catchAsync(async (req, res) => {
     const allFeatureLists = await featureListModel
-      .find(
-        { active: true },
-        { type: 1, icon: 1, visitorCount: 1, title: 1, description: 1, comingSoon: 1 },
-      );
+      .find({ active: true }, { type: 1, icon: 1, visitorCount: 1, title: 1, description: 1, comingSoon: 1 }, { sort: { rank: 1 } });
     res.status(200).json(
-        new apiResponse(200, "All featureLists fetched successfully", allFeatureLists)
+      new apiResponse(200, "All featureLists fetched successfully", allFeatureLists)
     );
   })
 }
