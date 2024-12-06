@@ -7,7 +7,7 @@ const connectDB = async () => {
         // console.log("process", process.env);
 
         mongoose.connect(DB_URL);
-        mongoose.set('debug', true);
+        mongoose.set('debug', false);
         const db = mongoose.connection;
 
         db.on('error', console.error.bind(console, "Error connecting to db"));

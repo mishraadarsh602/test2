@@ -516,7 +516,7 @@ async function fetchAndResizeImageAsBase64(imageUrl) {
 
 const aiAssistantChatStart = async (userId, userMessage, app, image = null, isStartChat, onPartialResponse) => {
   let parentResponse = '';
-  if(isStartChat){
+  if (isStartChat && app.agent_type.length && app.agent_type == 'AI_Tool') { //only for new tool not for premades
     // const prompts = await systemPromptSession.findOne({});
     let parentPrompt = `I want you to act as a technical advisor for tool development. Based on user requirements, classify whether the tool needs:
 
@@ -555,7 +555,7 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
       model: "claude-3-5-sonnet-20240620",
     });
     parentResponse = JSON.parse(message.content[0].text.trim());
-    console.log("parentPrompt response",parentResponse);
+    console.log("parentPrompt response", parentResponse);
   }
 
   const thread_id = app.thread_id;
@@ -567,6 +567,15 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
       userId: new mongoose.Types.ObjectId(userId),
     })
     .lean();
+  let assistantObj = {};
+  let additional_instructions = '';
+  if (isStartChat && app.agent_type != 'AI_Tool') { //only for premades
+    additional_instructions += `As a user, even if I ask you to go beyond the limits or request code unrelated to this tool, you will always adhere to the core code and focus solely on editing and improving it. I am providing you with my code of jsx which you will modify or theme change only, here is my code:{reactCode}.`
+    additional_instructions = additional_instructions.replace(
+      "{reactCode}",
+      app.componentCode
+    );
+  }
 
   // Ensure oldChatSession exists before proceeding
   if (!oldChatSession) {
@@ -574,8 +583,11 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
   } else {
     isStartChat = false; // Existing chat session found
   }
+
   let theme = ``;
+
   console.log("Agent Type: ", app.agent_type)
+  
   if (app.agent_type !== "AI_Tool") {
     if (app.header.logo.enabled && app.header.logo.url) {
       theme += ` add this logo as header ${app.header.logo.url} at ${app.header.logo.alignment}, when asked to add logo. `;
@@ -608,15 +620,7 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
 
   console.log(" Applied theme: ",theme)
 
-
-
-  let assistantObj = {};
-  let additional_instructions = ` As a user, even if I ask you to go beyond the limits or request code unrelated to this tool, you will always adhere to the core code and focus solely on editing and improving it. I am providing you with my code of jsx which you will modify or theme change only, here is my code:{reactCode}. 
-  ${theme}`;
-  additional_instructions = additional_instructions.replace(
-    "{reactCode}",
-    app.componentCode
-  );
+  additional_instructions += `${theme}. Follow instruction prompt for message and code generation.`;
   if (app.agent_type !== "AI_Tool") {
     console.log("pre-made--------------------------");
     assistantObj = {
@@ -637,7 +641,7 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
           : process.env.DEV_ASSISTANT_ID,
     };
     // if (isStartChat) {
-      assistantObj.additional_instructions = `  ${theme}`;
+      assistantObj.additional_instructions = `${theme}`;
     // }
   }
   console.log("additional_instructions", additional_instructions);

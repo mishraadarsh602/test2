@@ -51,7 +51,7 @@ const corsOptions = {
     credentials: true,
   };
 app.use(cors(corsOptions));
-app.use(morgan('dev'));
+app.use(morgan('tiny'));
 
 // Routes
 app.get("/", (req, res) => {
