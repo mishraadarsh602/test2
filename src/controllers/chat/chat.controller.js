@@ -787,6 +787,7 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
 
     const appDetails = await App.findOne({ _id: app._id });
     if (obj.code) {
+      try {
       // let prompt = `You are an AI assistant who inhances my UI and function, and fix error if present in it, and returns code in string \"\" format. We were going to work on a React-based Javascript App. 
       // Your purpose is to assist with creating, editing and improving React codebases with tailwind CSS, custom inline CSS, and Javascript only. 
       // Create the best and most visually appealing UI, working functionality, valid syntax, and other properties according to provided my code. 
@@ -951,10 +952,15 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
       // appDetails.apis = originalApis;
       appDetails.componentCode = obj.code;
       // This can be done asynchronously
-      appDetails.save().catch(error => console.error("Error saving app details:", error));
+      await appDetails.save().catch(error => console.error("Error saving app details:", error));
       // Call the callback to stream partial responses
+    } catch (error) {
+      console.error("Error saving app details:", error);
+      // Optionally throw the error if you want to handle it at a higher level
+      throw new Error("Failed to save new component code");
     }
-    obj.code = appDetails.componentCode;
+    }
+    // obj.code = appDetails.componentCode;
     // Final return after the streaming is done
     return obj;
   } catch (error) {
