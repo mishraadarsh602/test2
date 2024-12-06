@@ -590,33 +590,37 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
   
   if (app.agent_type !== "AI_Tool") {
     if (app.header.logo.enabled && app.header.logo.url) {
-      theme += ` add this logo as header ${app.header.logo.url} at ${app.header.logo.alignment}, when asked to add logo. `;
+      theme += ` Add this logo as header ${app.header.logo.url} at ${app.header.logo.alignment}, when asked to add logo. `;
       theme += ` The logo should have an alt text "${app.header.logo.altText}" and link to ${app.header.logo.link}. `;
       if (app.header.logo.size) {
-        theme += ` The logo size should be ${app.header.logo.size}%. `;
+        theme += ` Important: The logo width should be ${app.header.logo.size * 4}px. `;
       }
     }
     if (app.theme) {
-      theme += ` use this color while generating code for primary ${app.theme.primaryColor}, for secondary ${app.theme.secondaryColor}, for background color ${app.theme.backgroundColor} using inline style, when asked to change color or theme inhancement.`
+      theme += ` Use this color while generating code for primary ${app.theme.primaryColor}, for secondary ${app.theme.secondaryColor}, for background color ${app.theme.backgroundColor} using inline style, when asked to change color or theme inhancement.`
     }
     if (!app.header.logo.enabled || !app.header.logo.url) {
-      theme += ` do not add any logo. Remove any logo if already added.`
+      theme += ` Do not add any logo. Remove any logo if already added.`
     }
   } else {
     if (app.header.logo.enabled && app.header.logo.url) {
-      theme += ` add this logo as header ${app.header.logo.url} at ${app.header.logo.alignment}, when asked to add logo. `;
+      theme += ` Add this logo as header ${app.header.logo.url} at ${app.header.logo.alignment}, when asked to add logo. `;
       theme += ` The logo should have an alt text "${app.header.logo.altText}" and link to ${app.header.logo.link}. `;
       if (app.header.logo.size) {
-        theme += ` The logo size should be ${app.header.logo.size}%. `;
+        theme += ` Important: The logo width should be ${app.header.logo.size * 4}px. `;
       }
     }
     if (app.theme) {
-      theme += ` use this color while generating code for primary ${app.theme.primaryColor}, for secondary ${app.theme.secondaryColor}, for background color ${app.theme.backgroundColor} using inline style.`
+      theme += ` Use this color while generating code for primary ${app.theme.primaryColor}, for secondary ${app.theme.secondaryColor}, for background color ${app.theme.backgroundColor} using inline style.`
     }
     if (!app.header.logo.enabled || !app.header.logo.url) {
-      theme += ` do not add any logo. Remove any logo if already added.`
+      theme += ` Do not add any logo. Remove any logo if already added.`
     }
   }
+
+  theme += `Message Formatting Rules:
+  1.Keep messages small, non technical, conversational, and relevent.
+  2.Avoid phrases like "Here's the code..." or "Here is the implementation...", as the end user is not viewing any code. The code is for internal purposes only.`
 
   console.log(" Applied theme: ",theme)
 

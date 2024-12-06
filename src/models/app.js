@@ -34,7 +34,7 @@ const appSchema = new mongoose.Schema({
             },
             size: {
                 type: String,
-                default: '45'
+                default: '50'
             },
             url: {
                 type: String,
