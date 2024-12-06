@@ -10,21 +10,33 @@ exports.getApps = catchAsync(async (req, res) => {
   const limitNum = parseInt(limit, 10) || 10;
   const skip = (pageNum - 1) * limitNum;
 
-  let searchQuery = {};
+  let searchQuery = { status: 'dev' };
 
 
   if (user) {
     if (!mongoose.Types.ObjectId.isValid(user)) {
-      
-      searchQuery = { _id: { $exists: false } }; 
+      searchQuery.$and = [
+        { status: 'dev' },
+        { _id: { $exists: false } }
+      ];
     } else {
-      searchQuery = { user };
+      searchQuery = { 
+        status: 'dev',
+        user 
+      };
     }
   } else if (name) {
-    searchQuery = { name: { $regex: name, $options: "i" } };
+    searchQuery = { 
+      status: 'dev',
+      name: { $regex: name, $options: "i" } 
+    };
   } else if (url) {
-    searchQuery = { url: { $regex: url, $options: "i" } };
+    searchQuery = { 
+      status: 'dev',
+      url: { $regex: url, $options: "i" } 
+    };
   }
+
 
 
   const apps = await App.find(searchQuery)

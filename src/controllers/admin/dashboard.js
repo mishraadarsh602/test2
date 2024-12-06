@@ -170,7 +170,7 @@ const getAllCounts = catchAsync(async (req, res) => {
                 }
             }
         ]),
-        appModel.countDocuments({})
+        appModel.countDocuments({ status: 'dev' })  // Modified this line to filter by status
     ]);
 
     // Convert visitor stats array to counts by type
