@@ -159,20 +159,31 @@ const toggleActiveStatus = catchAsync(async (req, res) => {
 
 
 const getAllCounts = catchAsync(async (req, res) => {
-    const [userCount, featureListCount, leadCount, visitorCount, appCount] = await Promise.all([
+    const [userCount, featureListCount, visitorStats, appCount] = await Promise.all([
         userModel.countDocuments({}),
         featureListModel.countDocuments({}),
-        // appLeadsModel.countDocuments({}),
-        appVisitorsModel.countDocuments({}),
+        appVisitorsModel.aggregate([
+            {
+                $group: {
+                    _id: '$type',
+                    count: { $sum: 1 }
+                }
+            }
+        ]),
         appModel.countDocuments({})
     ]);
+
+    // Convert visitor stats array to counts by type
+    const visitorCounts = visitorStats.reduce((acc, stat) => {
+        acc[`${stat._id.toLowerCase()}Count`] = stat.count;
+        return acc;
+    }, { visitorCount: 0, leadCount: 0 });
 
     res.status(200).json(
         new apiResponse(200, "Counts fetched successfully", {
             userCount,
             featureListCount,
-            leadCount,
-            visitorCount,
+            ...visitorCounts,
             appCount
         })
     );
