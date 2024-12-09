@@ -11,7 +11,7 @@ const planSchema = new mongoose.Schema(
         planName:{
             type:String,
             unique:true,
-        }
+        },
         //features to add through fetaure model and sync to selected plans
         // enhance_prompt
         // upload_image
@@ -24,6 +24,12 @@ const planSchema = new mongoose.Schema(
         // embed_on_webpage
         // export_lead
 
+        features:[
+            {
+                type: String,
+                ref: 'features_new'
+            }
+        ]
     },
     {
         timestamps: true,
