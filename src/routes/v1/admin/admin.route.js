@@ -52,7 +52,7 @@ router.delete("/locale/:langCode", deleteLocale);
 router.get("/getsearchapp", getApps);
 
 router.get('/plans',plansController.getPlans);
-router.get('/plan/:id',plansController.getPlansById);
-router.put('/plan/:id',plansController.updatePlanById);
+router.get('/plan/:planName',plansController.getPlanByName);
+router.post('/plan',plansController.updatePlanById);
 router.post('/plan',plansController.createPlan);
 module.exports = router;

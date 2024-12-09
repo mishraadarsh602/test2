@@ -2,21 +2,32 @@ const catchAsync = require("../../utils/catchAsync");
 const planModel=require('../../models/plan.model');
 const apiResponse=require('../../utils/apiResponse');
 const ApiError = require("../../utils/throwError");
+const CryptoJS = require("crypto-js");
 module.exports={
     getPlans: catchAsync(async (req, res) => {
-        const findAllPlans = await planModel.find({});
+        const findAllPlans = await planModel.find({},{_id:0});
         res.status(200).json(
             new apiResponse(200, "Plans fetched successfully", findAllPlans)
         );
     }),
-    getPlansById: catchAsync(async (req, res) => {
-        const particularPlan = await planModel.findById(req.params.id);
+    getPlanByName: catchAsync(async (req, res) => {
+        const particularPlan = await planModel.findOne({planName:req.params.planName}).lean();
+        const encryptedId = CryptoJS.AES.encrypt(particularPlan._id.toString(), process.env.PLANS_SECRET_KEY).toString();
+        particularPlan._id=encryptedId;
         res.status(200).json(
             new apiResponse(200, "Plan fetched successfully", particularPlan)
         );
     }),
     updatePlanById:catchAsync(async (req, res) => {
-        await planModel.updateOne({_id:req.params.id},req.body);
+        const decryptedId = CryptoJS.AES.decrypt(req.body.id, process.env.PLANS_SECRET_KEY).toString(CryptoJS.enc.Utf8);
+        const { totalAppsCount, totalLeadsCount } = req.body.updates;
+        await planModel.updateOne({ _id: (decryptedId) },
+            {
+                $set: {
+                    totalAppsCount,
+                    totalLeadsCount
+                }
+            });
         res.status(200).json(
             new apiResponse(200, "Plan updated successfully")
         );
