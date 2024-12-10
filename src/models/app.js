@@ -238,6 +238,10 @@ const appSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    noOfCopies: {
+        type: Number,
+        default: 0
+    }
 }, { timestamps: true });
 appSchema.index({ "url": 1, "status": 1 });
 appSchema.index({ "user": 1, "status": 1, "name": 1, "updatedAt": -1 });

@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { OpenAI } = require("openai");
 const featureListModel = require('../../models/featureList');
 const catchAsync = require('../../utils/catchAsync');
 const apiResponse = require('../../utils/apiResponse');
@@ -294,30 +295,35 @@ const duplicateApp = catchAsync(async (req, res) => {
                 new apiResponse(404, "Target user or company not found")
             );
         }
-        const originalApp = await appModel.findById(appId).lean();
+        const originalApp = await appModel.findById(appId);
         if (!originalApp) {
             return res.status(404).json(
                 new apiResponse(404, "Original app not found")
             );
         }
+        originalApp.noOfCopies +=1;
         const duplicatedAppData = {
-            ...originalApp,
-            _id: undefined, 
-            user: targetUser._id, 
-            url: `Copy-of-${originalApp.url}`,
-            createdAt: new Date(),
-            updatedAt: new Date(),
+            ...originalApp.toObject(),
+            user: targetUser._id,
+            visitorCount: 0,
+            url: `Copy-of-${originalApp.url}-${originalApp.noOfCopies}`,
+            name: `Copy-of-${originalApp.url}-${originalApp.noOfCopies}`
         };
+        delete duplicatedAppData._id; 
         const duplicatedApp = await appModel.create(duplicatedAppData);
 
+        await originalApp.save();
+        
         if (originalApp.componentCode) {
+            const thread_id = await createThread();
             const updatedComponentCode = originalApp.componentCode.replace(
                 new RegExp(appId, "g"), 
                 duplicatedApp._id.toString() 
             );
-            duplicatedApp['thread_id'] = await createThread();
+            
             await appModel.findByIdAndUpdate(duplicatedApp._id, {
                 componentCode: updatedComponentCode,
+                thread_id // Add thread_id to the update
             });
         }
         return res.status(201).json(
@@ -334,7 +340,7 @@ const duplicateApp = catchAsync(async (req, res) => {
 async function createThread() {
     if (process.env.OPENAI_API_KEY) {
       try {
-        const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY });
+        const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
         const thread = await openai.beta.threads.create();
         return thread.id;
       } catch (error) {
