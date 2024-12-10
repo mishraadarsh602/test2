@@ -315,11 +315,10 @@ const duplicateApp = catchAsync(async (req, res) => {
                 new RegExp(appId, "g"), 
                 duplicatedApp._id.toString() 
             );
+            duplicatedApp['thread_id'] = await createThread();
             await appModel.findByIdAndUpdate(duplicatedApp._id, {
                 componentCode: updatedComponentCode,
             });
-
-            duplicatedApp.componentCode = updatedComponentCode; 
         }
         return res.status(201).json(
             new apiResponse(201, "App duplicated successfully", duplicatedApp)
@@ -332,7 +331,18 @@ const duplicateApp = catchAsync(async (req, res) => {
     }
 });
 
-
+async function createThread() {
+    if (process.env.OPENAI_API_KEY) {
+      try {
+        const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY });
+        const thread = await openai.beta.threads.create();
+        return thread.id;
+      } catch (error) {
+        console.log('Thred Creation Error:', error)
+        return '';
+      }
+    }
+  }
 
 
 
