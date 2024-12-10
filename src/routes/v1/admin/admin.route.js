@@ -14,6 +14,7 @@ const {
 } = require("../../../controllers/localeController");
 const plansController = require("../../../controllers/admin/plans");
 router.get('/getfeatureLists', adminController.getFeatureLists);
+router.get('/getVisitorsList', adminController.getVisitorsList);
 
 
 router.post('/login',adminUserController.loginUser);

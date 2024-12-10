@@ -59,6 +59,18 @@ const getFeatureLists = catchAsync(async (req, res) => {
 });
 
 
+const getVisitorsList = catchAsync(async (req, res) => {
+    const visitorStats = await featureListModel
+      .find({}, { visitorCount: 1, title: 1, _id: 1 })
+      .sort({ visitorCount: -1 })
+      .lean();
+  
+    res.status(200).json(
+      new apiResponse(200, "Visitor counts fetched successfully", visitorStats)
+    );
+  });
+
+
 
 
 const getFeatureListById = catchAsync(async (req, res) => {
@@ -354,5 +366,6 @@ module.exports = {
     toggleActiveStatus, 
     getAllCounts,
     getCreationStats,
-    duplicateApp
+    duplicateApp,
+    getVisitorsList
 };
