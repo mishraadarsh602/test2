@@ -301,41 +301,55 @@ const duplicateApp = catchAsync(async (req, res) => {
         );
     }
     try {
-        const targetUser = await findTargetUser(data);
+        const [targetUser, originalApp] = await Promise.all([
+            findTargetUser(data),
+            appModel.findById(appId),
+        ]);
+
         if (!targetUser) {
             return res.status(404).json(
                 new apiResponse(404, "Target user or company not found")
             );
         }
-        const originalApp = await appModel.findById(appId);
         if (!originalApp) {
             return res.status(404).json(
                 new apiResponse(404, "Original app not found")
             );
         }
-        originalApp.noOfCopies +=1;
+
+        originalApp.noOfCopies += 1;
+        const baseUrl = `copyof-${originalApp.url}-${originalApp.noOfCopies}`;
+        let uniqueUrl = baseUrl;
+
+        // Ensure unique URL
+        for (let counter = 1; await appModel.exists({ url: uniqueUrl }); counter++) {
+            uniqueUrl = `${baseUrl}-${counter}`;
+        }
+
+        // Duplicate app data
         const duplicatedAppData = {
             ...originalApp.toObject(),
             user: targetUser._id,
             visitorCount: 0,
-            url: `Copy-of-${originalApp.url}-${originalApp.noOfCopies}`,
-            name: `Copy-of-${originalApp.url}-${originalApp.noOfCopies}`
+            url: uniqueUrl,
+            name: uniqueUrl,
+            noOfCopies: 0,
         };
-        delete duplicatedAppData._id; 
+        delete duplicatedAppData._id;
         const duplicatedApp = await appModel.create(duplicatedAppData);
 
         await originalApp.save();
-        
+
         if (originalApp.componentCode) {
             const thread_id = await createThread();
             const updatedComponentCode = originalApp.componentCode.replace(
                 new RegExp(appId, "g"), 
                 duplicatedApp._id.toString() 
             );
-            
+
             await appModel.findByIdAndUpdate(duplicatedApp._id, {
                 componentCode: updatedComponentCode,
-                thread_id // Add thread_id to the update
+                thread_id,
             });
         }
         return res.status(201).json(
