@@ -62,8 +62,8 @@ module.exports={
                      
                     },
                   },
-                   {$limit:req.body.limit},
-                   {$skip:req.body.currentPage}
+                  {$skip:req.body.skip},
+                  {$limit:req.body.limit}
                 ]
               }
             },
