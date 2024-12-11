@@ -5,14 +5,11 @@ const mongoose = require("mongoose");
 
 exports.getApps = catchAsync(async (req, res) => {
   const { page = 1, limit = 10, name = "", user = "", url = "" } = req.query;
-
   const pageNum = parseInt(page, 10) || 1;
   const limitNum = parseInt(limit, 10) || 10;
   const skip = (pageNum - 1) * limitNum;
 
   let searchQuery = { status: 'dev' };
-
-
   if (user) {
     if (!mongoose.Types.ObjectId.isValid(user)) {
       searchQuery.$and = [
@@ -37,14 +34,16 @@ exports.getApps = catchAsync(async (req, res) => {
     };
   }
 
-
-
-  const apps = await App.find(searchQuery)
-    .sort({ updatedAt: -1 })
-    .skip(skip)
-    .limit(limitNum);
-
-  const total = await App.countDocuments(searchQuery);
+  
+  const [apps, total] = await Promise.all([
+    App.find(searchQuery)
+      .select('name url status visitorCount createdAt user')
+      .sort({ updatedAt: -1 })
+      .skip(skip)
+      .limit(limitNum)
+      .lean(), 
+    App.countDocuments(searchQuery)
+  ]);
 
   const pagination = {
     total,
@@ -60,3 +59,4 @@ exports.getApps = catchAsync(async (req, res) => {
     })
   );
 });
+
