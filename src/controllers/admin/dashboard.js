@@ -318,15 +318,17 @@ const duplicateApp = catchAsync(async (req, res) => {
         }
 
         originalApp.noOfCopies += 1;
-        const baseUrl = `copyof-${originalApp.url}-${originalApp.noOfCopies}`;
+        const copyCount = (originalApp.url.match(/copy-/g) || []).length;
+        const baseUrl = copyCount >= 1 
+            ? `copy-${copyCount + 1}x-${originalApp.url.replace(/copy-/g, '')}`
+            : `copy-${originalApp.url}`;
+
         let uniqueUrl = baseUrl;
 
-        // Ensure unique URL
         for (let counter = 1; await appModel.exists({ url: uniqueUrl }); counter++) {
             uniqueUrl = `${baseUrl}-${counter}`;
         }
 
-        // Duplicate app data
         const duplicatedAppData = {
             ...originalApp.toObject(),
             user: targetUser._id,
