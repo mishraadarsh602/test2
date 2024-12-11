@@ -18,7 +18,7 @@ module.exports = {
     if (langCodeExists) {
       return res
         .status(400)
-        .json(new ApiResponse(400, "LangCode already in use"));
+        .json(new ApiResponse(400, "Language Code already in use"));
     }
 
     if (languageExists) {

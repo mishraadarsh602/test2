@@ -33,7 +33,7 @@ const getFeatureLists = catchAsync(async (req, res) => {
 
 
   const allFeatureLists = await featureListModel
-    .find(searchQuery)
+    .find(searchQuery,{ title: 1, description: 1, type: 1, active: 1, visitorCount: 1 })
     .skip(skip)
     .limit(pageLimit)
     .sort({updatedAt: -1} );
