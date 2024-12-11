@@ -3,6 +3,7 @@ const planModel=require('../../models/plan.model');
 const apiResponse=require('../../utils/apiResponse');
 const ApiError = require("../../utils/throwError");
 const CryptoJS = require("crypto-js");
+const featuresModel=require('../../models/features.model');
 module.exports={
     getPlans: catchAsync(async (req, res) => {
         const findAllPlans = await planModel.find({},{_id:0});
@@ -44,5 +45,38 @@ module.exports={
         new apiResponse(200, "Plan Created successfully ",{planName,totalAppsCount,totalLeadsCount})
       ); 
     }),
+    getPlanFeatures:catchAsync(async(req,res,next)=>{
+        const response=await featuresModel.aggregate([
+            {
+              $facet: {
+                count: [
+                  { $group: { _id: null, myCount: { $sum: 1 } } }
+                ],
+                apps: [
+                  {
+                    $match: {
+                      $or: [
+                        { _id: { $regex: req.body.search, $options: 'i' } },
+                        { parent_feature: { $regex: req.body.search, $options: 'i' } }
+                      ],
+                     
+                    },
+                  },
+                   {$limit:req.body.limit},
+                   {$skip:req.body.currentPage}
+                ]
+              }
+            },
+            {
+              $project: {
+                count: { $arrayElemAt: ['$count.myCount', 0] },
+                apps: 1
+              }
+            }
+          ])
+        res.status(200).json(
+            new apiResponse(200, "Features fetched successfully ",response[0])
+          ); 
+    })
 
 }

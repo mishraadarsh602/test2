@@ -56,4 +56,5 @@ router.get('/plans',plansController.getPlans);
 router.get('/plan/:planName',plansController.getPlanByName);
 router.post('/plan',plansController.updatePlanById);
 router.post('/plan',plansController.createPlan);
+router.post('/plan-features',plansController.getPlanFeatures);
 module.exports = router;
