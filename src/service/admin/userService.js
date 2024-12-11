@@ -1,7 +1,8 @@
 const User = require('../../models/user.model');
 
-exports.getAllUsers = async (searchCriteria, skip, limit) => {
-  return await User.find(searchCriteria).skip(skip).limit(limit);
+exports.getAllUsers = async (searchCriteria, skip, limit, selectedFields) => {
+  return await User.find(searchCriteria).select(selectedFields)
+  .skip(skip).limit(limit);
 };
 
 exports.countUsers = async (searchCriteria) => {

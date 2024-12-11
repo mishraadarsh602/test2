@@ -16,11 +16,13 @@ exports.getAllUsers = async (req, res) => {
     }
 
     const skip = (page - 1) * limit;
+    const selectedFields = { name: 1, email: 1, ogCompanyName: 1, status: 1 };  // Add this line
 
     const users = await UserService.getAllUsers(
       searchCriteria,
       skip,
-      parseInt(limit)
+      parseInt(limit),
+      selectedFields 
     );
     const totalUsers = await UserService.countUsers(searchCriteria);
 
