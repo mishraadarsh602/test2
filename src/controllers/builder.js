@@ -599,7 +599,7 @@ module.exports = {
         if (!app.header.logo.enabled || !app.header.logo.url) {
           theme += ` Do not add any logo. Remove any logo if already added.`
         }
-        let aiUserThreadPrompt = '';
+
         let prompt = '';
         for (let i = 0; i < selectedOptions.length; i++) {
           switch (selectedOptions[i]) {
@@ -632,8 +632,6 @@ module.exports = {
           }
         }
 
-        
-        aiUserThreadPrompt = prompt;
         prompt += `${theme} ${lastMessageContent ? `This was my last message: ${lastMessageContent}` : ''} ${requirement? `This is my special addon request ${requirement}`:''}.
         Ensure that all React hooks are written with the full 'React' prefix, e.g., React.useState(). 
                   Create React element without any import statement. The following header is already added:
@@ -688,7 +686,7 @@ module.exports = {
           app.thread_id,
           {
             role: "user",
-            content: `This was my requirement ${aiUserThreadPrompt}, And this is the latest code output: ${response.content[0].text } `,
+            content: `This was my requirement ${prompt}, And this is the latest code output: ${response.content[0].text } `,
           },
           {
             role: "assistant",
