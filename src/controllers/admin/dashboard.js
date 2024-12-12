@@ -205,80 +205,123 @@ const getAllCounts = catchAsync(async (req, res) => {
 
 
 const getCreationStats = catchAsync(async (req, res) => {
-    console.log("req.query:",req.query)
     const { startDate, endDate } = req.query;
-    const end = endDate ? new Date(endDate) : new Date();
-    const start = startDate ? new Date(startDate) : new Date(end - 30 * 24 * 60 * 60 * 1000);
-    const userStats = await userModel.aggregate([
-        {
-            $match: {
-                createdAt: { $gte: start, $lte: end }
+    // Convert strings to Date objects and handle timezone consistently
+    const end = endDate ? new Date(new Date(endDate).setHours(23, 59, 59, 999)) : new Date();
+    const start = startDate ? new Date(new Date(startDate).setHours(0, 0, 0, 0)) : new Date(end - 30 * 24 * 60 * 60 * 1000);
+
+    // Run both aggregations in parallel
+    const [userStats, appStats] = await Promise.all([
+        userModel.aggregate([
+            {
+                $match: {
+                    createdAt: { $gte: start, $lte: end }
+                }
+            },
+            {
+                $group: {
+                    _id: {
+                        year: { $year: "$createdAt" },
+                        month: { $month: "$createdAt" },
+                        day: { $dayOfMonth: "$createdAt" }
+                    },
+                    userCount: { $sum: 1 }
+                }
+            },
+            {
+                $project: {
+                    _id: {
+                        $dateToString: {
+                            date: {
+                                $dateFromParts: {
+                                    year: "$_id.year",
+                                    month: "$_id.month",
+                                    day: "$_id.day"
+                                }
+                            },
+                            format: "%Y-%m-%d"
+                        }
+                    },
+                    userCount: 1
+                }
+            },
+            {
+                $sort: { _id: 1 }
             }
-        },
-        {
-            $group: {
-                _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-                count: { $sum: 1 },
-                companies: { $addToSet: "$ogCompanyId" }
+        ]),
+
+        appModel.aggregate([
+            {
+                $match: {
+                    createdAt: { $gte: start, $lte: end }
+                }
+            },
+            {
+                $group: {
+                    _id: {
+                        year: { $year: "$createdAt" },
+                        month: { $month: "$createdAt" },
+                        day: { $dayOfMonth: "$createdAt" }
+                    },
+                    appCount: { $sum: 1 }
+                }
+            },
+            {
+                $project: {
+                    _id: {
+                        $dateToString: {
+                            date: {
+                                $dateFromParts: {
+                                    year: "$_id.year",
+                                    month: "$_id.month",
+                                    day: "$_id.day"
+                                }
+                            },
+                            format: "%Y-%m-%d"
+                        }
+                    },
+                    appCount: 1
+                }
+            },
+            {
+                $sort: { _id: 1 }
             }
-        },
-        {
-            $project: {
-                date: "$_id",
-                userCount: "$count",
-                companyCount: { $size: "$companies" },
-                _id: 0
-            }
-        },
-        { $sort: { date: 1 } }
+        ])
     ]);
 
-    const appStats = await appModel.aggregate([
-        {
-            $match: {
-                createdAt: { $gte: start, $lte: end }
-            }
-        },
-        {
-            $group: {
-                _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-                count: { $sum: 1 }
-            }
-        },
-        {
-            $project: {
-                date: "$_id",
-                appCount: "$count",
-                _id: 0
-            }
-        },
-        { $sort: { date: 1 } }
-    ]);
+    // Generate all dates in range
+    const dates = [];
+    const currentDate = new Date(start);
+    while (currentDate <= end) {
+        dates.push(currentDate.toISOString().split('T')[0]);
+        currentDate.setDate(currentDate.getDate() + 1);
+    }
 
-    const dateMap = new Map();
-    userStats.forEach(stat => {
-        dateMap.set(stat.date, {
-            date: stat.date,
-            userCount: stat.userCount,
-            companyCount: stat.companyCount,
+    // Create base stats object with all dates
+    const dateMap = dates.reduce((acc, date) => {
+        acc[date] = {
+            date,
+            userCount: 0,
             appCount: 0
-        });
-    });
+        };
+        return acc;
+    }, {});
 
-    appStats.forEach(stat => {
-        if (dateMap.has(stat.date)) {
-            dateMap.get(stat.date).appCount = stat.appCount;
-        } else {
-            dateMap.set(stat.date, {
-                date: stat.date,
-                userCount: 0,
-                companyCount: 0,
-                appCount: stat.appCount
-            });
+    // Fill in actual stats
+    userStats.forEach(stat => {
+        if (dateMap[stat._id]) {
+            dateMap[stat._id].userCount = stat.userCount;
         }
     });
 
-    const combinedStats = Array.from(dateMap.values());
+    appStats.forEach(stat => {
+        if (dateMap[stat._id]) {
+            dateMap[stat._id].appCount = stat.appCount;
+        }
+    });
+
+    const combinedStats = Object.values(dateMap);
+    
     res.status(200).json(
         new apiResponse(200, "Creation statistics fetched successfully", {
             stats: combinedStats
