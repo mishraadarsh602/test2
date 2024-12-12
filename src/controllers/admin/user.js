@@ -31,14 +31,12 @@ module.exports = {
     }
   }),
   checkUser: catchAsync(async (req, res) => {
-    const token = req.cookies.token;
-
     try {
       if (
         req.user.email === process.env.ADMIN_EMAIL &&
         req.user.type === "admin"
       ) {
-        res.status(200).json({
+       return res.status(200).json({
           message: "User fetched successfully",
           data: req.user,
           success: true,
@@ -46,7 +44,7 @@ module.exports = {
       }
       return res.status(404).json({ error: "User not found" });
     } catch (error) {
-      res.status(500).json({ error: error.message });
+     return  res.status(500).json({ error: error.message });
     }
   }),
   logoutUser: catchAsync(async (req, res) => {
