@@ -558,27 +558,33 @@ module.exports = {
     try {
         const appUrl = req.body.appUrl;
         const selectedOptions = req.body.selectedOptions;
+        const requirement = req.body.requirement;
+        const includePreviousChanges = req.body.includePreviousChanges;
         const app = await App.findOne({
           url: appUrl,
           user: new mongoose.Types.ObjectId(req.user.userId),
           status: 'dev'
         });
-        // Find Chat Session
-        const chatSessionValue = await chatSession.findOne({agentId: app._id});
+
         // get last message content and its image of user
         let lastMessageContent = '';
         let lastMessageImage = '';
-        if(chatSessionValue){
+      if (includePreviousChanges) {
+        // Find Chat Session
+        const chatSessionValue = await chatSession.findOne({ agentId: app._id });
+        if (chatSessionValue) {
           // get last message content and its image of user
           let lastMessage = '';
-          if(chatSessionValue.messages.length > 1){ 
+          if (chatSessionValue.messages.length > 1) {
             lastMessage = chatSessionValue.messages[chatSessionValue.messages.length - 2];
-          }else{
+          } else {
             lastMessage = chatSessionValue.messages[chatSessionValue.messages.length - 1];
           }
           lastMessageContent = lastMessage.content;
           lastMessageImage = lastMessage.image && lastMessage.image[0];
         }
+      }
+
         let theme = ``;
         if (app.header.logo.enabled && app.header.logo.url) {
           theme += ` Add this logo as header ${app.header.logo.url} at ${app.header.logo.alignment}, when asked to add logo.`;
@@ -628,7 +634,7 @@ module.exports = {
 
         
         aiUserThreadPrompt = prompt;
-        prompt += `${theme} This is my last message: ${lastMessageContent}.
+        prompt += `${theme} ${lastMessageContent ? `This was my last message: ${lastMessageContent}` : ''} ${requirement? `This is my special addon request ${requirement}`:''}.
         Ensure that all React hooks are written with the full 'React' prefix, e.g., React.useState(). 
                   Create React element without any import statement. The following header is already added:
                   import React, {useState, useEffect, useContext, useReducer, useCallback, useMemo, useRef, useImperativeHandle, useLayoutEffect, useDebugValue, useTransition, useDeferredValue, useId, useSyncExternalStore, useInsertionEffect} from 'react'; import * as LucideIcons from 'lucide-react'; import { useLocation } from 'react-router-dom'; 
@@ -764,21 +770,21 @@ module.exports = {
         });
         // Update app componentCode and save
       //   app.apis = originalApis;
-        await app.save();
+      await app.save();
 
-        // Find the existing chat session
-        let oldChatSession = await chatSession
-          .findOne({
-            agentId: new mongoose.Types.ObjectId(app._id),
-          });
+      // Find the existing chat session
+      let oldChatSession = await chatSession
+        .findOne({
+          agentId: new mongoose.Types.ObjectId(app._id),
+        });
 
-          if(oldChatSession.messages[oldChatSession.messages.length - 1].role === 'assistant'){
-              oldChatSession.messages[oldChatSession.messages.length - 1].code = app.componentCode;
-              await oldChatSession.save();
-          }
+      if (oldChatSession && oldChatSession.messages[oldChatSession.messages.length - 1].role === 'assistant') {
+        oldChatSession.messages[oldChatSession.messages.length - 1].code = app.componentCode;
+        await oldChatSession.save();
+      }
 
-        return res.status(200).json({suggestion: response.content[0].text })
-        } catch (error) {
+      return res.status(200).json({ suggestion: response.content[0].text })
+    } catch (error) {
       console.log("erorr is ----> ",error);
       res.send(error);
     }
