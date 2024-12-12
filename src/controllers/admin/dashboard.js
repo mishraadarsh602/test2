@@ -318,10 +318,10 @@ const duplicateApp = catchAsync(async (req, res) => {
         }
 
         originalApp.noOfCopies += 1;
-        const copyCount = (originalApp.url.match(/copy-/g) || []).length;
-        const baseUrl = copyCount >= 1 
-            ? `copy-${copyCount + 1}x-${originalApp.url.replace(/copy-/g, '')}`
-            : `copy-${originalApp.url}`;
+        const copyCount = originalApp.url.match(/copied-/g) ? Number(originalApp.url.split('-')[1].split('x')[0]) : 0;
+        const baseUrl = copyCount >= 1 ?
+            `${originalApp.url.replace(`${copyCount}x`, `${copyCount + 1}x`)}-${originalApp.noOfCopies}`
+            : `copied-${copyCount + 1}x-${originalApp.url}-${originalApp.noOfCopies}`;
 
         let uniqueUrl = baseUrl;
 
