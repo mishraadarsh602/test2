@@ -771,15 +771,31 @@ module.exports = {
       await app.save();
 
       // Find the existing chat session
-      let oldChatSession = await chatSession
-        .findOne({
-          agentId: new mongoose.Types.ObjectId(app._id),
+      let oldChatSession = await chatSession.findOne({
+        agentId: new mongoose.Types.ObjectId(app._id),
+      });
+      
+      if (!oldChatSession) {
+        // Create new chat session if none exists
+        oldChatSession = new chatSession({
+          agentId: app._id,
+          userId: new mongoose.Types.ObjectId(req.user.userId.toString()),
+          sessionId: generateSessionId(), // Create a unique sessionId
+          conversationId: generateSessionId(), // Create a unique sessionId
+          startTime: new Date(),
+          lastTime: new Date(),
+          date: new Date(),
+          messages: [{
+            role: 'assistant',
+            content: "Hello, I'm your AI Assistant. How can I help you?",
+            code: ''
+          }]
         });
-
-      if (oldChatSession && oldChatSession.messages[oldChatSession.messages.length - 1].role === 'assistant') {
+      } else if (oldChatSession.messages[oldChatSession.messages.length - 1].role === 'assistant') {
         oldChatSession.messages[oldChatSession.messages.length - 1].code = app.componentCode;
-        await oldChatSession.save();
       }
+      
+      await oldChatSession.save();
 
       return res.status(200).json({ suggestion: response.content[0].text })
     } catch (error) {
@@ -991,6 +1007,10 @@ function extractDomain(url) {
     const domain = url.split('/')[2]; // Extracts the domain part of the URL
     return domain;
 }
+
+const generateSessionId = () => {
+  return uuidv4();  // Generates a unique UUID
+};
 
 async function getMediaType(url) {
   try {
