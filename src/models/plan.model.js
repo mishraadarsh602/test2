@@ -27,7 +27,7 @@ const planSchema = new mongoose.Schema(
         features:[
             {
                 type: String,
-                ref: 'features_new'
+                ref: 'plan_features'
             }
         ]
     },

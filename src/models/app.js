@@ -128,6 +128,10 @@ const appSchema = new mongoose.Schema({
             type: Boolean,
             default: false
         },
+        fb_lead:{
+            type: Boolean,
+            default: false
+        },
         showSubTitle:{
             type: Boolean,
             default: false

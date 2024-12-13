@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const featuresSchema = new mongoose.Schema(
+const planFeaturesSchema = new mongoose.Schema(
     {
         _id: {
             type: String
@@ -61,4 +61,4 @@ const featuresSchema = new mongoose.Schema(
 );
 
 
-module.exports = mongoose.model('features_new', featuresSchema, 'features_new' );
+module.exports = mongoose.model('plan_features', planFeaturesSchema, 'plan_features' );

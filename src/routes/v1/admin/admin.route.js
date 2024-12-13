@@ -54,7 +54,9 @@ router.get("/getsearchapp", getApps);
 
 router.get('/plans',plansController.getPlans);
 router.get('/plan/:planName',plansController.getPlanByName);
-router.post('/plan',plansController.updatePlanById);
+router.put('/plan',plansController.updatePlanById);
 router.post('/plan',plansController.createPlan);
 router.post('/plan-features',plansController.getPlanFeatures);
+router.put('/updateFeature',plansController.updateFeature)
+router.delete('/removeFeature/:id',plansController.deletePlanFeature);
 module.exports = router;
