@@ -2,7 +2,8 @@ const mongoose = require('mongoose');
 const planFeaturesSchema = new mongoose.Schema(
     {
         _id: {
-            type: String
+            type: String,
+            trim:true,
         },
         name: {
             type: String,

@@ -151,7 +151,7 @@ module.exports={
           }
         })
 
-        await planFeaturesModel.updateMany({_id:req.body.parent_feature},{
+        await planFeaturesModel.updateOne({_id:req.body.parent_feature},{
           $push:{
             sub_features:feature._id
           }
@@ -164,6 +164,38 @@ module.exports={
 
       res.status(200).json(
         new ApiResponse(200,'Feature Deleted Successfully',response)
+      )
+    }),
+    addFeature:catchAsync(async(req,res)=>{
+      const {_id,name}=req.body.feature;
+      
+      let feature = await planFeaturesModel.findOne({
+        $or:[
+          {_id:_id.trim()},
+         {name: name.trim()}
+        ]
+      });
+      if(feature){
+        return res.status(409).json(
+          new ApiResponse(409,'Feature Already Exist Please Update it.')
+        )
+      }
+      let featureAdded =new  planFeaturesModel(req.body.feature)
+      await featureAdded.save();
+      if(req.body.plans.length!==0){
+        await planModel.updateMany(
+          {
+            planName:{ $in:req.body.plans}
+          },
+          {
+            $push:{
+              features:featureAdded._id
+            }
+          }
+        )
+      }
+      res.status(200).json(
+        new ApiResponse(200,'Feature Created Successfully',featureAdded)
       )
     }),
 
