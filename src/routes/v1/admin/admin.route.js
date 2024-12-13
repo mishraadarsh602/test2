@@ -13,50 +13,51 @@ const {
   deleteLocale,
 } = require("../../../controllers/localeController");
 const plansController = require("../../../controllers/admin/plans");
-router.get('/getfeatureLists', adminController.getFeatureLists);
-router.get('/getVisitorsList', adminController.getVisitorsList);
+router.get('/getfeatureLists',  adminAuth,  adminController.getFeatureLists);
+router.get('/getVisitorsList', adminAuth, adminController.getVisitorsList);
 
 
 router.post('/login',adminUserController.loginUser);
 router.get('/checkUser', adminAuth, adminUserController.checkUser);
 router.post("/logout", adminAuth, adminUserController.logoutUser);
 
-router.get('/getfeatureList/:id', adminController.getFeatureListById);
-router.post('/createFeatureList', adminController.createFeatureList);
-router.put('/updateFeatureList/:id', adminController.updateFeatureList);
-router.patch('/updateActiveStatus/:id', adminController.toggleActiveStatus);
-router.get('/getAllCounts', adminController.getAllCounts);
-router.get('/getCreationStats', adminController.getCreationStats);
-router.post("/duplicateapp", adminController.duplicateApp);
+router.get('/getfeatureList/:id', adminAuth, adminController.getFeatureListById);
+router.post('/createFeatureList', adminAuth, adminController.createFeatureList);
+router.put('/updateFeatureList/:id', adminAuth, adminController.updateFeatureList);
+router.patch('/updateActiveStatus/:id', adminAuth, adminController.toggleActiveStatus);
+router.get('/getAllCounts',adminAuth, adminController.getAllCounts);
+router.get('/getCreationStats',adminAuth,adminController.getCreationStats);
+router.post("/duplicateapp",adminAuth, adminController.duplicateApp);
 
 
 
-router.get("/getusers", userController.getAllUsers);
+router.get("/getusers", adminAuth,  userController.getAllUsers);
 
-router.get("/getusers/:id", userController.getUserById);
+router.get("/getusers/:id", adminAuth, userController.getUserById);
 
-router.put("/updateusers/:id", userController.updateUserById);
-
-
-router.get("/getErrorLogs", adminErrorLogsController.getErrorLogs);
+router.put("/updateusers/:id", adminAuth,  userController.updateUserById);
 
 
+router.get("/getErrorLogs", adminAuth, adminErrorLogsController.getErrorLogs);
 
-router.post("/locale", createLocale);
 
-router.get("/locale/:langCode?", getLocale);
 
-router.put("/locale/:langCode", updateLocale);
+router.post("/locale",adminAuth,  createLocale);
 
-router.delete("/locale/:langCode", deleteLocale);
+router.get("/locale/:langCode?", adminAuth, getLocale);
 
-router.get("/getsearchapp", getApps);
+router.put("/locale/:langCode", adminAuth, updateLocale);
 
-router.get('/plans',plansController.getPlans);
-router.get('/plan/:planName',plansController.getPlanByName);
-router.put('/plan',plansController.updatePlanById);
-router.post('/plan',plansController.createPlan);
-router.post('/plan-features',plansController.getPlanFeatures);
-router.put('/updateFeature',plansController.updateFeature)
-router.delete('/removeFeature/:id',plansController.deletePlanFeature);
+router.delete("/locale/:langCode", adminAuth, deleteLocale);
+
+router.get("/getsearchapp", adminAuth, getApps);
+
+router.get('/plans', adminAuth, plansController.getPlans);
+router.get('/plan/:planName',adminAuth,plansController.getPlanByName);
+router.put('/plan',adminAuth,plansController.updatePlanById);
+router.post('/plan',adminAuth,plansController.createPlan);
+router.post('/plan-features',adminAuth,plansController.getPlanFeatures);
+router.put('/updateFeature',adminAuth,plansController.updateFeature)
+router.delete('/removeFeature/:id',adminAuth,plansController.deletePlanFeature);
+
 module.exports = router;
