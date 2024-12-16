@@ -21,6 +21,38 @@ module.exports={
             new apiResponse(200, "Plan fetched successfully", particularPlan)
         );
     }),
+  getParticularPlanFeatures: catchAsync(async (req, res) => {
+    const particularPlan = await planModel.findOne({ planName: req.params.planName },{features:1,_id:0}).lean();
+    const getAllFeatures = await planFeaturesModel.find({}).lean();
+    getAllFeatures.forEach((feature) => {
+      if (particularPlan.features.includes(feature._id)) {
+        feature.active = true;
+      }
+      let subFeatures = [];
+      feature.sub_features.forEach((subFeatureId) => {
+        let particularSubFeature = (getAllFeatures.find((el) => { return el._id == subFeatureId }))
+        if (particularSubFeature) {
+          if (particularPlan.features.includes(particularSubFeature._id)) {
+            particularSubFeature.active = true;
+          }
+          else {
+            particularSubFeature.active = false;
+          }
+
+          subFeatures.push(particularSubFeature);
+        }
+      })
+      feature.sub_features = subFeatures;
+    })
+
+    let planFeatures = getAllFeatures.filter((el) => !el.parent_feature);
+
+
+    res.status(200).json(
+      new apiResponse(200, "Plan fetched successfully",  planFeatures )
+    );
+  }),
+
     updatePlanById:catchAsync(async (req, res) => {
         const decryptedId = CryptoJS.AES.decrypt(req.body.id, process.env.PLANS_SECRET_KEY).toString(CryptoJS.enc.Utf8);
         const { totalAppsCount, totalLeadsCount } = req.body.updates;

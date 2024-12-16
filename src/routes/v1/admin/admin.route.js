@@ -62,6 +62,7 @@ router.delete('/removeFeature/:id',adminAuth,plansController.deletePlanFeature);
 
 router.get('/plans',plansController.getPlans);
 router.get('/plan/:planName',plansController.getPlanByName);
+router.get('/particularPlanFeatures/:planName',plansController.getParticularPlanFeatures);
 router.put('/plan',plansController.updatePlanById);
 router.post('/plan',plansController.createPlan);
 router.post('/plan-features',plansController.getPlanFeatures);
