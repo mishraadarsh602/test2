@@ -23,7 +23,7 @@ module.exports={
     }),
   getParticularPlanFeatures: catchAsync(async (req, res) => {
     const particularPlan = await planModel.findOne({ planName: req.params.planName },{features:1,_id:0}).lean();
-    const getAllFeatures = await planFeaturesModel.find({}).lean();
+    const getAllFeatures = await planFeaturesModel.find({},{active:1,_id:1,sub_features:1,name:1}).lean();
     getAllFeatures.forEach((feature) => {
       if (particularPlan.features.includes(feature._id)) {
         feature.active = true;
@@ -229,6 +229,18 @@ module.exports={
       res.status(200).json(
         new ApiResponse(200,'Feature Created Successfully',featureAdded)
       )
+    }),
+
+    updatePlanFeatures:(async(req,res)=>{
+      const {planName,features}=req.body;
+     await plansModel.updateOne({planName},
+        {
+          $set:{
+            features
+          }
+        }
+      )
+      return res.status(200).json(new apiResponse(200,'plan features updated sucessfully'))
     }),
 
 }

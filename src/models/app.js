@@ -16,7 +16,6 @@ const appSchema = new mongoose.Schema({
     url: {
         type: String,
         required: true,
-        unique: true
     },
     user: {
         type: mongoose.Schema.Types.ObjectId,
