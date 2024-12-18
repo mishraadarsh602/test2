@@ -10,6 +10,7 @@ const { URL, URLSearchParams } = require('url');
 const sharp = require('sharp');
 const systemPromptSession = require('../../models/chat/systemPrompt.model');
 const { default: Anthropic } = require('@anthropic-ai/sdk');
+const aiService = require("../../service/aiService")
 
 const generateSessionId = () => {
   return uuidv4();  // Generates a unique UUID
@@ -554,6 +555,9 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
       messages: [{ role: "user", content: parentPrompt }],
       model: "claude-3-5-sonnet-20240620",
     });
+    await aiService.logAnthropicTokens(message, {
+      appId: app._id,
+    });
     parentResponse = JSON.parse(message.content[0].text.trim());
     console.log("parentPrompt response", parentResponse);
   }
@@ -689,12 +693,18 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
     let isInsideCodeBlock = false;
     let codeBlockBuffer = "";
     // let isInsideLastMsgBlock = false;
+    let openaiInputToken = 0;
+    let openaiOutputToken = 0;
+    let openaiTotalToken = 0;
+    let openaiModel = "";
 
     // Start streaming from OpenAI or another source
     const run = await openai.beta.threads.runs
       .stream(thread_id, assistantObj)
       .on("textDelta", (textDelta) => {
         chatResponse += textDelta.value;
+        console.log("output22:",textDelta.value)
+        // aiOutputToken += estimateTokenCount(textDelta.value);
 
         const parts = textDelta.value.split("```");
         parts.forEach((part, index) => {
@@ -741,7 +751,16 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
             }
           }
         });
+      })
+      .on("event", (event) => {
+        if (event.event === "thread.run.completed") {
+          openaiInputToken += event.data.usage.prompt_tokens;
+          openaiOutputToken += event.data.usage.completion_tokens;
+          openaiTotalToken = event.data.usage.total_tokens,
+          openaiModel = event.data.model;
+        }
       });
+     
 
     // if (chatResponse.trim() === "") {
       for await (const event of run) {
@@ -965,6 +984,14 @@ const aiAssistantChatStart = async (userId, userMessage, app, image = null, isSt
     }
     }
     // obj.code = appDetails.componentCode;
+
+       await aiService.logOpenAITokens({
+        model:openaiModel,
+        appId: app._id,
+        aiInputToken: Math.max(0, openaiInputToken),
+        aiOutputToken: Math.max(0, openaiOutputToken),
+        aiTotalToken: Math.max(0, openaiTotalToken)
+      });
     // Final return after the streaming is done
     return obj;
   } catch (error) {

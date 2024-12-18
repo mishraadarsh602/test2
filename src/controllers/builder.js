@@ -24,7 +24,7 @@ const planModel=require('../models/plan.model');
 const client = new Anthropic({
   apiKey: process.env['ANTHROPIC_API_KEY'],
 });
-
+const aiService  =  require("../service/aiService");
 
 module.exports = {
 
@@ -321,6 +321,10 @@ module.exports = {
             }
           );
 
+          await aiService.logAnthropicTokens(response, {
+            appId: fetchedApp._id
+          });
+
           await openai.beta.threads.messages.create(
             fetchedApp.thread_id,
             {
@@ -546,6 +550,10 @@ module.exports = {
           },
         }
       );
+      await aiService.logAnthropicTokens(response, {
+        appId: appId
+      });
+    
 
       return res.status(200).json({ suggestion: response.data.content[0].text })
     } catch (error) {
@@ -677,6 +685,9 @@ module.exports = {
             ],
           }
         );
+          await aiService.logAnthropicTokens(response, {
+            appId: app._id
+          });
 
       if (response.content[0].text.startsWith('```')) {
         response.content[0].text = response.content[0].text.replace(/```(?:jsx|javascript)\n?/g, "");
