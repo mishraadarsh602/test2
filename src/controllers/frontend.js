@@ -40,7 +40,7 @@ module.exports = {
       const {totalAppsCount} = await userModel
       .findOne({_id:req.user.userId},{totalAppsCount:1,_id:0})
       
-    if(totalAppsCount<=countUserCreatedApps){
+    if(totalAppsCount!==-1 && totalAppsCount<=countUserCreatedApps){
       throw new ApiError(400, "Sorry You have already Exhausted your app limit");
     }
       appData.name = appData.agent_type + '-' + appData['appUUID'].substring(0, 7);

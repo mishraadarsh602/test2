@@ -129,6 +129,11 @@ const fieldsSchema = new mongoose.Schema(
             type:String,
             default:''
         }
+        ,
+        unique:{
+            type:Boolean,
+            default:false
+        }
     }, { usePushEach: true }
 );
 

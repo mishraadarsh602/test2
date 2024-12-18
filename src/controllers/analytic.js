@@ -190,20 +190,25 @@ get_leads: catchAsync(
     const {totalLeadsCount} = await userModel
     .findOne({_id:req.user.userId},{totalLeadsCount:1,_id:0})
 
-    const response = await appVisitorModel.find({
+    const responseQuery = appVisitorModel.find({
       app: moongooseHelper.giveMoongooseObjectId(appId),
       createdAt: {
         $gte: new Date(startDate),
         $lte: new Date(endDate),
       },
       type:'Lead',
-    })
-    .limit(totalLeadsCount)
-    .sort({ updatedAt: -1 })
+    });
+
+    if (totalLeadsCount !== -1) {
+      responseQuery.limit(totalLeadsCount);
+    }
+
+    const response = await responseQuery
+      .sort({ updatedAt: -1 })
       .select(
         "createdAt lead_fields browser utm_source device utm_medium utm_campaign utm_term utm_content transaction_completed amount currency"
       );
-    
+      
     let finalResponse = { columns: [], data: [], idsArray: [],limitExceed:false };
     const fixedColumns = [
       { key: "browser", label: "Browser" },
@@ -279,6 +284,24 @@ get_leads: catchAsync(
 ,
   saveLead:catchAsync(
      async(req,res)=>{
+    const duplicateLead=[];
+    req.body.fields.forEach((field) => {
+      if (field.unique == true)
+          duplicateLead.push({$elemMatch: { field_name: field.field_name, value:field.value } })
+  });
+     if(duplicateLead.length>0){
+       const findDuplicatesLeadFields = await appVisitorModel.findOne(
+        {
+          lead_fields: {
+            $all: duplicateLead
+          }
+        }
+       );
+
+      if(findDuplicatesLeadFields){
+        return res.status(201).json('Lead Saved SucessFully')
+      }
+    }
      await appVisitorModel.updateOne(
         { _id: moongooseHelper.giveMoongooseObjectId( req.body.visitorId) },             
         { $set: { lead_fields: req.body.fields,type:'Lead'} } 
