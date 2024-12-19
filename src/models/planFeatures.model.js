@@ -61,5 +61,11 @@ const planFeaturesSchema = new mongoose.Schema(
     }
 );
 
+planFeaturesSchema.pre('save', function (next) {
+    if (this.parent_feature === '') {
+        this.parent_feature = null;
+    }
+    next();
+});
 
 module.exports = mongoose.model('plan_features', planFeaturesSchema, 'plan_features' );

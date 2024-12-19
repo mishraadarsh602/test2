@@ -21,6 +21,7 @@ const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY });
 const { Anthropic } = require('@anthropic-ai/sdk');
 const sharp = require('sharp');
 const planModel=require('../models/plan.model');
+const userModel=require('../models/user.model');
 const client = new Anthropic({
   apiKey: process.env['ANTHROPIC_API_KEY'],
 });
@@ -112,12 +113,13 @@ module.exports = {
         }, 
       getAppByUrl:catchAsync(async(req,res)=>{
            let app = await App.findOne({url:req.params.url,user:req.user.userId,status:'dev'}).lean();
+           const planFeatures=await planModel.findOne({_id:req.user.ogSubscriptionId},{features:1,_id:0});
            if (!app) {
             throw new ApiError(404, "App not found");
           }
-          let liveApp=await App.findOne({parentApp:app._id,status:'live'},{url:1,_id:0});     
+          let liveApp=await App.findOne({parentApp:app._id,status:'live'},{url:1,_id:0,});     
           res.status(200).json(
-            new apiResponse(200, "App fetched successfully",{...app,isLive: !!liveApp,})
+            new apiResponse(200, "App fetched successfully",{...app,isLive: !!liveApp,featuresAvailable:planFeatures.features})
            );
         }),
   updateApp:catchAsync(async (req, res) => {
