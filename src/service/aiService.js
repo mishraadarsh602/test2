@@ -13,70 +13,68 @@ class AiService {
   }
 
   async logAnthropicTokens(response, { appId }) {
-    try {
-      const existingLog = await AiTempLog.findOne({ appId, model: response.model });
-      console.log("sonnet response11:",response)
-      console.log("sonnet input:",response.usage.input_tokens,",output:",response.usage.output_tokens,",totaltoken:",response.usage.input_tokens + response.usage.output_tokens)
+    if (!response?.usage || !appId) {
+      console.log('Missing required parameters for logging Anthropic tokens');
+      return;
+    }
 
-      if (existingLog) {
-        return await AiTempLog.findOneAndUpdate(
-          { appId, model: response.model },
-          {
-            $inc: {
-              aiInputToken: response.usage.input_tokens,
-              aiOutputToken: response.usage.output_tokens,
-              aiTotalToken: response.usage.input_tokens + response.usage.output_tokens
-            },
-          },
-          { new: true }
-        );
-      }
-  
-      const aiTempLog = new AiTempLog({
+    try {
+      const { model, usage: { input_tokens, output_tokens } } = response;
+      return await this._updateOrCreateLog({
         appId,
-        aiInputToken: response.usage.input_tokens,
-        aiOutputToken: response.usage.output_tokens,
-        aiTotalToken: response.usage.input_tokens + response.usage.output_tokens,
-        model: response.model,
+        model,
+        aiInputToken: input_tokens,
+        aiOutputToken: output_tokens,
+        aiTotalToken: input_tokens + output_tokens
       });
-      
-      return await aiTempLog.save();
     } catch (error) {
       console.log('Error logging Anthropic tokens:', error);
+     
     }
   }
-  
+
   async logOpenAITokens({ model, appId, aiInputToken, aiOutputToken, aiTotalToken }) {
-    console.log("openai input:",aiInputToken,",output:",aiOutputToken,",totaltoken:",aiTotalToken)
+    if (!model || !appId) {
+      throw new Error('Missing required parameters for logging OpenAI tokens');
+    }
     try {
-      const existingLog = await AiTempLog.findOne({ appId, model });
-      
-      if (existingLog) {
-        return await AiTempLog.findOneAndUpdate(
-          { appId, model },
-          {
-            $inc: {
-              aiInputToken: aiInputToken,
-              aiOutputToken: aiOutputToken,
-              aiTotalToken: aiTotalToken
-            },
-          },
-          { new: true }
-        );
-      }
-  
-      const aiTempLog = new AiTempLog({
+      return await this._updateOrCreateLog({
         appId,
-        aiInputToken: aiInputToken,
-        aiOutputToken: aiOutputToken,
-        aiTotalToken: aiTotalToken,
         model,
+        aiInputToken,
+        aiOutputToken,
+        aiTotalToken
       });
-      
-      return await aiTempLog.save();
     } catch (error) {
       console.log('Error logging OpenAI tokens:', error);
     }
+  }
+
+  async _updateOrCreateLog({ appId, model, aiInputToken, aiOutputToken, aiTotalToken }) {
+    const existingLog = await AiTempLog.findOne({ appId, model });
+    if (existingLog) {
+      return await AiTempLog.findOneAndUpdate(
+        { appId, model },
+        {
+          $inc: {
+            aiInputToken,
+            aiOutputToken,
+            aiTotalToken
+          },
+        },
+        { new: true }
+      );
+    }
+
+    const aiTempLog = new AiTempLog({
+      appId,
+      model,
+      aiInputToken,
+      aiOutputToken,
+      aiTotalToken,
+    });
+    
+    return await aiTempLog.save();
   }
 }
 
