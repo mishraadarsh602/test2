@@ -33,7 +33,8 @@ module.exports={
             createdAt: {
               $gte: new Date(startDate),
               $lte: new Date(endDate)
-            }
+            },
+            status:true
           }
         },
         {
@@ -186,6 +187,7 @@ get_leads: catchAsync(
         $gte: new Date(startDate),
         $lte: new Date(endDate),
       },
+     status:true
     });
     const {totalLeadsCount} = await userModel
     .findOne({_id:req.user.userId},{totalLeadsCount:1,_id:0})
@@ -197,6 +199,7 @@ get_leads: catchAsync(
         $lte: new Date(endDate),
       },
       type:'Lead',
+      status:true
     });
 
     if (totalLeadsCount !== -1) {
@@ -289,22 +292,20 @@ get_leads: catchAsync(
       if (field.unique == true)
           duplicateLead.push({$elemMatch: { field_name: field.field_name, value:field.value } })
   });
+  let findDuplicatesLeadFields;
      if(duplicateLead.length>0){
-       const findDuplicatesLeadFields = await appVisitorModel.findOne(
+      findDuplicatesLeadFields = await appVisitorModel.findOne(
         {
           lead_fields: {
             $all: duplicateLead
           }
         }
        );
-
-      if(findDuplicatesLeadFields){
-        return res.status(201).json('Lead Saved SucessFully')
-      }
     }
      await appVisitorModel.updateOne(
         { _id: moongooseHelper.giveMoongooseObjectId( req.body.visitorId) },             
-        { $set: { lead_fields: req.body.fields,type:'Lead'} } 
+        { $set: { lead_fields: req.body.fields,type:'Lead',
+          status:  (findDuplicatesLeadFields ?false:true)} } 
       );
         return res.status(201).json(
               new ApiResponse(201,'Lead created successfully')

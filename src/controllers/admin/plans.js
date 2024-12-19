@@ -8,7 +8,7 @@ const planFeaturesModel = require("../../models/planFeatures.model");
 const plansModel=require('../../models/plan.model');
 module.exports={
     getPlans: catchAsync(async (req, res) => {
-        const findAllPlans = await planModel.find({},{_id:0});
+        const findAllPlans = await planModel.find({},{_id:0,totalAppsCount:1,totalLeadsCount:1,planName:1});
         res.status(200).json(
             new apiResponse(200, "Plans fetched successfully", findAllPlans)
         );
