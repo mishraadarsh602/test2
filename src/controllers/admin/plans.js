@@ -8,7 +8,7 @@ const planFeaturesModel = require("../../models/planFeatures.model");
 const plansModel=require('../../models/plan.model');
 module.exports={
     getPlans: catchAsync(async (req, res) => {
-        const findAllPlans = await planModel.find({},{_id:0,totalAppsCount:1,totalLeadsCount:1,planName:1});
+        const findAllPlans = await planModel.find({},{_id:0,totalAppsCount:1,totalLeadsCount:1,planName:1}).sort({updatedAt:-1});
         res.status(200).json(
             new apiResponse(200, "Plans fetched successfully", findAllPlans)
         );
@@ -97,11 +97,15 @@ module.exports={
         }
       }
       
-      const response = await planFeaturesModel.aggregate(
+      const sortStage =   {
+        $sort: {updatedAt:-1}
+      };
+      let response = await planFeaturesModel.aggregate(
         [
           {
             $facet: {
               parentFeatures: [
+                sortStage,
                 {
                   $match: {
                     parent_feature: null
@@ -112,12 +116,13 @@ module.exports={
                     _id: null,
                     parent: { $push: "$_id" }
                   }
-                }
+                },
               ],
               apps: [
+                sortStage,
                 searchStage,
                 { $skip: skip },
-                { $limit: limit },
+                { $limit: limit },   
               ],
               count: [
                 searchStage,
@@ -143,10 +148,10 @@ module.exports={
               },
 
             }
-          }
+          },         
         ]
       )
-      const plans=await plansModel.find({},{planName:1,features:1,_id:0});
+      const plans=await plansModel.find({},{planName:1,features:1,_id:0}).sort({updatedAt:-1}).sort({updatedAt:-1});
       
         res.status(200).json(
             new apiResponse(200, "Features fetched successfully ",{...response[0],plans})
