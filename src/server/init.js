@@ -35,6 +35,7 @@ const corsOptions = {
     allowedHeaders: ["Content-Type", "x-refresh-token", "Authorization","Access-Control-Allow-Credentials"],
     preflightContinue: false,
     optionsSuccessStatus: 204,
+    exposedHeaders: ["Set-Cookie"],  // Add this
     credentials: true, // Allow credentials (cookies)
 };
 

@@ -46,7 +46,7 @@ const corsOptions = {
     ],
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
     allowedHeaders: ["Content-Type", "x-refresh-token", "Authorization"],
-    exposedHeaders: ["set-cookie"],  // Add this
+    exposedHeaders: ["Set-Cookie"],  // Add this
     preflightContinue: false,
     optionsSuccessStatus: 204,
     credentials: true,
