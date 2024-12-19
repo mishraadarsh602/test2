@@ -181,6 +181,12 @@ module.exports={
     updateFeature:catchAsync(async(req,res)=>{
       const {_id}=req.body;
       let feature = await planFeaturesModel.findById(_id);
+      const alreadyPresentFeature=await planFeaturesModel.findOne({name:req.body.name.trim(),id:{$ne:_id}});
+      if(alreadyPresentFeature){
+        return res.status(409).json(
+          new ApiResponse(409,'Feature Name Already Exist.')
+        )
+      }
       if(feature.parent_feature !== req.body.parent_feature){
         await planFeaturesModel.updateMany({},{
           $pull:{
