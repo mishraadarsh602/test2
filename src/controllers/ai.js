@@ -5,7 +5,6 @@ const { OpenAI } = require("openai");
 const fs = require('fs');
 const path = require('path');
 const { z } = require("zod");
-const { ChatAnthropic } = require('@langchain/anthropic');
 const { default: axios } = require('axios');
 const openai = new OpenAI({ apiKey: process.env.OPEN_AI_KEY });
 const client = new Anthropic({
