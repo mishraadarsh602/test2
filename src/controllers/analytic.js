@@ -205,13 +205,18 @@ get_leads: catchAsync(
     if (totalLeadsCount !== -1) {
       responseQuery.limit(totalLeadsCount);
     }
-
-    const response = await responseQuery
+    let response;
+    if(totalLeadsCount==0){
+      response=[];
+    }
+    else{
+     response = await responseQuery
       .sort({ updatedAt: -1 })
       .select(
         "createdAt lead_fields browser utm_source device utm_medium utm_campaign utm_term utm_content transaction_completed amount currency"
       );
-      
+    }
+
     let finalResponse = { columns: [], data: [], idsArray: [],limitExceed:false };
     const fixedColumns = [
       { key: "browser", label: "Browser" },

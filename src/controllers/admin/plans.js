@@ -6,6 +6,7 @@ const CryptoJS = require("crypto-js");
 const ApiResponse = require("../../utils/apiResponse");
 const planFeaturesModel = require("../../models/planFeatures.model");
 const plansModel=require('../../models/plan.model');
+const userModel = require("./../../models/user.model");
 module.exports={
     getPlans: catchAsync(async (req, res) => {
         const findAllPlans = await planModel.find({},{_id:0,totalAppsCount:1,totalLeadsCount:1,planName:1}).sort({updatedAt:-1});
@@ -27,6 +28,9 @@ module.exports={
     getAllFeatures.forEach((feature) => {
       if (particularPlan.features.includes(feature._id)) {
         feature.active = true;
+      }
+      else{
+        feature.active=false;
       }
       let subFeatures = [];
       feature.sub_features.forEach((subFeatureId) => {
@@ -63,6 +67,13 @@ module.exports={
                     totalLeadsCount
                 }
             });
+
+        await userModel.updateMany({ ogSubscriptionId:decryptedId}, {
+          $set: {
+            totalAppsCount,
+            totalLeadsCount
+        }
+        });
         res.status(200).json(
             new apiResponse(200, "Plan updated successfully")
         );
@@ -168,6 +179,11 @@ module.exports={
           }
         });
       }
+      await planModel.updateMany({},{
+        $pull:{
+          features:id
+        }
+      })
 
       await planFeaturesModel.updateMany({
         parent_feature:id
