@@ -17,6 +17,7 @@ module.exports = {
       res.cookie("admintoken", token, {
         httpOnly: true,
         maxAge: 24 * 60 * 60 * 1000,
+        secure:true,
         // sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         // secure: process.env.NODE_ENV === 'production',  
         // domain: process.env.NODE_ENV === 'production' ? '.test2-mp4q.onrender.com' : 'localhost'  // Adjust this
