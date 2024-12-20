@@ -15,11 +15,10 @@ module.exports = {
         { expiresIn: "1d" }
       );
       res.cookie("admintoken", token, {
-        httpOnly: true,
+        // httpOnly: true,
         maxAge: 24 * 60 * 60 * 1000,
+        sameSite: 'none',
         secure:true,
-        // sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        // secure: process.env.NODE_ENV === 'production',  
         // domain: process.env.NODE_ENV === 'production' ? '.test2-mp4q.onrender.com' : 'localhost'  // Adjust this
 
       });
@@ -54,7 +53,7 @@ module.exports = {
     try {
       // Clear the token cookie
       res.clearCookie("admintoken", {
-        httpOnly: true,
+        // httpOnly: true,
         sameSite: "none",
         secure: true,
       });
